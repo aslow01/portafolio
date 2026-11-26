@@ -41,6 +41,17 @@ export function cierraPorFondo(clic: { enFondo: boolean; empezoEnFondo: boolean;
 	return clic.enFondo && clic.empezoEnFondo && clic.msDesdeApertura >= GRACIA_FONDO_MS;
 }
 
+/**
+ * La página (0 a total-1) de la ficha `ficha` que guardó la entrada del historial (history.state) cuando se salió de ella, o 0 si
+ * no hay nada guardado, es de otra ficha o no es una posición válida. Así «Atrás» desde un caso vuelve a la página desde la que se salió.
+ */
+export function paginaGuardada(estado: unknown, ficha: string, total: number): number {
+	if (typeof estado !== 'object' || estado === null) return 0;
+	const { ficha: de, pagina } = estado as { ficha?: unknown; pagina?: unknown };
+	if (de !== ficha || typeof pagina !== 'number' || !Number.isInteger(pagina)) return 0;
+	return pagina >= 0 && pagina < total ? pagina : 0;
+}
+
 /** ¿La entrada del historial (history.state) la sumó una ficha al abrirse, y por eso «Atrás» la cierra? Sobrevive a recargar la página. */
 export function fueEmpujada(estado: unknown): boolean {
 	return typeof estado === 'object' && estado !== null && (estado as { empujada?: unknown }).empujada === true;

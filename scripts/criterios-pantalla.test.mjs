@@ -1,7 +1,7 @@
 // Los topes de página de la web v5, en funciones puras. Node puro: npm test
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { PAGINAS_SIN_FICHA, TAMANOS, TOPE_ABSOLUTO, esPaginaSinFicha, paginasAMedir, problemaDeRazon, razonDeDocumento, rutasDeCasos, topeDeRazon } from './criterios-pantalla.mjs';
+import { PAGINAS_SIN_FICHA, TAMANOS, TAMANOS_CASOS, TOPE_ABSOLUTO, esPaginaSinFicha, paginasAMedir, problemaDeRazon, razonDeDocumento, rutasDeCasos, topeDeRazon } from './criterios-pantalla.mjs';
 
 const tam = (nombre) => TAMANOS.find((t) => t.nombre === nombre);
 
@@ -13,6 +13,16 @@ test('topes por tamaño, tal como los fija la especificación', () => {
 	assert.equal(topeDeRazon(tam('320x640')), 1.25);
 	assert.equal(topeDeRazon(tam('844x390')), 1.5);
 	assert.equal(TAMANOS.length, 6);
+});
+
+test('los tamaños extra de /casos/ incluyen 768 × 860 y 900 × 900, sin repetir los generales, y no admiten desborde', () => {
+	const nombres = TAMANOS_CASOS.map((t) => t.nombre);
+	assert.ok(nombres.includes('768x860') && nombres.includes('900x900'));
+	for (const t of TAMANOS_CASOS) {
+		assert.equal(`${t.ancho}x${t.alto}`, t.nombre);
+		assert.equal(topeDeRazon(t), 1.0, t.nombre);
+		assert.ok(!TAMANOS.some((g) => g.nombre === t.nombre), `${t.nombre} ya está en TAMANOS`);
+	}
 });
 
 test('una página que entra justo no tiene problema; pasarse del tope sí, con el motivo', () => {

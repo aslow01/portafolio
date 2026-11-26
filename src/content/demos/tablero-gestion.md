@@ -7,6 +7,15 @@ demo: https://tablero.matiasormeno.com.ar
 orden: 3
 subdominio: tablero
 stack: ["TypeScript", "Svelte", "Vite"]
+# Lámina: captura real de la demo, en tema claro y con sus datos ficticios, sin retoques. Es un recorte cuadrado (1098 × 1098 px,
+# a 3x) de la demo en diseño de celular (390 px de ancho): la tarjeta «Posición al 31/10/2026», de la mora al saldo y su barra
+# por días de atraso. Cuadrado para que encaje en la caja de la ficha (casi cuadrada en escritorio) sin cortar palabras.
+laminas:
+  - id: resumen
+    clara: ../../assets/capturas/tablero-resumen-clara.png
+    alt: "Captura de la demo: tarjeta «Posición al 31/10/2026». En mora $ 6.306.481,28 (22,1 % de lo que hay por cobrar, en 6 clientes); saldo a cobrar $ 28.513.662,10 y su barra según días de atraso."
+    pie: "El resumen de cobranzas de la demo, con la fecha de corte del 31/10/2026."
+    procedencia: "Captura de la demo, escrita desde cero con datos inventados."
 autoria:
   yo: "Definí el alcance y las reglas del tablero: la fecha de corte se elige solo en cierres de mes, los vencimientos se cuentan en días corridos y sin feriados, y la facturación se muestra sin IVA y los saldos con IVA, con el rótulo en pantalla. Decidí que el control de cierre quede en las pruebas y no en pantalla. Revisé los importes y los consideré plausibles."
   ia: "Concebido y dirigido por mí; especificación, código y pruebas desarrollados con IA."

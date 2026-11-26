@@ -43,6 +43,7 @@ const lista = expedientes(casos, principal?.id, demoEnVivo);
 						<a href={e.href} data-salir data-color={colorDeCarpeta(e.carpeta)}>
 							<span class="num" aria-hidden="true"><b>{e.numero}</b> {e.caminos}</span>
 							<span class="tit-exp">{e.titulo}</span><span class="solo-lector"> ({e.caminos})</span>
+							{e.resultado && <span class="res-exp"><span class="solo-lector">. </span>{e.resultado}</span>}
 							{e.nota && <span class="rot-exp">{e.nota}</span>}
 							<span class="ir" aria-hidden="true">→</span>
 						</a>

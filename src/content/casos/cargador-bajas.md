@@ -4,6 +4,7 @@ resumen: "Las bajas de personal y de artículos se acumulaban semana a semana; u
 caminos: [logistica]
 orden: 3
 estado: publicado
+resultadoCorto: "El equipo de logística dejó de cargar las bajas a mano y pudo ponerse al día."
 contexto: "Empresa de seguridad privada de San Juan"
 rol: "Diseño, dirección y verificación"
 autoria:

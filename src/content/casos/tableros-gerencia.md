@@ -4,6 +4,7 @@ resumen: "Tableros de facturación, cobranzas y mora para la gerencia, en los qu
 caminos: [tecnico]
 orden: 5
 estado: publicado
+resultadoCorto: "En uso por la gerencia desde el segundo semestre de 2026."
 contexto: "Empresa de seguridad privada de San Juan"
 rol: "Diseño, dirección y verificación"
 autoria:

@@ -80,7 +80,7 @@ try {
 	for (const [como, opciones] of MOVIMIENTOS) {
 		// QA M1: un doble clic en «Ver la prueba completa» no abre y cierra la hoja (el segundo clic cae sobre el fondo).
 		await escenario(`M1 doble clic en «Ver la prueba completa» deja la hoja abierta (${como})`, opciones, async (p) => {
-			await p.goto(`${origen}/tecnico/`);
+			await p.goto(`${origen}/tecnico/#prueba-centavo`);
 			await p.locator('.ver-codigo').first().dblclick();
 			await p.waitForTimeout(1200);
 			exigir(await p.evaluate(() => !!document.querySelector('dialog.hoja[open]')), 'la hoja quedó cerrada');
@@ -99,7 +99,7 @@ try {
 
 		// QA A1: la hoja abierta muestra su código (la barra con el nombre del archivo no ocupa toda la pantalla).
 		await escenario(`A1 la barra con el nombre del archivo de la hoja de código es una barra (${como})`, opciones, async (p) => {
-			await p.goto(`${origen}/tecnico/`);
+			await p.goto(`${origen}/tecnico/#prueba-centavo`);
 			await p.locator('.ver-codigo').first().click();
 			await p.waitForTimeout(900);
 			const alto = await p.evaluate(() => Math.round(document.querySelector('dialog.hoja[open] p.archivo')?.getBoundingClientRect().height ?? -1));
@@ -110,7 +110,7 @@ try {
 
 		// M1 (el clic afuera sigue cerrando): un clic sobre el fondo, pasado el primer instante, cierra la hoja.
 		await escenario(`M1 un clic sobre el fondo, pasado el primer instante, cierra la hoja (${como})`, opciones, async (p) => {
-			await p.goto(`${origen}/tecnico/`);
+			await p.goto(`${origen}/tecnico/#prueba-centavo`);
 			await p.locator('.ver-codigo').first().click();
 			await p.waitForTimeout(1000);
 			await p.mouse.click(195, 8);
@@ -153,6 +153,72 @@ try {
 		exigir(p.url() === 'about:blank', `un «Atrás» después de cerrar dejó la dirección en ${p.url()}`);
 	});
 
+	// P1: «Atrás» desde un caso vuelve a la página de la ficha desde la que se salió (antes volvía siempre a la primera).
+	await escenario('P1 «Atrás» desde un caso vuelve a la página de la ficha de la portada desde la que se salió', { reducedMotion: 'reduce' }, async (p) => {
+		await p.goto(`${origen}/`);
+		await p.locator('[data-banda="logistica"]').click();
+		await p.waitForTimeout(600);
+		await p.locator('.ficha.abierta .pag-indice').click();
+		await p.locator('.ficha.abierta .pag-lista button', { hasText: 'Casos y demo' }).click();
+		await p.waitForTimeout(900);
+		const antes = (await posicion(p)).trim();
+		exigir(!antes.startsWith('1 /'), `no pasó de la primera página (${antes})`);
+		await Promise.all([p.waitForURL(/\/casos\//), p.locator('.ficha.abierta .ver-casos a[data-salir]').first().click()]);
+		await p.goBack();
+		await p.waitForSelector('.ficha.abierta');
+		await p.waitForTimeout(700);
+		exigir((await posicion(p)).trim() === antes, `al volver quedó en ${(await posicion(p)).trim()} y se había salido desde ${antes}`);
+		const f = await foco(p);
+		exigir(!f.startsWith('BODY') && !f.startsWith('ninguno'), `el foco quedó en ${f}`);
+	});
+	await escenario('P1 «Atrás» desde un caso vuelve a la página de /tecnico/ desde la que se salió', { reducedMotion: 'reduce' }, async (p) => {
+		await p.goto(`${origen}/tecnico/`);
+		await p.waitForTimeout(500);
+		await p.locator('.ficha.abierta .pag-sig').click();
+		await p.waitForTimeout(900);
+		exigir((await posicion(p)).trim().startsWith('2 /'), `no pasó a la página 2 (${(await posicion(p)).trim()})`);
+		await Promise.all([p.waitForURL(/\/casos\//), p.locator('.ficha.abierta #el-caso a[data-salir]').first().click()]);
+		await p.goBack();
+		await p.waitForSelector('.ficha.abierta');
+		await p.waitForTimeout(700);
+		exigir((await posicion(p)).trim().startsWith('2 /'), `al volver quedó en ${(await posicion(p)).trim()}`);
+	});
+
+	// T1: la tabulación sigue el orden visual: con la ficha Logística abierta, Tab no entra en las páginas que no se ven (antes
+	// saltaba 1 → 4 → 5 y arrastraba la ficha de una página a otra); de la última parada de la página se pasa al paginador.
+	const paginaDelFoco = (p) =>
+		p.evaluate(() => {
+			const a = document.activeElement;
+			const paginas = [...document.querySelectorAll('.ficha.abierta .pagina')];
+			const pg = a ? a.closest('.pagina') : null;
+			return pg ? paginas.indexOf(pg) + 1 : 0;
+		});
+	await escenario('T1 Tab recorre solo la página que se ve de la ficha Logística y sigue al paginador', { reducedMotion: 'reduce', viewport: { width: 1440, height: 900 } }, async (p) => {
+		await p.goto(`${origen}/#logistica`);
+		await p.waitForTimeout(800);
+		let enPaginador = false;
+		for (let i = 0; i < 10 && !enPaginador; i++) {
+			await p.keyboard.press('Tab');
+			const pagina = await paginaDelFoco(p);
+			exigir(pagina <= 1, `Tab llevó el foco a la página ${pagina} (la que se ve es la 1)`);
+			enPaginador = await p.evaluate(() => !!document.activeElement?.closest('.paginador'));
+		}
+		exigir(enPaginador, 'Tab no llegó al paginador');
+		exigir((await posicion(p)).trim().startsWith('1 /'), `la ficha cambió de página con Tab: ${(await posicion(p)).trim()}`);
+	});
+	await escenario('T1 Mayús+Tab desde el paginador vuelve a la página que se ve, no a la última', { reducedMotion: 'reduce', viewport: { width: 1440, height: 900 } }, async (p) => {
+		await p.goto(`${origen}/#logistica`);
+		await p.waitForTimeout(800);
+		await p.locator('.ficha.abierta .pag-lista button', { hasText: 'De dónde vengo' }).click();
+		await p.waitForTimeout(900);
+		const actual = (await posicion(p)).trim();
+		await p.locator('.ficha.abierta .pag-ant').focus();
+		await p.keyboard.press('Shift+Tab');
+		const pagina = await paginaDelFoco(p);
+		exigir(pagina === 4, `Mayús+Tab llevó el foco a la página ${pagina} y se veía la 4`);
+		exigir((await posicion(p)).trim() === actual, `la ficha cambió de página: de ${actual} a ${(await posicion(p)).trim()}`);
+	});
+
 	// B2: las flechas ← → cambian de página con el foco recién cargado (sin haber tocado nada).
 	for (const ruta of ['/tecnico/', '/casos/automatizacion-facturas/']) {
 		await escenario(`B2 ${ruta}: la flecha derecha pasa de página sin haber enfocado nada`, { reducedMotion: 'reduce' }, async (p) => {
@@ -166,6 +232,33 @@ try {
 			await p.keyboard.press('ArrowLeft');
 			await p.waitForTimeout(900);
 			exigir((await posicion(p)).trim().startsWith('1 /'), `tras la flecha izquierda quedó en ${(await posicion(p)).trim()}`);
+		});
+	}
+
+	// F1: el botón del paginador que se apaga (primera o última página) no se lleva el foco a body: pasa al otro botón.
+	for (const ruta of ['/tecnico/', '/casos/automatizacion-facturas/']) {
+		await escenario(`F1 ${ruta}: al llegar a la primera o a la última página con el teclado, el foco no se pierde en body`, { reducedMotion: 'reduce' }, async (p) => {
+			await p.goto(`${origen}${ruta}`);
+			await p.waitForTimeout(500);
+			await p.locator('.ficha.abierta .pag-sig').focus();
+			await p.keyboard.press('Enter');
+			await p.waitForTimeout(900);
+			exigir((await posicion(p)).trim().startsWith('2 /'), `no pasó a la página 2 (${(await posicion(p)).trim()})`);
+			await p.locator('.ficha.abierta .pag-ant').focus();
+			await p.keyboard.press('Enter');
+			await p.waitForTimeout(900);
+			exigir((await posicion(p)).trim().startsWith('1 /'), `no volvió a la página 1 (${(await posicion(p)).trim()})`);
+			exigir(await p.locator('.ficha.abierta .pag-ant').isDisabled(), '«Anterior» no quedó apagado en la página 1');
+			let f = await foco(p);
+			exigir(f.startsWith('BUTTON') && f.includes('pag-sig'), `en la primera página el foco quedó en ${f} (debía pasar a «Siguiente»)`);
+			// hasta la última: «Siguiente» se apaga con el foco puesto y el foco pasa a «Anterior»
+			for (let n = 0; n < 12 && !(await p.locator('.ficha.abierta .pag-sig').isDisabled()); n++) {
+				await p.keyboard.press('Enter');
+				await p.waitForTimeout(900);
+			}
+			exigir(await p.locator('.ficha.abierta .pag-sig').isDisabled(), '«Siguiente» no se apagó en la última página');
+			f = await foco(p);
+			exigir(f.startsWith('BUTTON') && f.includes('pag-ant'), `en la última página el foco quedó en ${f} (debía pasar a «Anterior»)`);
 		});
 	}
 

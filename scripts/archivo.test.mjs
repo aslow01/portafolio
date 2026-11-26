@@ -2,7 +2,8 @@
 // cada banda, la carpeta, los caminos y la nota salen de los datos del caso, nunca se escriben a mano. Node puro: npm test
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
+import { leerFrontmatter } from './frontmatter.mjs';
 import { carpetaDe } from '../src/v5/interiores/caso.ts';
 import {
 	MAX_EXPEDIENTES,
@@ -138,4 +139,28 @@ test('clases por tono, color de la cortina por carpeta y «muchos» desde siete'
 
 test('la puerta al archivo («Casos de estudio») solo se dibuja con dos casos o más', () => {
 	assert.deepEqual([0, 1, 2, 6].map(puertaAlArchivo), [false, false, true, true]);
+});
+
+test('la línea de resultado de cada expediente sale del caso (`resultadoCorto`); sin dato, el expediente no la lleva', () => {
+	const lista = expedientes([caso('a', 1, ['tecnico'], { resultadoCorto: 'En uso diario.' }), caso('b', 2, ['tecnico']), caso('c', 3, ['tecnico'], { resultadoCorto: '' })], undefined, false);
+	assert.deepEqual(lista.map((e) => e.resultado), ['En uso diario.', undefined, undefined]);
+	assert.equal('resultado' in lista[1], false);
+});
+
+test('los casos publicados traen su línea de resultado: una frase corta, sin voseo y sin cifras que el caso no diga', () => {
+	const dir = new URL('../src/content/casos/', import.meta.url);
+	const casos = readdirSync(dir).filter((f) => f.endsWith('.md'));
+	assert.ok(casos.length > 0);
+	for (const f of casos) {
+		const texto = readFileSync(new URL(f, dir), 'utf8');
+		const { datos } = leerFrontmatter(texto);
+		if (datos.estado !== 'publicado') continue;
+		const linea = datos.resultadoCorto;
+		assert.ok(linea, `${f}: falta resultadoCorto`);
+		assert.ok(linea.length <= 120, `${f}: resultadoCorto de ${linea.length} caracteres (máximo 120)`);
+		assert.ok(/[.]$/.test(linea), `${f}: resultadoCorto debe terminar en punto`);
+		assert.ok(!/\b(tenés|podés|hacé|mirá|vos)\b/i.test(linea), `${f}: resultadoCorto con voseo`);
+		// toda cifra de la línea (2.000, 2026…) tiene que figurar en el propio caso
+		for (const n of linea.match(/\d[\d.,]*/g) ?? []) assert.ok(texto.includes(n.replace(/[.,]$/, '')), `${f}: la cifra «${n}» no está en el caso`);
+	}
 });

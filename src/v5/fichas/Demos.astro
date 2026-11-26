@@ -31,10 +31,13 @@ interface Vista {
 	tapa: string;
 	pagina: string;
 	telefono: boolean;
+	/** La captura es un recorte cuadrado que no debe cortarse: se muestra entera salvo cuando la caja es casi cuadrada. */
+	entera?: boolean;
 }
 const vistas: Record<string, Vista> = {
 	'lector-facturas': { corto: 'Lector de facturas', tapa: 'celular', pagina: 'atencion', telefono: false },
 	'control-flota': { corto: 'Control de flota', tapa: 'alertas', pagina: 'alertas', telefono: true },
+	'tablero-gestion': { corto: 'Tablero de cobranzas', tapa: 'resumen', pagina: 'resumen', telefono: false, entera: true },
 };
 const vistaDe = (d: Demo): Vista => vistas[d.id] ?? { corto: d.data.titulo, tapa: d.data.laminas[0]?.id ?? '', pagina: d.data.laminas[0]?.id ?? '', telefono: false };
 const laminaDe = (d: Demo, id: string): Lamina | undefined => d.data.laminas.find((l) => l.id === id) ?? d.data.laminas[0];
@@ -89,8 +92,8 @@ const hechoCon = (d: Demo): string => (d.data.stack.length > 0 ? `Hecho con ${li
 						{d.data.aviso && <p class="aviso">{d.data.aviso}</p>}
 					</div>
 					{lam && (
-						<div class:list={['lamina', 'der', { telefono: v.telefono }]}>
-							<Image src={imagenDe(lam)} width={v.telefono ? 480 : 768} alt={lam.alt} loading="lazy" decoding="async" />
+						<div class:list={['lamina', 'der', { telefono: v.telefono, entera: v.entera }]}>
+							<Image src={imagenDe(lam)} width={v.telefono ? 480 : v.entera ? 900 : 768} alt={lam.alt} loading="lazy" decoding="async" />
 						</div>
 					)}
 					<p class="texto">{d.data.resumen}</p>
@@ -218,6 +221,11 @@ const hechoCon = (d: Demo): string => (d.data.stack.length > 0 ? `Hecho con ${li
 	/* La lámina toma el alto que sobra en la página (entre 150 y 420 px): así la página entra con cualquier largo de texto. */
 	.f-demos .lamina { position: relative; flex: 1 1 0; min-height: 150px; max-height: 420px; border: 1px solid var(--regla); background: var(--claro); overflow: hidden; box-shadow: var(--sombra-demo-lamina); }
 	.f-demos .lamina img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top left; }
+	/* Recorte cuadrado: con la caja casi cuadrada (0,9 a 1,02) llena y recorta unos pocos píxeles de margen; con otra proporción se ve
+	   entero, centrado, sobre el fondo de la lámina (nunca se corta una palabra). */
+	.f-demos .lamina.entera { container-type: size; }
+	.f-demos .lamina.entera img { object-fit: contain; object-position: 50% 0; }
+	@container (min-aspect-ratio: 9/10) and (max-aspect-ratio: 51/50) { .f-demos .lamina.entera img { object-fit: cover; object-position: top left; } }
 	.f-demos .lamina.telefono { width: 62%; align-self: center; max-height: 520px; transform: rotate(-2deg); }
 	.f-demos .lamina.telefono img { object-position: 50% calc(var(--p) * 30%); }
 	.f-demos .hecho { font-size: 14px; color: var(--texto-2); }

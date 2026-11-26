@@ -85,10 +85,10 @@ const vistas = proyectos.map(vistaDe);
 <style is:global>
 	/* Lo que es solo de la ficha Proyectos: el canto negro de la carta del juego (la noche ya tomó el borde derecho; sale de
 	   «terror por contagio»). Las cartas, los títulos y la carta de atrás están en src/styles/v5/cartas.css. */
-	.f-proyectos .carta-p.a::after { content: ''; position: absolute; right: -1px; top: 0; bottom: 0; width: 15%; background: var(--negro); clip-path: polygon(40% 0, 100% 0, 100% 100%, 0 100%, 0 76%, 22% 76%, 22% 52%, 10% 52%, 10% 28%, 40% 28%); pointer-events: none; }
-	.f-proyectos .carta-grande.g::after { content: ''; position: absolute; right: -1px; top: 0; bottom: 0; width: 13%; background: var(--negro); clip-path: polygon(40% 0, 100% 0, 100% 100%, 0 100%, 0 82%, 22% 82%, 22% 64%, 10% 64%, 10% 46%, 40% 46%); pointer-events: none; }
+	.f-proyectos .carta-p.a::after { content: ''; position: absolute; right: -1px; top: 0; bottom: 0; width: min(15%, 44px); background: var(--negro); clip-path: polygon(40% 0, 100% 0, 100% 100%, 0 100%, 0 76%, 22% 76%, 22% 52%, 10% 52%, 10% 28%, 40% 28%); pointer-events: none; }
+	.f-proyectos .carta-grande.g::after { content: ''; position: absolute; right: -1px; top: 0; bottom: 0; width: min(13%, 56px); background: var(--negro); clip-path: polygon(40% 0, 100% 0, 100% 100%, 0 100%, 0 82%, 22% 82%, 22% 64%, 10% 64%, 10% 46%, 40% 46%); pointer-events: none; }
 	/* El texto no pasa por debajo del canto negro de la carta del juego */
-	.f-proyectos .carta-grande.g > p, .f-proyectos .carta-grande.g .carta-textos p { margin-right: 13%; }
+	.f-proyectos .carta-grande.g > p, .f-proyectos .carta-grande.g .carta-textos p { margin-right: min(13%, 56px); }
 
 	@media (prefers-reduced-motion: no-preference) {
 		.f-proyectos .viva .carta-p.a::after { animation: proy-toma-canto 600ms steps(4, end) backwards 1100ms; }

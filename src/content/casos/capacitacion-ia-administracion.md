@@ -4,6 +4,7 @@ resumen: "Un curso de 20 sesiones para que el área administrativa use IA en su 
 caminos: [tecnico]
 orden: 7
 estado: publicado
+resultadoCorto: "Ya dicté el primer bloque: IA en Excel, Word, PowerPoint y correo."
 contexto: "Empresa de seguridad privada de San Juan"
 rol: "Diseño y dictado"
 autoria:

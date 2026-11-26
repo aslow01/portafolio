@@ -1,7 +1,7 @@
 // Decisiones del script de las fichas que no necesitan navegador (src/lib/paginas.ts). Node puro: npm test
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { GRACIA_FONDO_MS, cierraPorFondo, fueEmpujada, imagenRota, paginaDelHash, tituloConNombre } from '../src/lib/paginas.ts';
+import { GRACIA_FONDO_MS, cierraPorFondo, fueEmpujada, imagenRota, paginaDelHash, paginaGuardada, tituloConNombre } from '../src/lib/paginas.ts';
 
 const ids = ['tapa', 'el-caso', 'como-trabajo', 'que-hice-yo'];
 
@@ -56,4 +56,19 @@ test('«empujada»: una entrada del historial que abrió una ficha lo recuerda a
 	assert.equal(fueEmpujada(undefined), false);
 	assert.equal(fueEmpujada('empujada'), false);
 	assert.equal(fueEmpujada({ empujada: 'si' }), false, 'solo un true de verdad');
+});
+
+test('la página guardada en el historial: solo la de la misma ficha y dentro del total; si no, la primera', () => {
+	assert.equal(paginaGuardada({ ficha: 'logistica', empujada: true, pagina: 3 }, 'logistica', 5), 3);
+	assert.equal(paginaGuardada({ ficha: 'logistica', pagina: 0 }, 'logistica', 5), 0);
+	assert.equal(paginaGuardada({ ficha: 'logistica', pagina: 4 }, 'logistica', 5), 4, 'la última página vale');
+	assert.equal(paginaGuardada({ ficha: 'logistica', pagina: 5 }, 'logistica', 5), 0, 'una más que el total no existe');
+	assert.equal(paginaGuardada({ ficha: 'logistica', pagina: -1 }, 'logistica', 5), 0);
+	assert.equal(paginaGuardada({ ficha: 'logistica', pagina: 1.5 }, 'logistica', 5), 0);
+	assert.equal(paginaGuardada({ ficha: 'logistica', pagina: '3' }, 'logistica', 5), 0, 'solo un número de verdad');
+	assert.equal(paginaGuardada({ ficha: 'demos', pagina: 3 }, 'logistica', 5), 0, 'la página es de otra ficha');
+	assert.equal(paginaGuardada({ pagina: 3 }, 'logistica', 5), 0);
+	assert.equal(paginaGuardada(null, 'logistica', 5), 0);
+	assert.equal(paginaGuardada(undefined, 'logistica', 5), 0);
+	assert.equal(paginaGuardada('3', 'logistica', 5), 0);
 });

@@ -20,7 +20,7 @@
 //   [data-letras], [data-caida], [data-marcas], [data-sub], .ver-codigo[data-hoja]   piezas de la etapa 2
 // El script agrega a <html> las clases `js` (y saca `sin-js`) y `mueve` (si el movimiento no está reducido).
 
-import { cierraPorFondo, fueEmpujada, imagenRota, paginaDelHash, tituloConNombre } from '../../lib/paginas.ts';
+import { cierraPorFondo, fueEmpujada, imagenRota, paginaDelHash, paginaGuardada, tituloConNombre } from '../../lib/paginas.ts';
 import { nombre as autor } from '../../lib/sitio.ts';
 
 const d = document;
@@ -247,6 +247,7 @@ orden.forEach((f, n) => {
 				if (i !== o.idx) {
 					o.idx = Math.max(0, Math.min(total - 1, i));
 					actualizar(o, true);
+					recordarPagina(o);
 				}
 			});
 		},
@@ -286,10 +287,15 @@ function mostrarLista(o: FichaViva, si: boolean): void {
 	if (si) o.lista.querySelector<HTMLElement>('[aria-current]')?.focus();
 }
 
-// La página actual que se desplaza por dentro y no tiene nada enfocable recibe el foco con Tab; si no, con el
-// teclado no había forma de leerla. Solo la actual, para no sumar una parada por página.
+// El teclado y el lector de pantalla solo recorren lo que se ve:
+//  · las páginas que no son la actual son `inert` (nada enfocable ni clicable): si no, Tab entraba en los enlaces de las páginas
+//    que están fuera de la pantalla, arrastraba la ficha de una página a otra y la tabulación saltaba 1 → 4 → 5. Sigue sin ser
+//    inerte la página que tiene el foco, para que no se lo quite mientras la ficha se desplaza hasta ella (`ir` con foco);
+//  · la página actual que se desplaza por dentro y no tiene nada enfocable recibe el foco con Tab; si no, con el teclado no había
+//    forma de leerla. Solo la actual, para no sumar una parada por página.
 function pasoPorTeclado(o: FichaViva): void {
 	o.pags.forEach((p, j) => {
+		p.inert = j !== o.idx && !p.contains(d.activeElement);
 		p.tabIndex = j === o.idx && desplaza(p) && ![...p.querySelectorAll(FOCABLE)].some(visible) ? 0 : -1;
 	});
 }
@@ -321,6 +327,8 @@ function actualizar(o: FichaViva, anunciar = false): void {
 		if (j === i) b.setAttribute('aria-current', 'page');
 		else b.removeAttribute('aria-current');
 	});
+	// Un botón `disabled` con el foco lo pierde (el foco pasa a body): si era el que se apaga, el foco va al otro del paginador.
+	const conFoco = d.activeElement;
 	o.ant.disabled = i === 0;
 	const ultima = i === o.total - 1;
 	o.sig.replaceChildren();
@@ -340,6 +348,8 @@ function actualizar(o: FichaViva, anunciar = false): void {
 		o.sig.setAttribute('aria-label', 'Página siguiente');
 		o.sig.disabled = ultima;
 	}
+	if (conFoco === o.ant && o.ant.disabled && !o.sig.disabled) o.sig.focus();
+	else if (conFoco === o.sig && o.sig.disabled && !o.ant.disabled) o.ant.focus();
 	if (o.f.classList.contains('abierta')) {
 		o.pags[i].classList.add('viva');
 		armar(o.pags[i]);
@@ -353,7 +363,11 @@ function actualizar(o: FichaViva, anunciar = false): void {
 function ir(o: FichaViva, i: number, foco = false): void {
 	const j = Math.max(0, Math.min(o.total - 1, i));
 	o.hojas.scrollTo({ left: j * o.hojas.clientWidth, behavior: conAnim() ? 'smooth' : 'auto' });
-	if (foco) o.pags[j].focus({ preventScroll: true });
+	if (foco) {
+		// la página de destino todavía es inerte (idx no cambió): se la habilita antes de pasarle el foco
+		o.pags[j].inert = false;
+		o.pags[j].focus({ preventScroll: true });
+	}
 }
 
 addEventListener('resize', () => {
@@ -387,9 +401,30 @@ const ocultar = (o: FichaViva): void => {
 	mostrarLista(o, false);
 };
 const enfocarTitulo = (o: FichaViva): void => {
+	if (o.idx > 0) {
+		enfocarTituloDePagina(o.pags[o.idx]);
+		return;
+	}
 	const t = o.pags[0].querySelector<HTMLElement>('[tabindex="-1"]') ?? o.pags[0];
 	t.focus({ preventScroll: true });
 };
+
+// «Atrás» desde otra página (un caso, p. ej.) tiene que volver a la página de la ficha desde la que se salió, no a la primera.
+// La página actual se guarda en el estado de la entrada del historial (`history.state`): no cambia la dirección ni usa el
+// almacenamiento del navegador, y sobrevive a recargar y a ir y volver. Al volver a abrir la ficha se restaura.
+function recordarPagina(o: FichaViva): void {
+	if (abierta !== o) return;
+	const previo: object = typeof history.state === 'object' && history.state !== null ? history.state : {};
+	historial('replace', { ...previo, ficha: o.f.id, pagina: o.idx }, location.href);
+}
+function restaurarPagina(o: FichaViva): void {
+	const i = paginaGuardada(history.state, o.f.id, o.total);
+	if (i <= 0) return;
+	o.hojas.scrollTo({ left: i * o.hojas.clientWidth, behavior: 'auto' });
+	o.idx = i;
+	actualizar(o);
+	enfocarTituloDePagina(o.pags[i]);
+}
 // El navegador salta al fragmento (#ficha) después de que corre el script y deshace el foco: si pasado un cuadro nada lo tiene
 // (el foco quedó en <body>), se vuelve a poner en el título de la ficha que sigue abierta.
 const reenfocarSiNadaLoTiene = (o: FichaViva): void => {
@@ -548,7 +583,9 @@ addEventListener('popstate', () => {
 	const o = fichas.get(id);
 	empujada = fueEmpujada(history.state);
 	if (o) {
+		const yaAbierta = abierta === o;
 		abrir(o, { modo: abierta ? 'directo' : 'pila', desde: bandaDe(id) });
+		if (!yaAbierta) restaurarPagina(o);
 		reenfocarSiNadaLoTiene(o);
 	} else if (abierta) cerrar();
 });
@@ -957,7 +994,11 @@ if (fija && fichas.has(fija.id)) {
 	raiz.classList.add('con-ficha');
 	if (lomos) lomos.classList.add('visible');
 	const conHash = irAlHash(o);
-	if (!conHash) actualizar(o);
+	if (!conHash) {
+		actualizar(o);
+		// Sin hash de página: si se vuelve (con «Atrás») desde otra página, queda en la página desde la que se salió.
+		restaurarPagina(o);
+	}
 	// Con `#página`, al terminar la carga el navegador pone el foco en el destino (la página entera): se lo devuelve al título.
 	if (conHash) {
 		const reenfocar = (): void => {
@@ -982,6 +1023,7 @@ if (fija && fichas.has(fija.id)) {
 		// Recargar con la ficha abierta no borra el estado de la entrada: si la había sumado una ficha, «Atrás» la sigue cerrando.
 		empujada = fueEmpujada(history.state);
 		abrir(o, { modo: 'directo' });
+		restaurarPagina(o);
 		// Al cargar con `#ficha`, el navegador salta al fragmento después de este script y deshace el foco; se vuelve
 		// a pedir cuando la página terminó de cargar.
 		if (d.readyState === 'complete') reenfocarSiNadaLoTiene(o);

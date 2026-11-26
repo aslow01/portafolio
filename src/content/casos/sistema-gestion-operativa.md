@@ -5,6 +5,7 @@ caminos: [logistica, tecnico]
 corte: 5
 orden: 1
 estado: publicado
+resultadoCorto: "En uso diario desde el primer semestre de 2026: partes cargados en la app, en lugar de enviarse por correo."
 uso: "Diario, desde el primer semestre de 2026"
 contexto: "Empresa de seguridad privada de San Juan"
 rol: "Diseño, dirección y verificación"

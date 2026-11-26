@@ -4,6 +4,7 @@ resumen: "Un cargador hecho a medida para la empresa, que concilia las facturas 
 caminos: [tecnico, logistica]
 orden: 2
 estado: publicado
+resultadoCorto: "En uso diario: más de 2.000 comprobantes por mes."
 regla: "Se detiene ante cualquier diferencia, por mínima que sea. Nada se guarda sin aprobación humana."
 uso: "Diario, más de 2.000 comprobantes por mes"
 contexto: "Empresa de seguridad privada de San Juan"

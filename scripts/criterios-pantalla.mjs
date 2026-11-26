@@ -12,6 +12,18 @@ export const TAMANOS = [
 	{ nombre: '844x390', ancho: 844, alto: 390 },
 ];
 
+/**
+ * Tamaños extra solo para el índice `/casos/` (la pila de seis a ocho expedientes es lo más justo de la web): las bandas de
+ * tableta y de escritorio bajo donde el cajón llegó a desbordar en vertical (QA del 26/11/2026).
+ */
+export const TAMANOS_CASOS = [
+	{ nombre: '768x860', ancho: 768, alto: 860 },
+	{ nombre: '900x900', ancho: 900, alto: 900 },
+	{ nombre: '1023x1000', ancho: 1023, alto: 1000 },
+	{ nombre: '1280x720', ancho: 1280, alto: 720 },
+	{ nombre: '1366x768', ancho: 1366, alto: 768 },
+];
+
 /** Nunca aceptable, en ningún tamaño. */
 export const TOPE_ABSOLUTO = 1.5;
 

@@ -21,12 +21,14 @@ export interface Expediente {
 	carpeta: Carpeta;
 	tono: Tono;
 	nota?: 'Con demo en vivo' | 'Borrador';
+	/** Una línea de resultado, tomada del propio caso (`resultadoCorto`). Sin dato, el expediente no la lleva. */
+	resultado?: string;
 }
 
 /** Lo que `expedientes` lee de un caso (una entrada de la colección `casos` lo cumple tal cual). */
 export interface CasoDelCajon {
 	id: string;
-	data: { titulo: string; orden: number; caminos: Camino[]; estado?: string; borrador?: boolean };
+	data: { titulo: string; orden: number; caminos: Camino[]; estado?: string; borrador?: boolean; resultadoCorto?: string };
 }
 
 /** El escalonado y las medidas del cajón están probados hasta ocho expedientes. */
@@ -93,6 +95,7 @@ export function expedientes(casos: CasoDelCajon[], principalId: string | undefin
 			carpeta,
 			tono,
 			...(nota ? { nota } : {}),
+			...(c.data.resultadoCorto ? { resultado: c.data.resultadoCorto } : {}),
 		};
 	});
 }

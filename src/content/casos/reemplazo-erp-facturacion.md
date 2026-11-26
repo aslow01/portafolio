@@ -4,6 +4,7 @@ resumen: "Antes de construir, tres pruebas de viabilidad; después, un sistema n
 caminos: [tecnico]
 orden: 4
 estado: publicado
+resultadoCorto: "Las tres pruebas dieron resultado favorable; el sistema quedó en pausa sin llegar a usarse."
 contexto: "Empresa de seguridad privada de San Juan"
 rol: "Diseño, dirección y verificación"
 autoria:

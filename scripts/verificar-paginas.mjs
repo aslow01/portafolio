@@ -24,7 +24,7 @@ import { readdirSync, existsSync, statSync } from 'node:fs';
 import { readFile, mkdir } from 'node:fs/promises';
 import { extname, join, normalize, resolve, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { TAMANOS, esPaginaSinFicha, paginasAMedir, problemaDeRazon, razonDeDocumento, rutasDeCasos } from './criterios-pantalla.mjs';
+import { TAMANOS, TAMANOS_CASOS, esPaginaSinFicha, paginasAMedir, problemaDeRazon, razonDeDocumento, rutasDeCasos } from './criterios-pantalla.mjs';
 
 const raiz = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const dist = join(raiz, 'dist');
@@ -67,6 +67,8 @@ const origen = `http://127.0.0.1:${servidor.address().port}`;
 const casos = existsSync(join(dist, 'casos')) ? rutasDeCasos(readdirSync(join(dist, 'casos'), { withFileTypes: true })) : [];
 const paginas = process.env.PAGINAS ? process.env.PAGINAS.split(',') : paginasAMedir(casos);
 const tamanos = process.env.TAMANOS ? TAMANOS.filter((t) => process.env.TAMANOS.split(',').includes(t.nombre)) : TAMANOS;
+// Los tamaños extra de `/casos/` (TAMANOS_CASOS) se miden solo con la lista y los tamaños por defecto.
+const pasadas = [...tamanos.map((t) => [t, paginas]), ...(process.env.PAGINAS || process.env.TAMANOS ? [] : TAMANOS_CASOS.map((t) => [t, ['/casos/']]))];
 const carpetaCapturas = process.env.CAPTURAS;
 if (carpetaCapturas) await mkdir(carpetaCapturas, { recursive: true });
 
@@ -75,7 +77,7 @@ let paginasMedidas = 0;
 const maxima = new Map(); // tamaño → la razón más alta vista (para ver que la medición no es siempre 1,00)
 const navegador = await chromium.launch(process.env.CHROMIUM_RUTA ? { executablePath: process.env.CHROMIUM_RUTA } : {});
 try {
-	for (const tamano of tamanos) {
+	for (const [tamano, paginas] of pasadas) {
 		const contexto = await navegador.newContext({ viewport: { width: tamano.ancho, height: tamano.alto }, colorScheme: 'light', reducedMotion: 'reduce' });
 		for (const pagina of paginas) {
 			const p = await contexto.newPage();
@@ -126,7 +128,7 @@ try {
 	servidor.close();
 }
 
-console.log(`Páginas de ficha medidas: ${paginasMedidas} (${paginas.join(', ')}; ${tamanos.map((t) => t.nombre).join(', ')}).`);
+console.log(`Páginas de ficha medidas: ${paginasMedidas} (${paginas.join(', ')}; ${tamanos.map((t) => t.nombre).join(', ')}; y /casos/ en ${pasadas.slice(tamanos.length).map(([t]) => t.nombre).join(', ') || 'ninguno más'}).`);
 console.log('Razón más alta por tamaño: ' + [...maxima].map(([n, r]) => `${n} ${r.toFixed(2)}`).join(' · '));
 if (paginasMedidas === 0) fallos.push('No se midió ninguna página: la prueba no comprobó nada.');
 if (fallos.length > 0) {

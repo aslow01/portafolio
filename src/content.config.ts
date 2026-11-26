@@ -23,6 +23,8 @@ const casos = defineCollection({
 		estado: z.enum(['borrador', 'publicado']),
 		// Obra principal: dos oraciones, protagonista de la portada y fila de la ficha.
 		regla: z.string().optional(),
+		// Una línea de resultado para el índice /casos/: una frase corta tomada del propio caso, sin cifras que el caso no diga.
+		resultadoCorto: z.string().optional(),
 		// Filas de la ficha.
 		uso: z.string().optional(),
 		contexto: z.string().optional(),
