@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<title>Lámina para compartir</title>
+<link rel="stylesheet" href="og.css" />
+</head>
+<!--
+	Plantilla de las imágenes para compartir (1200 × 630). Está vacía: scripts/og/generar.mjs la llena con textContent, clases
+	y propiedades personalizadas a partir de scripts/og/laminas.mjs. El estilo está en og.css.
+	Cuatro composiciones: A portada (la pila), B ficha (Técnico y Logística), C cajón (/casos/) y D tapa de un caso
+	(la ficha B con rótulo, pie y, si hay, la cifra). Se muestra una a la vez: body[data-tipo].
+-->
+<body>
+<!-- B y D: la ficha. La clase de #ficha dice la variante (tecnico, logistica, caso, caso con-cifra) y el color (c-*). -->
+<div class="lamina ficha" id="ficha">
+	<div class="cabeza">
+		<p class="solapa"><b class="n"></b> <span class="sec"></span></p>
+		<p class="firma"></p>
+	</div>
+	<div class="cuerpo">
+		<p class="rotulo"></p>
+		<h1 class="titulo"><span class="palabra"></span> <span class="resto"></span></h1>
+		<p class="linea"></p>
+		<div class="pieza pieza-tec" aria-hidden="true"><span class="cifra">0,0</span><b>1</b></div>
+		<svg class="pieza pieza-log" viewBox="0 0 640 300" aria-hidden="true">
+			<polygon class="c3" points="0,300 0,170 60,120 120,150 190,70 250,115 320,40 380,90 450,55 520,110 590,60 640,90 640,300" />
+			<polygon class="c2" points="0,300 0,220 70,180 140,205 210,140 280,175 350,120 420,160 500,125 570,165 640,140 640,300" />
+			<polygon class="c1" points="0,300 0,260 90,230 170,250 260,205 340,235 430,200 520,232 640,210 640,300" />
+			<polyline class="camino" points="150,262 330,226 210,196 400,160 300,132 470,96" />
+		</svg>
+		<div class="pieza cifra-caso">
+			<p class="cc"><span class="a"></span><span class="f">→</span><span class="b2"></span></p>
+			<p class="uni"></p>
+			<p class="med"></p>
+		</div>
+		<p class="pie"><span class="ctx"></span></p>
+	</div>
+</div>
+
+<!-- A: la portada. Las cinco bandas de la pila se arman desde las fichas. -->
+<div class="lamina portada" id="portada">
+	<div class="izq">
+		<p class="nombre"></p>
+		<p class="titular"></p>
+	</div>
+	<ol class="pila"></ol>
+</div>
+
+<!-- C: el cajón de /casos/. Los expedientes se arman desde los casos publicados. -->
+<div class="lamina casos" id="casos">
+	<div class="izq">
+		<p class="rotulo"></p>
+		<p class="h"><span class="palabra"></span><span class="resto"></span></p>
+		<p class="firma2"></p>
+	</div>
+	<ol class="cajon"></ol>
+</div>
+</body>
+</html>

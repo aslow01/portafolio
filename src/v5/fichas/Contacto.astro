@@ -1,0 +1,157 @@
+---
+// Ficha 05 · Contacto.
+// Páginas: Escribir (el fichero de canales) y «CV y este sitio» (sin PDF publicado: «Este sitio»). Correo, teléfono, LinkedIn, CV y estudios salen de src/lib: no hay datos de contacto escritos acá.
+import { cv, telefono } from '../../lib/datos-pendientes';
+import { correo, estudiosActuales, linkedin, telefonoVisible, ubicacion } from '../../lib/sitio';
+import { nombre } from '../datos';
+import Ficha from '../Ficha.astro';
+import Pagina from '../Pagina.astro';
+import TituloFicha from '../TituloFicha.astro';
+
+// Bajada de la página de contacto de la v4 (pages/contacto.astro).
+const bajada = 'Para una propuesta de trabajo, una consulta sobre los casos o para conversar sobre automatización, escriba por correo.';
+
+// El correo se parte después de la @ para que en pantallas angostas cada mitad quede en su renglón.
+const [usuarioCorreo, dominioCorreo] = correo.split('@');
+const numero = telefono ? telefonoVisible(telefono.visible) : '';
+
+interface Canal {
+	via: string;
+	href: string;
+	externo: boolean;
+	partes: string[];
+}
+// Sin teléfono público no hay filas de WhatsApp ni de Teléfono (datos-pendientes.ts).
+const canales: Canal[] = [
+	{ via: 'Correo', href: `mailto:${correo}`, externo: false, partes: [`${usuarioCorreo}@`, dominioCorreo] },
+	...(telefono?.whatsapp ? [{ via: 'WhatsApp', href: telefono.whatsapp, externo: true, partes: [numero] }] : []),
+	...(telefono ? [{ via: 'Teléfono', href: `tel:${telefono.tel}`, externo: false, partes: [numero] }] : []),
+	{ via: 'LinkedIn', href: linkedin, externo: true, partes: [`${nombre.primero} ${nombre.apellido}`] },
+];
+
+// Los CV: solo los que tienen PDF. Sin ninguno, la página se llama «Este sitio» y la lista no se dibuja.
+const cvs = [
+	{ titulo: 'CV de logística y minería', pdf: cv.logistica },
+	{ titulo: 'CV técnico e IA', pdf: cv.tecnico },
+].flatMap((c) => (c.pdf ? [{ titulo: c.titulo, pdf: c.pdf }] : []));
+const tituloPagina2 = cvs.length > 0 ? 'CV y este sitio' : 'Este sitio';
+---
+
+<Ficha id="contacto">
+	<Pagina titulo="Escribir" tapa>
+		<TituloFicha id="contacto" palabra="Contacto" />
+		<p class="texto">{bajada}</p>
+		<ul class="canales der">
+			{
+				canales.map((c) => (
+					<li class="canal">
+						<a href={c.href} class:list={{ ext: c.externo }} rel={c.externo ? 'noopener' : undefined}>
+							<span class="via">{c.via}</span>
+							<span class="valor">{c.partes.map((t) => <span>{t}</span>)}</span>
+							{!c.externo && <span class="ir" aria-hidden="true">→</span>}
+						</a>
+					</li>
+				))
+			}
+		</ul>
+	</Pagina>
+
+	<Pagina titulo={tituloPagina2}>
+		<h3 class="pg-sub">{tituloPagina2}</h3>
+		{
+			cvs.length > 0 && (
+				<ul class="cvs">
+					{cvs.map((c) => (
+						<li>
+							<a href={c.pdf.archivo} download>
+								<span>{c.titulo}</span>
+								<b class="baja" aria-hidden="true">PDF</b>
+								<span class="solo-lector"> ({c.pdf.detalle})</span>
+							</a>
+						</li>
+					))}
+				</ul>
+			)
+		}
+		<div class="sitio der">
+			<dl class="datos">
+				<div><dt class="rotulo">Base</dt><dd>{ubicacion}</dd></div>
+				<div><dt class="rotulo">Estudios</dt><dd>{estudiosActuales}</dd></div>
+			</dl>
+			<p class="legal pg-pie">Sitio diseñado y dirigido por mí; desarrollado con IA. © {new Date().getFullYear()} {nombre.completo}. Código con licencia MIT; textos e imágenes, todos los derechos reservados.</p>
+		</div>
+	</Pagina>
+</Ficha>
+
+<style is:global>
+	/* Estilos propios de la ficha Contacto. Todos los selectores empiezan con .f-contacto.
+	   Salen de portada.css del prototipo; los grises de las pestañas 2 a 4 del fichero son mezclas de --grafito con
+	   --claro (el prototipo los escribía a mano, como tres grises sueltos). */
+
+	/* --- El fichero de canales: pestañas que se apilan de abajo hacia arriba --- */
+	.f-contacto .canales { position: relative; flex: 1 1 auto; display: flex; flex-direction: column; margin: 26px calc(-1 * var(--margen)) -22px; }
+	.f-contacto .canal { --e: clamp(0, (var(--p) - 0.1 - var(--k) * 0.12) / 0.4, 1); position: relative; flex: 1 1 auto; display: flex; transform: translateY(calc((1 - var(--e)) * 60vh)); }
+	.f-contacto .canal:first-child { flex-grow: 1.4; }
+	.f-contacto .canal > a { flex: 1; }
+	.f-contacto .canal:nth-child(1) { --k: 0; --c: var(--hueso); --tx: var(--tinta); --tx2: var(--tinta-2); --xn: 0; z-index: 1; }
+	.f-contacto .canal:nth-child(2) { --k: 1; --c: color-mix(in srgb, var(--grafito) 89%, var(--claro)); --tx: var(--claro); --tx2: color-mix(in srgb, var(--claro) 88%, var(--c)); --xn: 0.22; z-index: 2; }
+	.f-contacto .canal:nth-child(3) { --k: 2; --c: color-mix(in srgb, var(--grafito) 81%, var(--claro)); --tx: var(--claro); --tx2: color-mix(in srgb, var(--claro) 92%, var(--c)); --xn: 0.44; z-index: 3; }
+	.f-contacto .canal:nth-child(4) { --k: 3; --c: color-mix(in srgb, var(--grafito) 72%, var(--claro)); --tx: var(--claro); --tx2: color-mix(in srgb, var(--claro) 96%, var(--c)); --xn: 0.66; z-index: 4; }
+	.f-contacto .canal a { position: relative; display: grid; grid-template-columns: 1fr auto; grid-template-rows: 1fr auto auto; align-items: end; gap: 2px 12px; min-height: 76px; padding: 10px var(--margen) 30px; background: var(--c); color: var(--tx); text-decoration: none; transition: transform 300ms var(--sale); }
+	.f-contacto .canal a::before { content: ''; position: absolute; left: calc(100% * var(--xn)); bottom: 100%; width: 28%; height: 22px; background: var(--c); clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 100%, 0 100%); }
+	.f-contacto .canal .via { grid-column: 1 / -1; grid-row: 2; font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--tx2); }
+	.f-contacto .canal .valor { grid-row: 3; font-family: var(--f-cartel); font-stretch: 80%; font-weight: 700; font-size: 24px; line-height: 1.05; letter-spacing: -0.01em; overflow-wrap: anywhere; }
+	.f-contacto .canal .ir { grid-row: 3; font-family: var(--f-cartel); font-weight: 700; font-size: 24px; line-height: 1; }
+	/* los canales que salen del sitio llevan la marca «↗» de .ext en el lugar de la flecha de la fila */
+	.f-contacto .canal a.ext::after { grid-row: 3; grid-column: 2; margin: 0; font-size: 24px; line-height: 1; font-weight: 700; }
+	.f-contacto .canal:first-child .valor { grid-column: 1 / -1; font-stretch: 75%; font-weight: 800; font-size: clamp(30px, 9.6vw, 96px); line-height: 0.92; letter-spacing: -0.02em; }
+	.f-contacto .canal:first-child .via { grid-column: 1; }
+	.f-contacto .canal:first-child .ir { grid-row: 2; }
+	.f-contacto .canal:first-child .valor span { display: block; }
+	.f-contacto .canal:last-child a { padding-bottom: 36px; }
+	.f-contacto .canal a:active { transform: translateY(-4px); }
+	@media (hover: hover) { .f-contacto .canal a:hover { transform: translateY(-8px); } }
+	.f-contacto .canal a:focus-visible { outline: 3px solid var(--tx); outline-offset: -8px; box-shadow: none; }
+
+	/* --- Página 2: CV y este sitio --- */
+	.f-contacto .legal { font-size: 14px; color: var(--texto-2); max-width: 46ch; }
+	.f-contacto .cvs { display: grid; gap: 0; border-top: 1px solid var(--regla); }
+	.f-contacto .cvs li { border-bottom: 1px solid var(--regla); }
+	.f-contacto .cvs a { display: flex; justify-content: space-between; align-items: center; min-height: 52px; font-family: var(--f-cartel); font-stretch: 85%; font-weight: 700; font-size: 21px; text-decoration: none; }
+	.f-contacto .cvs a span:first-child { text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 5px; }
+	.f-contacto .cvs a:hover span:first-child { text-decoration-thickness: 3px; }
+	.f-contacto .cvs .baja::after { margin-left: 0.3em; }
+
+	/* Base, Estudios y la línea legal van en un envoltorio. En vertical no se nota (`contents`: sus hijos son hijos de la
+	   página); donde la página va en dos columnas, queda a la derecha del título y los CV. */
+	.f-contacto .sitio { display: contents; }
+
+	/* --- Escritorio --- */
+	@media (min-width: 1024px), (orientation: landscape) and (max-height: 520px) and (min-width: 640px) {
+		.f-contacto .pg > .sitio { display: grid; gap: 18px; align-content: start; grid-column: 8 / 13; grid-row: 1 / span 3; align-self: center; }
+		.f-contacto .sitio .legal { margin-top: 0; }
+		.f-contacto .canales { margin: 0 calc(-1 * var(--margen)) -36px 0; }
+		.f-contacto .canal a { min-height: 96px; padding: 16px 40px 32px; }
+		.f-contacto .canal .valor { font-size: 32px; }
+		/* el correo entero en dos renglones («contacto@» y «matiasormeno.com.ar»): el tamaño sigue el ancho de la pieza,
+		   no el de la pantalla (con 5,4vw el «.ar» caía a un tercer renglón) */
+		.f-contacto .canal { container-type: inline-size; }
+		.f-contacto .canal:first-child .valor { font-size: min(88px, calc((100cqi - 80px) / 7.8)); }
+		.f-contacto .canal a::before { height: 30px; width: 24%; }
+	}
+	/* Pantallas bajas en vertical */
+	@media (max-height: 760px) and (max-width: 767px) {
+		.f-contacto .tapa .texto { font-size: 16px; line-height: 1.38; }
+		.f-contacto .canales { margin-top: 16px; }
+		.f-contacto .canal a { min-height: 68px; padding-bottom: 27px; }
+		.f-contacto .canal:last-child a { padding-bottom: 32px; }
+	}
+	/* Celular apaisado y zoom alto */
+	@media (orientation: landscape) and (max-height: 520px) {
+		.f-contacto .pg > .sitio { gap: 10px; }
+		.f-contacto .canales { min-height: 0; margin: -12px calc(-1 * var(--margen)) -14px 0; }
+		.f-contacto .canal a { min-height: 54px; padding: 8px 20px 22px; }
+		.f-contacto .canal .valor, .f-contacto .canal .ir { font-size: 20px; }
+		.f-contacto .canal:first-child .valor { font-size: 28px; }
+	}
+</style>

@@ -1,0 +1,89 @@
+/*
+ * Web v5 «Mezcla»: TODOS los tokens, en un solo lugar (color, tipografía, espaciado, curvas y duraciones).
+ * Solo tema claro: el oscuro entra después del lanzamiento.
+ * Quien porte una ficha usa estas variables y NO define colores ni medidas sueltas: si falta una, se agrega acá.
+ */
+:root {
+	/* ---------- Color base ---------- */
+	--hueso: #f0f0ec;
+	--tinta: #1c1a17;
+	--tinta-2: #554e47;
+	--claro: #f4eee4;
+	--negro: #000;
+
+	/* Una por sección (color = sección) */
+	--cobre: #8c3823;
+	--azurita: #2e4a80;
+	--malaquita: #1c5b47;
+	--azufre: #c2a23b;
+	--grafito: #23211e;
+
+	/* Piezas dibujadas (nunca texto) */
+	--cerro-3: #7c311e; /* cordillera de Logística: plano lejano, medio y cercano */
+	--cerro-2: #65261a;
+	--cerro-1: #4c1c12;
+	--cifra-azurita: #4d6aa5; /* el «0,01» que asoma en la pestaña de Técnico */
+	--terror: #a68824; /* «terror» sobre el bloque negro de Proyectos */
+	--arroba: #47423b; /* la @ que asoma en la pestaña de Contacto */
+	--captura-borde: rgba(0, 0, 0, 0.3);
+
+	/* Sombras de las piezas */
+	--sombra-cara: 0 -8px 16px -12px rgba(20, 16, 10, 0.45);
+	--sombra-captura: -10px 12px 24px -10px rgba(0, 0, 0, 0.55);
+	--sombra-lista: 0 -16px 30px -18px rgba(10, 8, 6, 0.6);
+	--sombra-demo-captura: 0 22px 40px -18px rgba(0, 0, 0, 0.55); /* captura de una demo en su ficha */
+	--sombra-demo-lamina: 0 20px 30px -22px rgba(0, 0, 0, 0.7); /* lámina de una demo */
+	--sombra-carta-p: 0 22px 34px -20px rgba(40, 30, 0, 0.8); /* las dos cartas cruzadas de Proyectos */
+	--sombra-carta-grande: 0 26px 40px -26px rgba(40, 30, 0, 0.85); /* la carta de un proyecto, a toda la página */
+	--sombra-hoja: 0 18px 30px -22px rgba(8, 14, 30, 0.75); /* la hoja clara de lectura de una página de caso */
+	--velo: rgba(13, 11, 9, 0.62);
+	--aviso-scroll: rgba(10, 8, 6, 0.38);
+	--regla-hueso: rgba(28, 26, 23, 0.14);
+	--regla-pliego: rgba(28, 26, 23, 0.2); /* filetes sobre la hoja clara de un caso */
+
+	/* ---------- Tipografía ---------- */
+	--f-cartel: 'Bricolage Grotesque', 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif;
+	--f-texto: 'Schibsted Grotesk', 'Helvetica Neue', Arial, sans-serif;
+	/* La del código (pruebas, rutas, `code`); autoalojada en fuentes.css, con la del sistema como respaldo */
+	--f-mono: 'Red Hat Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+
+	/* ---------- Espaciado y medidas ---------- */
+	--oreja: 26px; /* alto de la solapa */
+	--corte: 16px; /* corte en diagonal de la solapa */
+	--margen: 20px;
+	--cabeza: 48px; /* fila de arriba de la ficha */
+	--pag: 56px; /* paginador */
+	--lomos: 58px; /* lomos abajo (celular) */
+	--riel: 0px; /* lomos a la derecha (escritorio y celular apaisado) */
+	--wn: 0.26; /* ancho de una solapa, como fracción del ancho */
+
+	/* ---------- Curvas y duraciones ---------- */
+	--peso: cubic-bezier(0.7, 0, 0.12, 1);
+	--sale: cubic-bezier(0.16, 1, 0.3, 1);
+	--rebote: cubic-bezier(0.34, 1.5, 0.55, 1);
+	--d-rapida: 160ms;
+	--d-media: 300ms;
+	--d-lenta: 380ms;
+	--d-larga: 640ms;
+
+	color-scheme: light;
+}
+@media (min-width: 768px) {
+	:root { --oreja: 30px; --corte: 19px; --margen: 40px; --cabeza: 56px; --pag: 64px; --wn: 0.2; }
+}
+@media (min-width: 1024px) {
+	:root { --margen: 64px; --riel: 64px; --lomos: 0px; --pag: 72px; --cabeza: 60px; }
+}
+/* Celular apaisado y zoom alto (844 × 390, 720 × 450): los lomos pasan a un riel a la derecha y la cabeza se achica,
+   para que quede zona de lectura. */
+@media (orientation: landscape) and (max-height: 520px) {
+	:root { --oreja: 24px; --corte: 14px; --margen: 24px; --cabeza: 44px; --pag: 50px; --lomos: 0px; --riel: 56px; }
+}
+
+/* Color = sección. --oscuro, --luz y --hondo son solo para las piezas dibujadas (nunca texto). */
+.c-hueso { --fondo: var(--hueso); --texto: var(--tinta); --texto-2: var(--tinta-2); --regla: rgba(28, 26, 23, 0.22); --oscuro: #d9dad3; --luz: #fbfbf8; }
+.c-cobre { --fondo: var(--cobre); --texto: var(--claro); --texto-2: #ecd9cc; --regla: rgba(244, 238, 228, 0.3); --oscuro: #6a2918; --luz: #a5492f; --luz-2: #bd6446; --hondo: #4e1c10; }
+.c-azurita { --fondo: var(--azurita); --texto: var(--claro); --texto-2: #dfe4f1; --regla: rgba(244, 238, 228, 0.3); --oscuro: #22386a; --luz: #3f5f9c; }
+.c-malaquita { --fondo: var(--malaquita); --texto: var(--claro); --texto-2: #cfe0d8; --regla: rgba(244, 238, 228, 0.3); --oscuro: #123f31; --luz: #2a7259; }
+.c-azufre { --fondo: var(--azufre); --texto: var(--tinta); --texto-2: #2e2618; --regla: rgba(28, 26, 23, 0.3); --oscuro: #b0912e; --luz: #d6bb62; }
+.c-grafito { --fondo: var(--grafito); --texto: var(--claro); --texto-2: #c9c2b8; --regla: rgba(244, 238, 228, 0.22); --oscuro: #151412; --luz: #37342f; }

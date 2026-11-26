@@ -1,0 +1,27 @@
+---
+// Párrafos y listas de un caso, con las etiquetas de siempre (`p`, `ul > li`, `strong`): el CSS de interiores.css las
+// destaca sin que el texto cambie. Ver cuerpo.ts.
+import Inline from './Inline.astro';
+import type { Bloque } from './cuerpo.ts';
+
+interface Props {
+	bloques: Bloque[];
+	/** Clase de cada párrafo (la página de la cifra pone la suya). */
+	claseParrafo?: string;
+}
+const { bloques, claseParrafo } = Astro.props;
+---
+
+{
+	bloques.map((b) =>
+		b.t === 'p' ? (
+			<p class={claseParrafo}><Inline nodos={b.hijos} /></p>
+		) : (
+			<ul>
+				{b.items.map((it) => (
+					<li><Inline nodos={it} /></li>
+				))}
+			</ul>
+		),
+	)
+}

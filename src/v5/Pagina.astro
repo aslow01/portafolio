@@ -1,0 +1,24 @@
+---
+// Una página de una ficha: una pantalla del carrusel horizontal. `titulo` es lo que dice el paginador («Tapa»,
+// «El caso»…) y el nombre accesible de la página. Dentro va el contenido de la página, tal como en el prototipo:
+// <p class="rotulo">, <h3 class="pg-sub">, piezas con clase «der» (columna derecha en pantallas anchas), <div class="acciones pg-pie">.
+interface Props {
+	titulo: string;
+	/** La primera página de cada ficha (lleva el <TituloFicha> y el layout de tapa). */
+	tapa?: boolean;
+	/** Clases extra del <article> (p. ej. `log` en la tapa de Logística). */
+	clase?: string;
+	/**
+	 * El `id` de la página, para llegar a ella por el hash (`/tecnico/#el-caso`): en una ficha fija, pestanas.ts abre la
+	 * página cuyo id coincide con el hash. Solo en páginas interiores; no puede repetirse ni chocar con el id de una ficha.
+	 */
+	id?: string;
+}
+const { titulo, tapa = false, clase = '', id } = Astro.props;
+---
+
+<article class:list={['pagina', { tapa }, clase]} id={id} data-titulo={titulo}>
+	<div class="pg">
+		<slot />
+	</div>
+</article>

@@ -1,0 +1,327 @@
+/*
+ * Web v5 «Mezcla»: página de caso «Expediente». Incluye el
+ * título interior y el «quién».
+ * Se carga después de sistema.css. La ficha (cabeza, paginador, lomos) es la carpeta; la lectura larga va en hojas
+ * claras con su propia solapa. Todo cuelga de `.expediente` o de clases que solo existen en esta página.
+ * Colores y sombras: solo los de tokens.css (`--regla-pliego` y `--sombra-hoja` son los de la hoja).
+ */
+
+/* ---------- La página: una ficha fija ---------- */
+/* El fondo detrás de la ficha es el de la carpeta (visible al rebotar el desplazamiento) */
+body:has(.expediente.c-azurita) { background: var(--azurita); }
+body:has(.expediente.c-cobre) { background: var(--cobre); }
+.sin-js .ficha.expediente { margin-top: 0; }
+/* El color de la carpeta, para los títulos y filetes de las hojas (se resuelve acá, antes de que la hoja cambie --fondo) */
+.expediente { --acento: var(--fondo); }
+
+/* Hoja clara: el papel del expediente. Tinta sobre claro para leer largo. */
+.c-pliego {
+	--fondo: var(--claro);
+	--texto: var(--tinta);
+	--texto-2: var(--tinta-2);
+	--regla: var(--regla-pliego);
+}
+
+/* ---------- Tapa: carátula ---------- */
+.expediente .h1-t { font-size: clamp(46px, 13.2vw, 150px); margin-left: -0.04em; }
+.expediente .h1-t .resto { display: block; font-weight: 300; letter-spacing: -0.02em; text-wrap: balance; font-size: 0.62em; line-height: 0.92; margin-top: 0.06em; }
+.expediente .h1-t:focus { outline: none; }
+.expediente .tapa .pg { gap: 16px; }
+.expediente .resumen { max-width: 34ch; }
+.chapa { display: inline-block; padding: 1px 6px; border: 1.5px solid currentColor; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; }
+.caratula { border-top: 3px solid var(--claro); }
+.caratula dd { font-size: 21px; }
+/* La cifra del caso ya en la carátula (lo que un gerente mira en 10 segundos); su medición, siempre al lado */
+.caratula .cifra-mini { font-stretch: 75%; font-weight: 800; font-size: 1.9em; line-height: 0.9; letter-spacing: -0.02em; margin-right: 0.12em; }
+.caratula small { display: block; margin-top: 4px; font-family: var(--f-texto); font-stretch: 100%; font-weight: 400; font-size: 14px; line-height: 1.35; color: var(--texto-2); }
+.res-der { display: grid; gap: 14px; }
+
+/* ---------- Páginas de hoja ---------- */
+.expediente .pagina.de-hoja { padding: 12px 10px 14px; }
+.de-hoja .pg { gap: 0; }
+/* El molde de doce columnas de sistema.css (pantallas anchas) es para las páginas de pieza; la hoja tiene su propia
+   grilla adentro (.pliego), así que acá la página sigue siendo una columna. */
+.expediente .pagina.de-hoja .pg { display: flex; flex-direction: column; }
+.expediente .pagina.de-hoja .pg > * { grid-column: auto; }
+.expediente .pagina:not(.de-hoja) .pg { grid-template-rows: none; }
+/* La solapa de la hoja: en el flujo (si el texto crece, crece), con el mismo corte que las pestañas */
+.solapa-h {
+	position: relative;
+	z-index: 1;
+	align-self: flex-start;
+	display: inline-flex;
+	align-items: center;
+	gap: 9px;
+	min-height: 34px;
+	max-width: calc(100% - 28px);
+	margin: 0 0 -1px;
+	padding: 5px 36px 3px 16px;
+	background: var(--fondo);
+	color: var(--acento);
+	font-family: var(--f-cartel);
+	font-stretch: 80%;
+	font-weight: 800;
+	font-size: 19px;
+	line-height: 1.05;
+	letter-spacing: -0.005em;
+	clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 100%, 0 100%);
+}
+.solapa-h .num { font-size: 15px; font-weight: 700; color: var(--texto-2); }
+.solapa-h .sigue { font-weight: 400; color: var(--texto-2); }
+.solapa-h:focus { outline: none; }
+.pliego {
+	position: relative;
+	flex: 1 1 auto;
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	padding: 16px 16px 18px;
+	background: var(--fondo);
+	color: var(--texto);
+	box-shadow: var(--sombra-hoja);
+}
+.folio { display: none; }
+
+/* El texto del Markdown, con las etiquetas que genera Astro (p, ul > li, strong), sin tocarlo */
+.lectura { display: flex; flex-direction: column; gap: 12px; max-width: 62ch; }
+.lectura p, .lectura li { font-size: 17px; line-height: 1.5; text-wrap: pretty; }
+.lectura > p:first-child { font-size: 19px; line-height: 1.42; }
+.lectura code { font-family: var(--f-mono); font-size: 0.9em; }
+.lectura a { color: var(--texto); text-decoration-thickness: 1.5px; text-underline-offset: 4px; }
+/* Frase en negrita dentro de un párrafo: se destaca en bloque, sin cambiar el orden de lectura */
+.lectura p > strong {
+	display: block;
+	margin: 10px 0;
+	padding-left: 14px;
+	border-left: 6px solid var(--acento);
+	font-family: var(--f-cartel);
+	font-stretch: 85%;
+	font-weight: 600;
+	font-size: clamp(27px, 7.6vw, 40px);
+	line-height: 1.06;
+	letter-spacing: -0.012em;
+	color: var(--acento);
+	text-wrap: balance;
+}
+.lectura ul { display: grid; border-top: 1px solid var(--regla); }
+.lectura li { position: relative; padding: 10px 0 11px 22px; border-bottom: 1px solid var(--regla); }
+/* La posta: el cuadrado de la cornisa, en el color de la carpeta */
+.lectura li::before { content: ''; position: absolute; left: 0; top: 19px; width: 8px; height: 8px; background: var(--acento); }
+/* Cabeza del ítem (negrita al comienzo): en bloque */
+.lectura li > strong:first-child {
+	display: block;
+	margin-bottom: 2px;
+	font-family: var(--f-cartel);
+	font-stretch: 85%;
+	font-weight: 700;
+	font-size: 22px;
+	line-height: 1.1;
+	color: var(--acento);
+}
+.c-pliego .enlace { color: var(--texto); }
+.salidas { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; margin-top: auto; padding-top: 10px; border-top: 1px solid var(--regla); }
+.salidas .enlace { line-height: 1.3; }
+/* «Más casos»: el CV y el correo, uno al lado del otro si entran */
+.salidas.contacto { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 0 20px; margin-top: 4px; padding-top: 0; border-top: 0; }
+.volver span { font-family: var(--f-cartel); font-weight: 700; }
+/* Sin texto de verificación, el pie queda solo: sin filete de más */
+.pliego > .salidas:first-child { border-top: 0; padding-top: 0; }
+
+/* «Más casos»: hasta tres cartas con rótulo y título como enlace */
+.cartas { display: grid; gap: 0; border-top: 1px solid var(--regla); }
+.cartas li { display: grid; gap: 2px; padding: 12px 0 14px; border-bottom: 1px solid var(--regla); }
+.carta-enlace { display: inline-flex; align-items: center; min-height: 44px; color: var(--acento); font-family: var(--f-cartel); font-stretch: 85%; font-weight: 700; font-size: 24px; line-height: 1.1; text-decoration: none; }
+.carta-enlace:hover { text-decoration: underline; text-decoration-thickness: 3px; text-underline-offset: 5px; }
+.carta-enlace .flecha { margin-left: 8px; transition: transform 200ms var(--sale); }
+.carta-enlace:hover .flecha { transform: translateX(4px); }
+/* La fila hacia el índice de casos: sin rótulo, el enlace solo, más angosta que una carta */
+.cartas li.todos { padding: 8px 0 10px; }
+
+/* Movimiento: la hoja se asienta al llegar; las postas se marcan una por una */
+@media (prefers-reduced-motion: no-preference) {
+	.viva .pliego { animation: asienta-hoja 620ms var(--rebote) backwards 60ms; }
+	.viva .solapa-h { animation: asienta-hoja 620ms var(--rebote) backwards; }
+	.viva .lectura li::before { animation: marca-posta 300ms var(--rebote) backwards calc(380ms + var(--k, 0) * 120ms); }
+	.lectura li:nth-child(2) { --k: 1; } .lectura li:nth-child(3) { --k: 2; } .lectura li:nth-child(4) { --k: 3; }
+	.viva .lectura p > strong { animation: subraya-hoja 700ms var(--sale) backwards 380ms; }
+}
+@keyframes asienta-hoja { from { transform: translateY(26px); } }
+@keyframes marca-posta { from { transform: scale(0); } }
+@keyframes subraya-hoja { from { border-left-color: transparent; transform: translateX(-12px); } }
+
+/* ---------- Resultado: la cifra ---------- */
+.cifra-caso { display: grid; gap: 10px; }
+.cifra-c { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 0.1em; font-size: clamp(92px, 28vw, 210px); line-height: 0.8; }
+.cifra-c .antes, .cifra-c .flecha { font-size: 0.4em; color: var(--texto-2); }
+.cifra-c .flecha { font-weight: 600; }
+.cifra-caso figcaption { display: grid; gap: 4px; }
+.cifra-caso .unidad { font-family: var(--f-cartel); font-stretch: 85%; font-weight: 700; font-size: 23px; line-height: 1.1; }
+.cifra-caso .medicion { font-size: 15px; line-height: 1.4; color: var(--texto-2); max-width: 40ch; }
+.res-texto { font-size: 17px; line-height: 1.5; padding-top: 14px; border-top: 1px solid var(--regla); }
+.res-texto + .res-texto { padding-top: 0; border-top: 0; }
+@media (prefers-reduced-motion: no-preference) {
+	.viva .cifra-c .ahora { animation: sube-cifra 760ms var(--rebote) backwards 260ms; }
+	.viva .cifra-c .flecha { animation: corre-flecha 520ms var(--sale) backwards 120ms; }
+}
+@keyframes sube-cifra { from { transform: translateY(0.35em); clip-path: inset(0 0 100% 0); } }
+@keyframes corre-flecha { from { transform: translateX(-30px); clip-path: inset(0 100% 0 0); } }
+
+/* ---------- Mi parte ---------- */
+.expediente .quien { display: grid; gap: 4px; padding-top: 12px; border-top: 1px solid var(--regla); }
+.expediente .quien p:not(.rotulo) { font-size: 17px; line-height: 1.48; max-width: 44ch; }
+.expediente .quien.yo p:not(.rotulo) { font-family: var(--f-cartel); font-stretch: 85%; font-weight: 600; font-size: clamp(21px, 5.8vw, 30px); line-height: 1.16; letter-spacing: -0.008em; max-width: 30ch; }
+
+/* ---------- Pantallas bajas en vertical (360 × 740) ---------- */
+@media (max-height: 760px) and (max-width: 767px) {
+	.expediente .pagina.de-hoja { padding: 10px 8px 12px; }
+	.pliego { padding: 14px 14px 14px; gap: 12px; }
+	.lectura { gap: 10px; }
+	.lectura p, .lectura li { font-size: 16px; line-height: 1.45; }
+	.lectura > p:first-child { font-size: 17.5px; line-height: 1.4; }
+	.lectura p > strong { font-size: 24px; margin: 4px 0; }
+	.lectura li { padding: 8px 0 9px 20px; }
+	.lectura li::before { top: 16px; }
+	.lectura li > strong:first-child { font-size: 20px; }
+	.cifra-c { font-size: clamp(84px, 25vw, 120px); }
+	.res-texto { font-size: 15px; line-height: 1.4; }
+	.cifra-caso .medicion { font-size: 14px; line-height: 1.35; }
+	.res-der { gap: 10px; }
+	.expediente .quien.yo p:not(.rotulo) { font-size: 21px; }
+	.expediente .resumen { font-size: 17px; }
+	.caratula dd { font-size: 19px; }
+	.caratula > div { padding: 8px 0 9px; }
+	.cartas li { padding: 8px 0 8px; }
+	.cartas li.todos { padding: 4px 0 4px; }
+}
+/* Angosto (menos de 380 px) */
+@media (max-width: 379px) {
+	.lectura p, .lectura li { font-size: 16px; }
+	.lectura > p:first-child { font-size: 17.5px; }
+}
+/* Muy chico (320 × 640, o zoom alto en vertical): más compacto; si igual no entra, la página se desplaza con aviso */
+@media (max-width: 359px) and (max-height: 700px) {
+	.expediente .pagina.de-hoja { padding: 8px 6px 10px; }
+	.solapa-h { min-height: 30px; font-size: 17px; padding: 3px 30px 2px 12px; }
+	.pliego { padding: 12px 12px 12px; gap: 10px; }
+	.lectura { gap: 8px; }
+	.lectura p, .lectura li { font-size: 15px; line-height: 1.4; }
+	.lectura > p:first-child { font-size: 16px; }
+	.lectura p > strong { font-size: 23px; margin: 4px 0; }
+	.lectura li { padding: 6px 0 7px 18px; }
+	.lectura li::before { top: 13px; width: 7px; height: 7px; }
+	.lectura li > strong:first-child { font-size: 18px; }
+	.expediente .h1-t { font-size: 42px; }
+	.expediente .resumen { font-size: 16px; }
+	.caratula dd { font-size: 18px; }
+	.caratula small { font-size: 13px; }
+	.cifra-c { font-size: 76px; }
+	.res-texto, .expediente .quien p:not(.rotulo) { font-size: 15px; }
+	.res-texto { line-height: 1.34; padding-top: 10px; }
+	.res-der .uso dd { font-size: 15px; line-height: 1.3; }
+	.expediente .quien.yo p:not(.rotulo) { font-size: 19px; }
+}
+
+/* ---------- Escritorio y apaisado ancho: dos columnas ---------- */
+@media (min-width: 768px) {
+	.expediente .pagina.de-hoja { padding: 24px var(--margen) 24px; }
+	.pliego { padding: 28px 32px 30px; }
+}
+@media (min-width: 1024px), (orientation: landscape) and (max-height: 520px) and (min-width: 640px) {
+	.expediente .pagina:not(.de-hoja) { padding: 40px var(--margen) 36px; }
+	.expediente .pagina:not(.de-hoja) .pg { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 40px; row-gap: 20px; align-content: center; }
+	.expediente .pagina:not(.de-hoja) .pg > * { grid-column: 1 / 7; }
+	.expediente .pagina:not(.de-hoja) .pg > .der { grid-column: 8 / 13; grid-row: 1 / span 8; align-self: center; }
+	.expediente .pg-sub { font-size: min(5.6vw, 11svh); }
+	.expediente .h1-t { font-size: min(8vw, 15svh); grid-column: 1 / 11; }
+	.expediente .tapa .h1-t { grid-column: 1 / 8; }
+	/* La carátula acompaña a las tres filas de la tapa (rótulo, título, resumen): con 8 filas, las cinco vacías sumaban
+	   100 px de separación y la tapa del caso no entraba en 844 × 390 (1,53 veces la pantalla) */
+	.expediente .pagina.tapa .pg > .der { grid-row: 1 / span 3; }
+	.cifra-caso { grid-row: 2 / span 4; align-self: start; }
+	.res-texto { border-top: 0; padding-top: 0; }
+	.res-der { border-left: 1px solid var(--regla); padding-left: 32px; gap: 24px; }
+}
+@media (min-width: 1024px) {
+	.expediente .pagina.de-hoja { padding: 30px var(--margen) 30px; }
+	.pliego { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 32px; align-content: center; padding: 48px 56px; }
+	.folio {
+		display: block;
+		grid-column: 1 / 4;
+		grid-row: 1 / span 2;
+		align-self: start;
+		font-family: var(--f-cartel);
+		font-stretch: 75%;
+		font-weight: 800;
+		font-variation-settings: 'opsz' 96;
+		font-size: min(16vw, 30svh);
+		line-height: 0.78;
+		letter-spacing: -0.03em;
+		color: var(--acento);
+	}
+	.solapa-h .num { display: none; }
+	.solapa-h { font-size: 22px; min-height: 42px; padding: 6px 44px 3px 22px; }
+	.lectura { grid-column: 4 / 12; }
+	.cartas { grid-column: 4 / 12; }
+	.salidas { grid-column: 4 / 12; margin-top: 24px; }
+	.lectura p, .lectura li { font-size: 19px; }
+	.lectura > p:first-child { font-size: 23px; line-height: 1.38; }
+	.lectura p > strong { font-size: min(3.4vw, 46px); }
+	.lectura li { padding: 14px 0 15px 26px; }
+	.lectura li::before { top: 25px; width: 9px; height: 9px; }
+	.lectura li > strong:first-child { font-size: 26px; }
+	.cifra-c { font-size: min(13vw, 30svh); }
+	.res-texto, .expediente .quien p:not(.rotulo) { font-size: 19px; }
+	.expediente .quien.yo p:not(.rotulo) { font-size: min(2.6vw, 34px); }
+}
+/* Escritorio de poca altura (portátiles de 720 a 800 px): la hoja gasta menos relleno y deja correr más ancho el texto,
+   para que las páginas sigan entrando sin desplazarse por dentro */
+@media (min-width: 1024px) and (max-height: 820px) {
+	.expediente .pagina.de-hoja { padding: 18px var(--margen) 18px; }
+	.pliego { padding: 26px 48px 26px; column-gap: 24px; }
+	.folio { font-size: min(14vw, 24svh); }
+	.lectura { max-width: 84ch; }
+	.lectura p, .lectura li { font-size: 17px; line-height: 1.42; }
+	.lectura > p:first-child { font-size: 20px; line-height: 1.34; }
+	.lectura p > strong { font-size: min(3vw, 36px); margin: 6px 0; }
+	.lectura li { padding: 9px 0 10px 24px; }
+	.lectura li::before { top: 17px; width: 8px; height: 8px; }
+	.lectura li > strong:first-child { font-size: 22px; }
+	.salidas { margin-top: 16px; }
+}
+/* Celular apaisado (844 × 390): el texto del resultado, que con la explicación del promedio es el más largo del caso,
+   usa seis columnas (no cinco) para no alargarse; la cifra queda a la izquierda, en las otras seis */
+@media (orientation: landscape) and (max-height: 520px) and (min-width: 640px) {
+	.expediente .pagina:not(.de-hoja) .pg > .res-der { grid-column: 7 / 13; }
+}
+/* Celular apaisado y zoom alto: hoja en dos columnas de texto para que entre en la altura */
+@media (orientation: landscape) and (max-height: 520px) {
+	.expediente .pagina.de-hoja { padding: 8px var(--margen) 10px; }
+	.solapa-h { min-height: 28px; font-size: 16px; padding: 3px 30px 2px 12px; }
+	.pliego { padding: 12px 18px; gap: 10px; }
+	.lectura { display: block; max-width: none; }
+	.lectura > * + * { margin-top: 8px; }
+	.lectura li { break-inside: avoid; }
+	.lectura p, .lectura li { font-size: 15px; line-height: 1.42; }
+	.lectura > p:first-child { font-size: 16px; }
+	.lectura p > strong { font-size: 22px; }
+	.lectura li > strong:first-child { font-size: 18px; }
+	.lectura li { padding: 6px 0 7px 18px; }
+	.lectura li::before { top: 13px; }
+	.cifra-c { font-size: min(11vw, 26svh); }
+	.res-texto, .expediente .quien p:not(.rotulo) { font-size: 15px; }
+	.expediente .quien.yo p:not(.rotulo) { font-size: 18px; }
+	.salidas { margin-top: 8px; }
+	.salidas.contacto { margin-top: 2px; }
+	.cartas li { padding: 6px 0 6px; }
+	.cartas li.todos { padding: 2px 0 2px; }
+	.expediente .h1-t { font-size: min(7vw, 13svh); }
+}
+/* Las dos columnas de texto, solo donde cada una mide algo (a 320 × 256, con zoom de 400 %, quedaban de 136 px y cortaban las viñetas: QA Q4) */
+@media (orientation: landscape) and (max-height: 520px) and (min-width: 560px) {
+	.lectura { columns: 2; column-gap: 28px; }
+}
+
+@media (forced-colors: active) {
+	.pliego { border: 2px solid CanvasText; }
+	.solapa-h { forced-color-adjust: none; }
+}

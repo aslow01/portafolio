@@ -1,0 +1,295 @@
+---
+// Ficha Demos (03). Los textos, el estado, los enlaces y las capturas salen de la colección `demos`:
+//   - en vivo: una página por demo (resumen, «hecho con», enlaces a la demo y al código, captura);
+//   - en desarrollo: una página con una tarjeta por demo, sin enlaces;
+//   - en preparación: no aparece (demoVisible).
+// La autoría de cada demo (`autoria`) va en una hoja que abre un botón (src/scripts/v5/demos-hoja.ts); sin JavaScript, el
+// bloque queda en el flujo debajo de las acciones.
+import { Image } from 'astro:assets';
+import { getCollection, type CollectionEntry } from 'astro:content';
+import { botonAutoria, filasAutoria, tituloAutoria } from '../../lib/contenido';
+import { demoVisible } from '../../lib/estados';
+import { capitalizar, listaConY, textoEstadoDemo } from '../../lib/presentacion';
+import { cuentaDemos } from '../datos';
+import Ficha from '../Ficha.astro';
+import Pagina from '../Pagina.astro';
+import TituloFicha from '../TituloFicha.astro';
+
+type Demo = CollectionEntry<'demos'>;
+type Lamina = Demo['data']['laminas'][number];
+
+const demos = (await getCollection('demos', ({ data }) => demoVisible(data))).sort((a, b) => a.data.orden - b.data.orden);
+const vivas = demos.filter((d) => d.data.estado === 'en-vivo');
+const enDesarrollo = demos.filter((d) => d.data.estado === 'en-desarrollo');
+const cuenta = cuentaDemos(demos.map((d) => d.data.estado));
+
+// Qué lámina de cada demo va en la tapa y en su página, y cómo se llama en la solapa de la captura.
+// SIN FUENTE EN content: el nombre corto de la solapa (el título del contenido no entra en 34 px de alto) y cuál de
+// las láminas se usa donde. Si falta la demo, se usa la primera lámina y el título completo.
+interface Vista {
+	corto: string;
+	tapa: string;
+	pagina: string;
+	telefono: boolean;
+}
+const vistas: Record<string, Vista> = {
+	'lector-facturas': { corto: 'Lector de facturas', tapa: 'celular', pagina: 'atencion', telefono: false },
+	'control-flota': { corto: 'Control de flota', tapa: 'alertas', pagina: 'alertas', telefono: true },
+};
+const vistaDe = (d: Demo): Vista => vistas[d.id] ?? { corto: d.data.titulo, tapa: d.data.laminas[0]?.id ?? '', pagina: d.data.laminas[0]?.id ?? '', telefono: false };
+const laminaDe = (d: Demo, id: string): Lamina | undefined => d.data.laminas.find((l) => l.id === id) ?? d.data.laminas[0];
+// Si la lámina trae el recorte para teléfono, es el que se muestra (la de escritorio no se lee a este tamaño).
+const imagenDe = (l: Lamina) => l.movil?.clara ?? l.clara;
+
+const etiqueta = (estado: string): string => capitalizar(textoEstadoDemo(estado));
+const hechoCon = (d: Demo): string => (d.data.stack.length > 0 ? `Hecho con ${listaConY(d.data.stack)}.` : '');
+---
+
+<Ficha id="demos">
+	<Pagina titulo="Tapa" tapa>
+		<TituloFicha id="demos" palabra="Demos" />
+		<p class="cuenta-l">
+			{cuenta.vivas > 0 && <span class="estado"><span class="lampara prendida" aria-hidden="true"></span>{cuenta.vivas} en vivo</span>}
+			{cuenta.desarrollo > 0 && <span class="estado"><span class="lampara" aria-hidden="true"></span>{cuenta.desarrollo} en desarrollo</span>}
+		</p>
+		{
+			vivas.length > 0 && (
+				<div class="capas der">
+					{vivas.slice(0, 2).map((d, i) => {
+						const v = vistaDe(d);
+						const lam = laminaDe(d, v.tapa);
+						return (
+							lam && d.data.demo && (
+								<a class={`captura cap-${i === 0 ? 'a' : 'b'}`} href={d.data.demo} rel="noopener">
+									<span class="cap-oreja">{v.corto}</span>
+									<span class="cap-marco">
+										<Image src={imagenDe(lam)} width={i === 0 ? 540 : 480} alt={`Probar la demo: ${d.data.titulo}`} loading="lazy" decoding="async" />
+									</span>
+								</a>
+							)
+						);
+					})}
+				</div>
+			)
+		}
+		<p class="pie-cap">Capturas reales de las demos en vivo. Datos inventados. Herramientas propias, escritas desde cero.</p>
+	</Pagina>
+
+	{
+		vivas.map((d) => {
+			const v = vistaDe(d);
+			const lam = laminaDe(d, v.pagina);
+			const filas = filasAutoria(d.data.autoria);
+			const corto = v.corto.toLowerCase();
+			return (
+				<Pagina titulo={v.corto}>
+					<div class="demo-cabeza">
+						<h3 class="pg-sub">{d.data.titulo}</h3>
+						<span class="estado"><span class="lampara prendida" aria-hidden="true"></span>{etiqueta(d.data.estado)}</span>
+						{d.data.aviso && <p class="aviso">{d.data.aviso}</p>}
+					</div>
+					{lam && (
+						<div class:list={['lamina', 'der', { telefono: v.telefono }]}>
+							<Image src={imagenDe(lam)} width={v.telefono ? 480 : 768} alt={lam.alt} loading="lazy" decoding="async" />
+						</div>
+					)}
+					<p class="texto">{d.data.resumen}</p>
+					{hechoCon(d) && <p class="hecho">{hechoCon(d)}</p>}
+					<div class="acciones pg-pie">
+						{d.data.demo && (
+							<a class="boton ext" href={d.data.demo} rel="noopener">
+								Probar la demo<span class="solo-lector">: {corto}</span>
+							</a>
+						)}
+						{d.data.repo && (
+							<a class="enlace ext" href={d.data.repo} rel="noopener">
+								Ver el código<span class="solo-lector">: {corto}</span>
+							</a>
+						)}
+						{filas.length > 0 && (
+							<button type="button" class="ver-codigo" data-autoria={`autoria-${d.id}`} hidden>
+								{botonAutoria}<span class="solo-lector">: {corto}</span>
+							</button>
+						)}
+					</div>
+					{filas.length > 0 && (
+						<div class="autoria-flujo" id={`autoria-${d.id}`}>
+							<h4 class="autoria-t">{tituloAutoria}</h4>
+							<dl>
+								{filas.map((f) => (
+									<div class={`fila-a ${f.clave}`}>
+										<dt>{f.rotulo}</dt>
+										<dd>{f.texto}</dd>
+									</div>
+								))}
+							</dl>
+						</div>
+					)}
+				</Pagina>
+			);
+		})
+	}
+
+	{
+		enDesarrollo.length > 0 && (
+			<Pagina titulo="En desarrollo">
+				<p class="rotulo">Todavía sin demo en vivo</p>
+				<h3 class="pg-sub">En desarrollo</h3>
+				<div class="en-desarrollo ancho">
+					{enDesarrollo.map((d) => {
+						const filas = filasAutoria(d.data.autoria);
+						return (
+							<article aria-labelledby={`d-${d.id}`}>
+								<span class="estado"><span class="lampara" aria-hidden="true"></span>{etiqueta(d.data.estado)}</span>
+								<h4 id={`d-${d.id}`}>{d.data.titulo}</h4>
+								<p class="texto">{d.data.resumen}</p>
+								{filas.length > 0 && (
+									<button type="button" class="ver-codigo" data-autoria={`autoria-${d.id}`} hidden>
+										{botonAutoria}<span class="solo-lector">: {d.data.titulo.toLowerCase()}</span>
+									</button>
+								)}
+								{filas.length > 0 && (
+									<div class="autoria-flujo" id={`autoria-${d.id}`}>
+										<h5 class="autoria-t">{tituloAutoria}</h5>
+										<dl>
+											{filas.map((f) => (
+												<div class={`fila-a ${f.clave}`}>
+													<dt>{f.rotulo}</dt>
+													<dd>{f.texto}</dd>
+												</div>
+											))}
+										</dl>
+									</div>
+								)}
+							</article>
+						);
+					})}
+				</div>
+				<p class="nota ancho">El código de cada demo se publica cuando está terminada y probada.</p>
+			</Pagina>
+		)
+	}
+</Ficha>
+
+<script>
+	import '../../scripts/v5/demos-hoja';
+</script>
+
+<style is:global>
+	/* Estilos propios de la ficha Demos (portada.css 383–407 y piezas.css del prototipo). Todo cuelga de .f-demos.
+	   Las sombras de las capturas y las láminas están en tokens.css. */
+
+	/* --- Tapa: capturas reales en capas; la pantalla se recorre al llegar --- */
+	.f-demos .cuenta-l { display: flex; flex-wrap: wrap; gap: 4px 22px; }
+	.f-demos .cuenta-l .estado { font-size: 16px; }
+	.f-demos .capas { position: relative; flex: 1 1 auto; min-height: 290px; margin: 4px 0 0; overflow: clip; overflow-clip-margin: 0; }
+	.f-demos .captura { position: absolute; display: block; color: var(--texto); text-decoration: none; transition: transform 380ms var(--sale); }
+	.f-demos .captura .cap-oreja {
+		position: relative;
+		z-index: 1;
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		height: 34px;
+		padding: 0 26px 0 12px;
+		background: var(--claro);
+		color: var(--malaquita);
+		font-size: 14px;
+		font-weight: 700;
+		clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 100%, 0 100%);
+		white-space: nowrap;
+	}
+	.f-demos .captura .cap-oreja::before { content: ''; width: 9px; height: 9px; background: currentColor; }
+	/* La flecha es marca de enlace externo: el lector de pantalla no la lee (el nombre lo da el texto alternativo). */
+	.f-demos .captura .cap-oreja::after { content: '↗'; content: '↗' / ''; font-family: var(--f-cartel); font-weight: 600; }
+	.f-demos .captura .cap-marco { display: block; overflow: hidden; height: calc(100% - 34px); background: var(--claro); border: 1px solid var(--captura-borde); box-shadow: var(--sombra-demo-captura); }
+	.f-demos .captura img { width: 100%; }
+	.f-demos .cap-a { left: 2%; top: 8px; width: 60%; height: 80%; transform: rotate(-3deg) translateY(calc((1 - var(--p)) * 60px)); transform-origin: 0 100%; z-index: 1; }
+	.f-demos .cap-a img { transform: translateY(calc(-30% + var(--p) * 28%)); }
+	.f-demos .cap-b { right: 3%; bottom: 6px; width: 50%; height: 84%; transform: rotate(2.5deg) translateY(calc((1 - var(--p)) * 140px)); transform-origin: 100% 100%; z-index: 2; }
+	.f-demos .cap-b img { transform: translateY(calc(var(--p) * -33%)); }
+	@media (hover: hover) { .f-demos .captura:hover { transform: rotate(0deg) translateY(-8px); } }
+	.f-demos .captura:focus-visible { outline: 3px solid var(--texto); outline-offset: 4px; box-shadow: none; }
+	.f-demos .pie-cap { font-size: 13px; line-height: 1.35; color: var(--texto-2); }
+
+	/* --- Páginas de cada demo --- */
+	.f-demos .demo-cabeza { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 14px; }
+	.f-demos .demo-cabeza .aviso { flex: 1 0 100%; padding-left: 10px; border-left: 4px solid var(--texto); font-size: 14px; font-weight: 700; line-height: 1.3; }
+	/* La lámina toma el alto que sobra en la página (entre 150 y 420 px): así la página entra con cualquier largo de texto. */
+	.f-demos .lamina { position: relative; flex: 1 1 0; min-height: 150px; max-height: 420px; border: 1px solid var(--regla); background: var(--claro); overflow: hidden; box-shadow: var(--sombra-demo-lamina); }
+	.f-demos .lamina img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top left; }
+	.f-demos .lamina.telefono { width: 62%; align-self: center; max-height: 520px; transform: rotate(-2deg); }
+	.f-demos .lamina.telefono img { object-position: 50% calc(var(--p) * 30%); }
+	.f-demos .hecho { font-size: 14px; color: var(--texto-2); }
+	.f-demos .en-desarrollo { display: grid; gap: 14px; }
+	.f-demos .en-desarrollo article { padding: 16px 16px 18px; border: 2px dashed var(--regla); display: grid; gap: 8px; align-content: start; }
+	.f-demos .en-desarrollo h4 { font-family: var(--f-cartel); font-stretch: 80%; font-weight: 800; font-size: 30px; line-height: 0.95; letter-spacing: -0.015em; }
+
+	/* --- Autoría: el botón que abre la hoja y su contenido (en el flujo si no hay JavaScript) --- */
+	.f-demos .ver-codigo { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; font-weight: 700; text-align: left; text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 5px; }
+	.f-demos .ver-codigo[hidden] { display: none; }
+	.f-demos .ver-codigo::before { content: '+'; content: '+' / ''; flex: none; display: grid; place-items: center; width: 26px; height: 26px; background: var(--texto); color: var(--fondo); font-weight: 800; text-decoration: none; }
+	.f-demos .autoria-flujo { display: grid; gap: 10px; margin-top: 4px; }
+	.f-demos .autoria-t { font-family: var(--f-cartel); font-stretch: 80%; font-weight: 800; font-size: 26px; line-height: 0.98; letter-spacing: -0.015em; }
+	.f-demos .autoria-flujo dl { border-top: 1px solid var(--regla); }
+	.f-demos .fila-a { display: grid; gap: 4px; padding: 14px 0; border-bottom: 1px solid var(--regla); }
+	.f-demos .fila-a dt { font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; line-height: 1.3; color: var(--texto-2); }
+	.f-demos .fila-a dd { margin: 0; max-width: 62ch; font-size: 17px; line-height: 1.5; text-wrap: pretty; }
+	.f-demos .fila-a.yo dd { font-family: var(--f-cartel); font-stretch: 85%; font-weight: 600; font-size: 20px; line-height: 1.22; }
+	/* La hoja (dialog.hoja, hija de la ficha) lleva el color de la ficha: solapa «03 Autoría» y cuerpo en malaquita. */
+	.f-demos dialog.hoja .hoja-oreja .oreja, .f-demos dialog.hoja .hoja-cuerpo { background: var(--fondo); color: var(--texto); }
+	.f-demos dialog.hoja .cerrar-hoja { border-color: var(--texto); color: var(--texto); }
+	.f-demos dialog.hoja .cerrar-hoja:hover { background: var(--texto); color: var(--fondo); }
+	.f-demos dialog.hoja .cerrar-hoja:focus-visible { outline-color: var(--texto); }
+
+	/* --- Escritorio y apaisado --- */
+	@media (min-width: 1024px), (orientation: landscape) and (max-height: 520px) and (min-width: 640px) {
+		.f-demos .capas { min-height: 0; height: 100%; }
+		.f-demos .cap-a { width: 52%; height: 86%; left: 4%; }
+		.f-demos .cap-b { width: 40%; height: 94%; right: 4%; }
+		.f-demos .lamina { flex: none; min-height: 0; max-height: none; height: 58svh; }
+		.f-demos .lamina.telefono { width: 58%; height: 62svh; }
+		.f-demos .en-desarrollo { grid-template-columns: 1fr 1fr; gap: 24px; }
+		.f-demos .en-desarrollo article { min-height: 260px; align-content: end; }
+		.f-demos .cuenta-l .estado { font-size: 18px; }
+	}
+	@media (min-width: 1024px) {
+		.f-demos .fila-a { grid-template-columns: 11rem minmax(0, 1fr); gap: 24px; }
+		.f-demos .fila-a.yo dd { font-size: 24px; }
+	}
+	/* Pantallas bajas en vertical (360 × 740 y menos) */
+	@media (max-height: 760px) and (max-width: 767px) {
+		.f-demos .capas { min-height: 240px; }
+		.f-demos .lamina { max-height: 220px; }
+		.f-demos .lamina.telefono { max-height: 240px; }
+		/* Un escalón más chico, como el resto de la ficha, para que entren el texto del contenido y las tres acciones */
+		.f-demos .pg { gap: 10px; }
+		.f-demos .pg-sub { font-size: clamp(32px, 9.4vw, 44px); }
+		.f-demos .texto { font-size: 16px; line-height: 1.4; }
+		.f-demos .acciones { gap: 4px 16px; }
+		.f-demos .boton { min-height: 48px; padding: 0 14px; gap: 8px; font-size: 16px; }
+	}
+	/* Muy angosto (320 px): un escalón más para que la página pase lo menos posible de una pantalla */
+	@media (max-width: 359px) and (max-height: 760px) {
+		.f-demos .texto { font-size: 15px; }
+		.f-demos .lamina { min-height: 130px; }
+	}
+	/* Escritorio bajo (1024 × 768): el título de la demo, más largo que el del prototipo, baja un escalón */
+	@media (min-width: 1024px) {
+		.f-demos .pg-sub { font-size: min(5.8vw, 11.5svh); }
+	}
+	@media (orientation: landscape) and (max-height: 520px) {
+		.f-demos .pg-sub { font-size: min(5vw, 10svh); }
+		.f-demos .texto { font-size: 16px; line-height: 1.4; }
+		.f-demos .capas { min-height: 0; }
+		.f-demos .lamina { flex: none; min-height: 0; max-height: none; height: 62svh; }
+		.f-demos .lamina.telefono { height: 66svh; }
+		.f-demos .en-desarrollo article { min-height: 0; }
+	}
+
+	/* --- Movimiento (el sistema ya lo apaga con prefers-reduced-motion) --- */
+	@media (prefers-reduced-motion: no-preference) {
+		.f-demos .viva .lamina { animation: demos-asienta 700ms var(--rebote) backwards 150ms; }
+	}
+	@keyframes demos-asienta { from { transform: translateY(40px) rotate(4deg); } }
+</style>

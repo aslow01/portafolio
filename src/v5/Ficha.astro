@@ -1,0 +1,42 @@
+---
+// El molde de una ficha: una sección que se abre a pantalla completa desde su pestaña. Pone la cabeza (solapa con el
+// número y el nombre, y «Cerrar») y el carrusel de páginas. El script (src/scripts/v5/pestanas.ts) le agrega el
+// paginador debajo. Las páginas van en el <slot>, una <Pagina> por página; la primera lleva el <TituloFicha>.
+// Sin JavaScript, la ficha queda en el flujo, debajo de la portada, con todas sus páginas a la vista.
+import { ficha, type IdFicha } from './datos';
+
+interface Props {
+	id: IdFicha;
+	/**
+	 * Ficha de una página interior (no se cierra: es la página; p. ej. /tecnico/). Su «Cerrar» no cierra: sale a
+	 * `salida` con la cortina del color de la ficha.
+	 */
+	fija?: boolean;
+	/** Solo con `fija`: a dónde sale «Cerrar». Por defecto, a la ficha en la portada (`/#<id>`). */
+	salida?: string;
+}
+const { id, fija = false, salida } = Astro.props;
+const f = ficha(id);
+const destinoSalida = salida ?? `/#${f.id}`;
+---
+
+<section
+	class:list={['ficha', `c-${f.color}`, `p${f.posicion}`, `f-${f.id}`, { fija }]}
+	id={f.id}
+	data-nombre={f.nombre}
+	aria-labelledby={`t-${f.id}`}
+>
+	<div class="ficha-cabeza">
+		<p class="oreja"><span class="num">{f.numero}</span><b>{f.nombre}</b></p>
+		{
+			fija ? (
+				<a class="cerrar" href={destinoSalida} data-salir><span>Cerrar</span><span class="solo-lector">: volver a {f.nombre} en la portada</span></a>
+			) : (
+				<a class="cerrar" href="#inicio" data-cerrar><span>Cerrar</span><span class="solo-lector"> la sección</span></a>
+			)
+		}
+	</div>
+	<div class="hojas">
+		<slot />
+	</div>
+</section>

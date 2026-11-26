@@ -1,0 +1,31 @@
+{
+  "name": "web",
+  "type": "module",
+  "private": true,
+  "license": "MIT",
+  "version": "0.0.1",
+  "engines": {
+    "node": ">=22.23.4"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "verificar": "node scripts/verificar-borradores.mjs",
+    "test": "node --test scripts/*.test.mjs",
+    "check": "astro check",
+    "higiene": "node --test scripts/higiene.test.mjs",
+    "prepublicar": "node scripts/prepublicar.mjs",
+    "verificar:paginas": "node scripts/verificar-paginas.mjs",
+    "verificar:interacciones": "node scripts/verificar-interacciones.mjs"
+  },
+  "dependencies": {
+    "@astrojs/sitemap": "^3.7.4",
+    "astro": "^7.4.7"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.12",
+    "typescript": "^6.0.3"
+  }
+}

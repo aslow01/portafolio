@@ -1,0 +1,659 @@
+/*
+ * Web v5 «Mezcla»: el sistema compartido por la portada y todas las fichas (solapa, ficha con páginas horizontales,
+ * paginador, lomos, cortina y hoja de código). Los tokens están en tokens.css y las fuentes en fuentes.css.
+ * Incluye la disposición de las páginas (el molde de 12 columnas). Las piezas propias de cada ficha NO van acá: van en el <style> de su
+ * archivo en src/v5/fichas/.
+ */
+
+/* ---------- Base ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; overflow-x: clip; }
+/* lo que recibe el foco con Tab no queda debajo del riel de lomos fijo (2.4.11): en pantallas bajas la última banda de /casos/ se tapaba */
+html { scroll-padding-bottom: calc(var(--lomos) + env(safe-area-inset-bottom, 0px)); }
+body {
+	margin: 0;
+	background: var(--hueso);
+	color: var(--tinta);
+	font-family: var(--f-texto);
+	font-size: 17px;
+	line-height: 1.5;
+	font-kerning: normal;
+	-webkit-font-smoothing: antialiased;
+	overflow-x: clip;
+}
+@media (min-width: 1024px) { body { font-size: 18px; } }
+h1, h2, h3, h4, p, ol, ul, figure, dl, dd, pre, blockquote { margin: 0; }
+ol, ul { padding: 0; list-style: none; }
+img { display: block; max-width: 100%; height: auto; }
+a { color: inherit; }
+a, button { touch-action: manipulation; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+::selection { background: var(--tinta); color: var(--claro); }
+
+.solo-lector {
+	position: absolute !important;
+	width: 1px; height: 1px;
+	margin: -1px; padding: 0;
+	overflow: hidden; clip: rect(0 0 0 0);
+	white-space: nowrap; border: 0;
+}
+.saltar {
+	position: fixed; left: 12px; top: 12px; z-index: 300;
+	padding: 12px 16px;
+	background: var(--tinta); color: var(--claro);
+	font-weight: 600; text-decoration: none;
+	transform: translateY(-160%);
+}
+.saltar:focus { transform: none; }
+
+:focus-visible {
+	outline: 3px solid var(--texto, var(--tinta));
+	outline-offset: 3px;
+	box-shadow: 0 0 0 6px var(--fondo, var(--hueso));
+}
+/* Lo que recibe el foco por programa (los títulos y las páginas, al abrir una ficha; tabindex="-1") no dibuja el marco de
+   color de fondo: sobre una foto o un dibujo se veía como un recuadro. Su anillo, si lo tiene, es el outline. */
+[tabindex='-1']:focus-visible { box-shadow: none; }
+
+/* ---------- Tipografía ---------- */
+.cartel {
+	font-family: var(--f-cartel);
+	font-stretch: 75%;
+	font-weight: 800;
+	font-optical-sizing: none;
+	font-variation-settings: 'opsz' 96;
+	letter-spacing: -0.025em;
+	line-height: 0.86;
+}
+.num {
+	font-family: var(--f-cartel);
+	font-stretch: 85%;
+	font-weight: 700;
+	font-variant-numeric: tabular-nums lining-nums;
+	letter-spacing: 0.02em;
+}
+.rotulo {
+	font-family: var(--f-texto);
+	font-size: 13px;
+	font-weight: 600;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	line-height: 1.3;
+	color: var(--texto-2);
+}
+.texto { max-width: 46ch; text-wrap: pretty; }
+.texto-2 { color: var(--texto-2); }
+.nota { font-size: 15px; color: var(--texto-2); max-width: 40ch; }
+.datos { display: grid; gap: 0; border-top: 1px solid var(--regla); }
+.datos > div { display: grid; gap: 2px; padding: 10px 0 12px; border-bottom: 1px solid var(--regla); }
+.datos dd { margin: 0; font-family: var(--f-cartel); font-stretch: 85%; font-weight: 700; font-size: 21px; line-height: 1.12; }
+/* Letras partidas por el script (Afterfall cae letra por letra); el texto accesible va aparte */
+.letras { white-space: normal; }
+.letras .l { display: inline-block; }
+
+/* ---------- La solapa ---------- */
+.oreja {
+	position: absolute;
+	bottom: 100%;
+	left: calc((100% - var(--riel)) * var(--xn, 0));
+	width: calc((100% - var(--riel)) * var(--wn, 0.26));
+	height: var(--oreja);
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 2px 0 0 14px;
+	background: var(--fondo);
+	color: var(--texto);
+	clip-path: polygon(0 0, calc(100% - var(--corte)) 0, 100% 100%, 0 100%);
+	font-size: 13px;
+	white-space: nowrap;
+	overflow: hidden;
+}
+.oreja .num { font-size: 14px; }
+.p1 .oreja { padding-left: var(--margen); }
+.p1 { --xn: 0; }
+.p2 { --xn: 0.185; }
+.p3 { --xn: 0.37; }
+.p4 { --xn: 0.555; }
+.p5 { --xn: 0.74; }
+@media (min-width: 768px) {
+	.p2 { --xn: 0.2; }
+	.p3 { --xn: 0.4; }
+	.p4 { --xn: 0.6; }
+	.p5 { --xn: 0.8; }
+}
+
+/* ---------- Botones y enlaces ---------- */
+.acciones { display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: center; }
+.boton {
+	display: inline-flex;
+	align-items: center;
+	gap: 12px;
+	min-height: 52px;
+	padding: 0 20px;
+	background: var(--texto);
+	color: var(--fondo);
+	font-weight: 700;
+	font-size: 17px;
+	line-height: 1.2;
+	text-decoration: none;
+	border: 2px solid var(--texto);
+	transition: transform var(--d-rapida) var(--sale), background-color var(--d-rapida), color var(--d-rapida);
+}
+.boton .flecha { font-family: var(--f-cartel); font-weight: 700; transition: transform 200ms var(--sale); }
+.boton:hover .flecha { transform: translateX(4px); }
+.boton:hover { background: transparent; color: var(--texto); }
+.boton:active { transform: translateY(1px) scale(0.985); }
+.enlace {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	min-height: 44px;
+	font-weight: 600;
+	color: var(--texto);
+	text-decoration: underline;
+	text-decoration-thickness: 1.5px;
+	text-underline-offset: 5px;
+}
+.enlace:hover { text-decoration-thickness: 3px; }
+.ext::after { content: '↗'; content: '↗' / ''; font-family: var(--f-cartel); font-weight: 600; margin-left: 2px; text-decoration: none; }
+/* Descarga del CV: la flecha baja (es un archivo, no otra página) */
+.baja::after { content: '↓'; content: '↓' / ''; font-family: var(--f-cartel); font-weight: 700; margin-left: 2px; text-decoration: none; }
+.boton.baja::after { margin-left: 0; }
+/* Lo que todavía no tiene destino no es un enlace: se rotula */
+.pronto {
+	display: inline-flex;
+	align-items: center;
+	gap: 10px;
+	min-height: 44px;
+	font-weight: 600;
+	color: var(--texto-2);
+}
+.pronto small { font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 3px 7px 2px; border: 1.5px solid currentColor; }
+
+/* Estado con lámpara (de la D3): forma + texto, nunca solo color. Al llegar a su página, la de «en vivo» se prende. */
+.estado { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; letter-spacing: 0.02em; }
+.lampara { flex: none; width: 12px; height: 12px; border: 2px solid currentColor; }
+.lampara.prendida { background: currentColor; }
+@media (prefers-reduced-motion: no-preference) {
+	.viva .lampara.prendida { animation: prende 760ms steps(1, end) backwards 420ms; }
+	.viva .estado + .estado .lampara.prendida { animation-delay: 560ms; }
+}
+@keyframes prende {
+	0% { background: transparent; }
+	25% { background: currentColor; }
+	40% { background: transparent; }
+	60% { background: currentColor; }
+	70% { background: transparent; }
+	100% { background: currentColor; }
+}
+
+/* =====================================================================
+   FICHA: una sección abierta a pantalla completa
+   ===================================================================== */
+.ficha {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	background: var(--fondo);
+	color: var(--texto);
+}
+/* Sin JS: las fichas van una debajo de la otra y se leen enteras */
+.sin-js .ficha { margin-top: 64px; }
+.sin-js .pagina { padding-bottom: 40px; }
+.js .ficha {
+	position: fixed;
+	inset: 0;
+	z-index: 20;
+	display: none;
+	padding-right: var(--riel);
+}
+.js .ficha.abierta { display: flex; }
+.js .ficha.abierta.encima { z-index: 21; }
+html.con-ficha, html.con-ficha body { overflow: hidden; }
+/* Ficha interior fija (la página «Ver el caso»): entra desde abajo, como la que se saca del fichero */
+@media (prefers-reduced-motion: no-preference) {
+	.js .ficha.fija { animation: saca-ficha 820ms var(--rebote) backwards; }
+}
+@keyframes saca-ficha { from { transform: translateY(70%); } }
+
+/* La fila de arriba: el fondo de la portada, y la solapa de la ficha encima */
+.ficha-cabeza {
+	position: relative;
+	flex: none;
+	height: var(--cabeza);
+	background: var(--hueso);
+	color: var(--tinta);
+}
+.ficha-cabeza .oreja {
+	--o: 38px;
+	bottom: 0;
+	top: auto;
+	height: var(--o);
+	width: auto;
+	min-width: calc((100% - var(--riel)) * 0.26);
+	padding: 3px calc(var(--corte) + 18px) 0 14px;
+	gap: 9px;
+	font-size: 15px;
+}
+.ficha-cabeza .oreja .num { font-size: 15px; }
+.ficha-cabeza .oreja b { font-family: var(--f-cartel); font-stretch: 80%; font-weight: 700; font-size: 17px; letter-spacing: 0; }
+.ficha.p4 .ficha-cabeza .oreja, .ficha.p5 .ficha-cabeza .oreja { left: auto; right: calc((100% - var(--riel)) * (1 - var(--xn) - 0.26)); }
+.ficha.p5 .ficha-cabeza .oreja { right: 0; }
+@media (min-width: 768px) {
+	.ficha-cabeza .oreja { --o: 44px; font-size: 16px; }
+	.ficha-cabeza .oreja b { font-size: 20px; }
+	.ficha.p4 .ficha-cabeza .oreja { right: calc((100% - var(--riel)) * 0.2); }
+}
+@media (orientation: landscape) and (max-height: 520px) {
+	.ficha-cabeza .oreja { --o: 34px; }
+	.ficha-cabeza .oreja b { font-size: 16px; }
+}
+.cerrar {
+	position: absolute;
+	top: 0;
+	right: 6px;
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	min-height: 44px;
+	min-width: 44px;
+	padding: 0 14px;
+	font-family: var(--f-cartel);
+	font-stretch: 85%;
+	font-weight: 700;
+	font-size: 17px;
+	color: var(--tinta);
+	text-decoration: none;
+}
+.cerrar span { text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 5px; }
+.cerrar:hover span { text-decoration-thickness: 3px; }
+.cerrar:focus-visible { outline-color: var(--tinta); box-shadow: 0 0 0 6px var(--hueso); outline-offset: -4px; }
+.ficha.p4 .cerrar, .ficha.p5 .cerrar { right: auto; left: 6px; }
+/* Sin JavaScript, «Cerrar» se ve solo cuando es un enlace de salida (/tecnico/: vuelve a la portada); el que cierra una ficha en la portada lo necesita. */
+.sin-js .cerrar:not([data-salir]) { display: none; }
+
+/* Las páginas: desplazamiento nativo en horizontal, una pantalla cada una */
+.hojas {
+	position: relative;
+	flex: 1;
+	min-height: 0;
+	display: flex;
+	overflow-x: auto;
+	overflow-y: hidden;
+	scroll-snap-type: x mandatory;
+	overscroll-behavior-x: contain;
+	scrollbar-width: none;
+}
+.hojas::-webkit-scrollbar { display: none; }
+.sin-js .hojas { display: block; overflow: visible; }
+.pagina {
+	--p: 1; /* avance de la pieza de la página: 0 al llegar, 1 armada. Sin JS o quieto, 1. */
+	position: relative;
+	flex: 0 0 100%;
+	width: 100%;
+	scroll-snap-align: start;
+	scroll-snap-stop: always;
+	overflow-x: hidden;
+	overflow-y: auto;
+	overscroll-behavior-y: contain;
+	display: flex;
+	flex-direction: column;
+	padding: 18px var(--margen) 22px;
+}
+/* Si una página no entra (pantalla baja, zoom, texto ampliado), lo avisa: sombra arriba o abajo donde hay más */
+.js .pagina {
+	background:
+		linear-gradient(var(--fondo) 30%, transparent) center top / 100% 36px no-repeat local,
+		linear-gradient(transparent, var(--fondo) 70%) center bottom / 100% 36px no-repeat local,
+		linear-gradient(var(--aviso-scroll), transparent) center top / 100% 14px no-repeat scroll,
+		linear-gradient(transparent, var(--aviso-scroll)) center bottom / 100% 14px no-repeat scroll,
+		var(--fondo);
+}
+.pagina:focus { outline: none; }
+.pagina:focus-visible { outline: 3px solid var(--texto); outline-offset: -6px; box-shadow: none; }
+.pg { flex: 1; display: flex; flex-direction: column; gap: 18px; }
+.pg-pie { margin-top: auto; }
+.tapa .pg { gap: 16px; }
+
+/* Títulos de la ficha. La palabra que viaja desde la pestaña llega ANCHA (wdth 100, injerto de la D3):
+   en la pila es condensada; abierta, se ensancha. */
+.pg-titulo { font-size: clamp(54px, 15.6vw, 150px); margin-left: -0.04em; }
+.pg-titulo .palabra-h { display: inline-block; transform-origin: 0 0; font-stretch: 100%; letter-spacing: -0.035em; }
+.pg-titulo .resto { display: block; font-weight: 300; letter-spacing: -0.02em; }
+.pg-titulo:focus, .pg-sub:focus { outline: none; }
+.pg-sub {
+	font-family: var(--f-cartel);
+	font-stretch: 75%;
+	font-weight: 800;
+	font-size: clamp(40px, 11.4vw, 96px);
+	line-height: 0.9;
+	letter-spacing: -0.025em;
+	margin-left: -0.03em;
+	text-wrap: balance;
+}
+.pg-sub .resto { font-weight: 300; }
+.rotulo + .pg-sub, .rotulo + .pg-titulo { margin-top: -8px; }
+.pg-lead { font-size: 18px; line-height: 1.4; max-width: 32ch; text-wrap: pretty; }
+@media (min-width: 1024px) { .pg-lead { font-size: 23px; max-width: 32ch; } }
+
+/* Molde de página según el tamaño. Una pantalla alta o ancha ordena la página en doce columnas: el texto a la
+   izquierda y la pieza (clase «der») a la derecha; «ancho» ocupa todo; «pg-pie» baja al final. */
+@media (min-width: 768px) {
+	.pagina { padding-top: 32px; padding-bottom: 30px; }
+}
+@media (max-height: 760px) and (max-width: 767px) {
+	.pagina { padding-top: 14px; padding-bottom: 16px; }
+	.pg { gap: 14px; }
+	.pg-titulo { font-size: clamp(50px, 14vw, 64px); }
+	.pg-sub { font-size: clamp(36px, 10.4vw, 48px); }
+}
+@media (min-width: 1024px), (orientation: landscape) and (max-height: 520px) and (min-width: 640px) {
+	.pagina { padding: 40px var(--margen) 36px; }
+	.pg { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 32px; row-gap: 20px; align-content: center; }
+	.pg > * { grid-column: 1 / 7; }
+	.pg > .der { grid-column: 8 / 13; grid-row: 1 / span 6; align-self: center; margin-top: 0; }
+	.pg > .pg-pie { margin-top: 12px; }
+	.pg > .ancho { grid-column: 1 / 13; }
+	.pg-titulo { font-size: min(9vw, 19svh); }
+	.pg-sub { font-size: min(6.6vw, 13svh); }
+	.tapa .pg { align-content: stretch; grid-template-rows: auto auto auto 1fr; }
+	.tapa .pg > .der { grid-row: 1 / span 5; align-self: stretch; }
+	.tapa .pg > .pg-pie { align-self: end; }
+}
+/* Celular apaisado y zoom alto (844 × 390, 720 × 450): dos columnas como en escritorio, el texto a la izquierda y
+   la pieza a la derecha a toda la altura; si algo no entra, la página se desplaza por dentro, con aviso */
+@media (orientation: landscape) and (max-height: 520px) {
+	.pagina { padding: 12px var(--margen) 14px; }
+	.pg { row-gap: 10px; column-gap: 24px; }
+	.pg-titulo { font-size: min(8vw, 17svh); }
+	.pg-sub { font-size: min(6vw, 12svh); }
+}
+
+/* ---------- Paginador: anterior, posición «1 / 4» con solapas chicas, siguiente ---------- */
+.paginador {
+	position: relative;
+	flex: none;
+	display: grid;
+	grid-template-columns: 56px minmax(0, 1fr) 56px;
+	align-items: stretch;
+	height: var(--pag);
+	margin-bottom: calc(var(--lomos) + env(safe-area-inset-bottom, 0px));
+	border-top: 1px solid var(--regla);
+	color: var(--texto);
+	background: var(--fondo);
+}
+.sin-js .paginador { display: none; }
+.pag-ant, .pag-sig {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 10px;
+	font-family: var(--f-cartel);
+	font-weight: 700;
+	font-size: 26px;
+	line-height: 1;
+	transition: transform 200ms var(--sale);
+}
+.pag-ant .pag-txt, .pag-sig .pag-txt { display: none; font-size: 17px; font-stretch: 85%; }
+.pag-ant:hover { transform: translateX(-3px); }
+.pag-sig:hover { transform: translateX(3px); }
+.pag-ant:active, .pag-sig:active { transform: scale(0.94); }
+.pag-ant:disabled, .pag-sig:disabled { opacity: 0.32; cursor: default; transform: none; }
+.pag-ant:focus-visible, .pag-sig:focus-visible, .pag-indice:focus-visible { outline-offset: -6px; box-shadow: none; }
+.pag-sig.salto { font-size: 17px; font-stretch: 85%; padding-right: 6px; }
+.pag-indice {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 5px;
+	min-width: 0;
+}
+.pag-indice .pag-lin { display: flex; gap: 8px; align-items: baseline; font-size: 14px; line-height: 1; white-space: nowrap; max-width: 100%; }
+.pag-indice .pag-pos { font-family: var(--f-cartel); font-stretch: 85%; font-weight: 700; font-variant-numeric: tabular-nums; }
+.pag-indice .pag-nombre { font-weight: 600; color: var(--texto); overflow: hidden; text-overflow: ellipsis; }
+.pag-indice .pag-nombre::after { content: ' ▾'; content: ' ▾' / ''; font-size: 11px; color: var(--texto-2); }
+.pag-indice[aria-expanded='true'] .pag-nombre::after { content: ' ▴'; content: ' ▴' / ''; }
+/* Las solapas chicas: la posición, con el mismo dibujo que las pestañas */
+.solapitas { display: flex; align-items: flex-end; gap: 3px; height: 14px; }
+.solapitas i {
+	display: block;
+	width: 20px;
+	height: 8px;
+	background: var(--texto);
+	opacity: 0.38;
+	clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 100%, 0 100%);
+	transition: height 260ms var(--rebote), opacity 200ms, width 260ms var(--sale);
+}
+.solapitas i.ahora { height: 14px; width: 28px; opacity: 1; }
+.pag-lista {
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 100%;
+	z-index: 5;
+	max-height: calc(100svh - var(--pag) - var(--cabeza) - var(--lomos));
+	overflow-y: auto;
+	padding: 8px 0;
+	background: var(--oscuro);
+	box-shadow: var(--sombra-lista);
+}
+.pag-lista[hidden] { display: none; }
+.pag-lista button {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	width: 100%;
+	min-height: 48px;
+	padding: 0 var(--margen);
+	text-align: left;
+	font-weight: 600;
+	color: var(--texto);
+}
+.pag-lista button .num { width: 24px; color: var(--texto-2); }
+.pag-lista button[aria-current] { background: var(--fondo); }
+.pag-lista button[aria-current]::after { content: '·  aquí'; font-size: 13px; color: var(--texto-2); }
+.pag-lista button:hover { background: var(--fondo); }
+.pag-lista button:focus-visible { outline-offset: -4px; box-shadow: none; }
+
+@media (min-width: 1024px) {
+	.paginador { grid-template-columns: auto minmax(0, 1fr) auto; padding: 0 calc(var(--margen) - 20px); }
+	.pag-ant, .pag-sig { padding: 0 20px; }
+	.pag-ant .pag-txt, .pag-sig .pag-txt { display: inline; }
+	.pag-indice { display: none; }
+	.pag-ant { grid-column: 1; grid-row: 1; }
+	.pag-sig { grid-column: 3; grid-row: 1; }
+	.pag-lista, .pag-lista[hidden] { grid-column: 2; grid-row: 1; }
+	.pag-lista, .pag-lista[hidden] {
+		position: static;
+		display: flex;
+		justify-content: center;
+		align-items: flex-end;
+		gap: 4px;
+		max-height: none;
+		overflow: visible;
+		padding: 0;
+		background: none;
+		box-shadow: none;
+	}
+	.pag-lista li { display: flex; }
+	.pag-lista button {
+		width: auto;
+		min-height: 46px;
+		padding: 6px 26px 0 12px;
+		gap: 8px;
+		font-size: 15px;
+		background: var(--oscuro);
+		clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 100%, 0 100%);
+		transition: transform 260ms var(--rebote), background-color var(--d-rapida);
+		transform: translateY(8px);
+		white-space: nowrap;
+	}
+	/* `muchas`: más de 6 páginas. `compacta`: las solapas no entran en su columna y pisarían «Anterior» o «Siguiente»;
+	   la agrega el script al medir. Las que no son la actual quedan solo con el número. */
+	.pag-lista:is(.muchas, .compacta) button { padding-right: 22px; }
+	.pag-lista:is(.muchas, .compacta) button:not([aria-current]) .pag-titulo { display: none; }
+	/* Y si ni así entran, se achican con puntos suspensivos antes que invadir las columnas de los lados */
+	.pag-lista li { min-width: 0; }
+	.pag-lista button { min-width: 0; overflow: hidden; }
+	.pag-lista .pag-titulo { overflow: hidden; text-overflow: ellipsis; }
+	.pag-lista button:hover { transform: translateY(2px); background: var(--luz); }
+	.pag-lista button[aria-current] { background: var(--texto); color: var(--fondo); transform: none; }
+	.pag-lista button[aria-current] .num { color: var(--fondo); }
+	.pag-lista button[aria-current]::after { content: none; }
+	/* Con foco la solapa pierde el recorte: el `clip-path` se comía el anillo */
+	.pag-lista button:focus-visible { clip-path: none; outline: 3px solid var(--texto); outline-offset: 2px; }
+}
+
+/* ---------- Lomos: las otras pestañas, abajo (celular) o a la derecha (escritorio, apaisado) ---------- */
+.lomos {
+	position: fixed;
+	z-index: 40;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	padding-bottom: env(safe-area-inset-bottom, 0px);
+	background: var(--hueso);
+	box-shadow: 0 -1px 0 rgba(28, 26, 23, 0.25);
+	visibility: hidden;
+	transition: visibility 0s linear var(--d-larga);
+}
+.lomos.visible { visibility: visible; transition: none; }
+.sin-js .lomos { display: none; }
+/* Los lomos de la 404 se ven aun sin JavaScript: de ahí se sigue a cualquier sección (Lomos.astro, con `visibles`) */
+.sin-js .lomos.visible { display: block; }
+.lomos ol { display: flex; height: var(--lomos); }
+/* flex 1 1 0 y min-width 0: los cinco entran a 320 px sin pisarse */
+.lomos li { flex: 1 1 0; min-width: 0; display: flex; transform: translateY(110%); transition: transform var(--d-lenta) var(--peso); }
+.lomos.visible li { transform: none; transition: transform var(--d-larga) var(--rebote) calc(260ms + var(--i, 0) * 55ms); }
+.lomos li.inicio { flex: 0 0 50px; }
+.lomos li:nth-child(2) { --i: 1; }
+.lomos li:nth-child(3) { --i: 2; }
+.lomos li:nth-child(4) { --i: 3; }
+.lomos li:nth-child(5) { --i: 4; }
+.lomos li:nth-child(6) { --i: 5; }
+.lomos a {
+	position: relative;
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	gap: 1px;
+	padding: 7px 4px 0 9px;
+	color: var(--tinta);
+	text-decoration: none;
+	box-shadow: inset 0 6px 0 var(--fondo), inset -1px 0 0 var(--regla-hueso);
+	transition: transform var(--d-media) var(--rebote);
+}
+.lomos .num { font-size: 12px; color: var(--tinta-2); line-height: 1; }
+.lomos .corto { font-family: var(--f-cartel); font-stretch: 75%; font-size: 14px; font-weight: 700; line-height: 1.1; overflow-wrap: anywhere; }
+@media (min-width: 480px) { .lomos .corto { font-size: 15px; } }
+.lomos .inicio a { --fondo: var(--tinta); align-items: center; padding: 7px 0 0; }
+.lomos a:is([aria-current], [data-actual]) {
+	background: var(--fondo);
+	color: var(--texto);
+	box-shadow: none;
+	transform: translateY(-10px);
+	clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%);
+	padding-bottom: 10px;
+	margin-bottom: -10px;
+}
+.lomos a:is([aria-current], [data-actual]) .num { color: var(--texto-2); }
+.lomos a:active { transform: translateY(-5px); }
+.lomos a:focus-visible { outline-offset: -5px; box-shadow: none; }
+@media (hover: hover) { .lomos a:not([aria-current], [data-actual]):hover { transform: translateY(-6px); } }
+/* Angosto (320–379 px): rótulo de 13 px, inicio más angosto. El nombre completo es el texto del enlace. */
+@media (max-width: 379px) {
+	.lomos li.inicio { flex-basis: 40px; }
+	.lomos a { padding: 7px 1px 0 5px; }
+	.lomos .corto { font-size: 13px; letter-spacing: -0.015em; }
+	.lomos .num { font-size: 11px; }
+}
+
+@media (min-width: 1024px), (orientation: landscape) and (max-height: 520px) {
+	.lomos {
+		left: auto;
+		top: 0;
+		width: var(--riel);
+		padding: 0;
+		background: var(--hueso);
+		box-shadow: inset 1px 0 0 rgba(28, 26, 23, 0.2);
+	}
+	.lomos ol { flex-direction: column; height: 100%; padding: 14px 0; }
+	.lomos li { transform: translateX(110%); }
+	.lomos li.inicio { flex: 0 0 72px; }
+	.lomos a {
+		writing-mode: vertical-rl;
+		flex-direction: row;
+		justify-content: flex-start;
+		align-items: center;
+		gap: 10px;
+		padding: 16px 0 12px 10px;
+		box-shadow: inset 7px 0 0 var(--fondo), 0 1px 0 rgba(28, 26, 23, 0.16);
+		clip-path: polygon(0 14px, 100% 0, 100% 100%, 0 100%);
+	}
+	.lomos .corto { font-size: 16px; }
+	.lomos .num { font-size: 13px; }
+	.lomos .inicio a { padding: 16px 0 0 10px; }
+	.lomos a:is([aria-current], [data-actual]) { transform: translateX(-12px); padding-bottom: 12px; margin-bottom: 0; clip-path: polygon(0 14px, 100% 0, 100% 100%, 0 100%); margin-right: -12px; padding-right: 12px; }
+	@media (hover: hover) { .lomos a:not([aria-current], [data-actual]):hover { transform: translateX(-10px); } }
+}
+@media (orientation: landscape) and (max-height: 520px) {
+	.lomos ol { padding: 4px 0; }
+	.lomos li.inicio { flex: 0 0 52px; }
+	.lomos a { padding: 10px 0 8px 8px; gap: 6px; }
+	.lomos .corto { font-size: 14px; }
+	.lomos .num { display: none; }
+}
+/* A 400 % de zoom (320 × 256) el riel no entra: se desplaza en vez de cortar los últimos lomos. */
+@media (max-height: 300px) {
+	.lomos ol { overflow-y: auto; }
+}
+
+/* Cortina: al salir hacia otra página, el color de destino sube desde donde se tocó */
+.cortina { position: fixed; inset: 0; z-index: 200; pointer-events: none; contain: strict; }
+.cortina > div { position: absolute; inset: 0; }
+
+/* Hoja de código: el segundo nivel de las pruebas (sube con su solapa; Cerrar, Escape o un toque fuera la bajan) */
+dialog.hoja {
+	position: fixed;
+	inset: auto 0 0 0;
+	width: 100%;
+	max-width: none;
+	height: calc(100svh - 18px);
+	max-height: none;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: var(--claro);
+	overflow: visible;
+}
+dialog.hoja::backdrop { background: var(--velo); }
+dialog.hoja[open] { display: flex; flex-direction: column; }
+.hoja-oreja { position: relative; flex: none; height: var(--oreja); }
+.hoja-oreja .oreja { bottom: 0; --wn: 0.5; background: var(--grafito); color: var(--claro); }
+.hoja-cuerpo { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; background: var(--grafito); padding: 14px var(--margen) 32px; }
+.hoja-cabeza { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; }
+.hoja-cabeza h2 { font-family: var(--f-cartel); font-stretch: 80%; font-weight: 800; font-size: 30px; line-height: 0.95; letter-spacing: -0.015em; }
+.hoja-cabeza h2:focus { outline: none; }
+.hoja .cerrar-hoja { flex: none; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border: 2px solid var(--claro); color: var(--claro); font-weight: 700; font-size: 15px; }
+.hoja .cerrar-hoja:hover { background: var(--claro); color: var(--grafito); }
+.hoja .cerrar-hoja:focus-visible { outline-color: var(--claro); box-shadow: none; outline-offset: 3px; }
+@media (min-width: 1024px) {
+	dialog.hoja { left: auto; right: calc(var(--riel) + 24px); width: min(960px, calc(100vw - var(--riel) - 80px)); height: calc(100svh - 32px); }
+	.hoja-cuerpo { padding: 28px 48px 48px; }
+}
+
+/* ---------- Movimiento reducido: todo quieto y armado ---------- */
+@media (prefers-reduced-motion: reduce) {
+	*, *::before, *::after { animation: none !important; transition: none !important; }
+	.hojas { scroll-behavior: auto; }
+	.pagina { --p: 1 !important; }
+}
+@media (forced-colors: active) {
+	.oreja, .lomos a:is([aria-current], [data-actual]), .solapitas i { forced-color-adjust: none; }
+	.ficha-cabeza { border-bottom: 2px solid CanvasText; }
+}

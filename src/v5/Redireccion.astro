@@ -1,0 +1,81 @@
+---
+// Una dirección de la v4 que ya no tiene página propia: lleva a su ficha en la
+// portada (`/#<ficha>`). `meta refresh` inmediato, `noindex`, canónica a la portada y, por si el navegador no redirige,
+// un único enlace visible. Sin JavaScript (no carga el script de las pestañas) y fuera del sitemap (lib/redirecciones.ts).
+// Sin estilos ni scripts en línea: la política de contenido de public/_headers no los admite. Un `meta refresh` no cae
+// bajo ninguna directiva de esa política.
+// No carga fuentes.css: la página se ve un instante y se va, así que usa la fuente de respaldo de tokens.css y no baja las
+// dos fuentes (ni las precarga) que de todos modos baja la portada, a la que lleva.
+// Lleva las etiquetas de vista previa (descripción, `og:` y `twitter:`) porque los rastreadores de LinkedIn y WhatsApp no
+// siguen el `meta refresh`: sin ellas, `/logistica/` (la dirección del CV) se vería sin imagen ni descripción. Sin `og:url`:
+// la canónica ya apunta a la portada.
+// El color de la barra del navegador (`theme-color`) repite --hueso (tokens.css): el atributo no admite variables CSS.
+import '../styles/v5/tokens.css';
+import '../styles/v5/sistema.css';
+import { descripcionSitio, imagenSocial, nombre } from '../lib/sitio';
+import { ficha as fichaDe, type IdFicha } from './datos';
+
+interface Props {
+	/** La ficha de la portada a la que se va. */
+	ficha: IdFicha;
+}
+const destino = fichaDe(Astro.props.ficha);
+const hacia = `/#${destino.id}`;
+const canonica = new URL('/', Astro.site);
+// Logística tiene su imagen y su descripción (la de la tapa de la ficha); las otras tres, las de la portada.
+const esLogistica = destino.id === 'logistica';
+const descripcion = esLogistica ? 'Logística de flota, combustible y traslados en proyectos mineros y energéticos de San Juan.' : descripcionSitio;
+const tituloCompleto = `${destino.nombre} | ${nombre.completo}`;
+const { archivo, alt } = imagenSocial(esLogistica ? 'logistica' : 'portada', import.meta.env.DEV);
+const imagen = new URL(archivo, Astro.site);
+---
+
+<!doctype html>
+<html lang="es-AR" class="con-fotos">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+		<meta name="color-scheme" content="light" />
+		<meta name="theme-color" content="#f0f0ec" />
+		<meta http-equiv="refresh" content={`0; url=${hacia}`} />
+		<meta name="robots" content="noindex" />
+		<link rel="canonical" href={canonica} />
+		<meta name="generator" content={Astro.generator} />
+		<title>{tituloCompleto}</title>
+		<link rel="icon" href="/favicon.ico" sizes="32x32" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="description" content={descripcion} />
+		<meta property="og:type" content="website" />
+		<meta property="og:locale" content="es_AR" />
+		<meta property="og:site_name" content={nombre.completo} />
+		<meta property="og:title" content={tituloCompleto} />
+		<meta property="og:description" content={descripcion} />
+		<meta property="og:image" content={imagen} />
+		<meta property="og:image:type" content="image/png" />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta property="og:image:alt" content={alt} />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:image" content={imagen} />
+		<meta name="twitter:image:alt" content={alt} />
+	</head>
+	<body>
+		<main class="redireccion c-hueso">
+			<h1 class="rotulo">Esta página cambió de lugar</h1>
+			<p><a class="boton" href={hacia}>Ir a {destino.nombre} <span class="flecha" aria-hidden="true">→</span></a></p>
+		</main>
+	</body>
+</html>
+
+<style is:global>
+	.redireccion {
+		min-height: 100svh;
+		display: grid;
+		align-content: center;
+		justify-items: start;
+		gap: 14px;
+		padding: var(--margen);
+		background: var(--fondo);
+		color: var(--texto);
+	}
+</style>

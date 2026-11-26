@@ -1,0 +1,12 @@
+---
+// Texto en línea de un caso (negrita, cursiva, código, enlaces) a partir del árbol de cuerpo.ts. Todo el texto sale por
+// expresiones de Astro, que lo escapa: nunca se escribe HTML con datos. Va en una sola línea para no sumar espacios.
+import type { Inline } from './cuerpo.ts';
+
+interface Props {
+	nodos: Inline[];
+}
+const { nodos } = Astro.props;
+---
+
+{nodos.map((n) => (n.t === 'txt' ? n.s : n.t === 'code' ? <code>{n.s}</code> : n.t === 'strong' ? <strong><Astro.self nodos={n.hijos} /></strong> : n.t === 'em' ? <em><Astro.self nodos={n.hijos} /></em> : <a class:list={['enlace-texto', { ext: n.href.startsWith('https://') }]} href={n.href} rel={n.href.startsWith('https://') ? 'noopener' : undefined}><Astro.self nodos={n.hijos} /></a>))}

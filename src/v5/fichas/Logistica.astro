@@ -1,0 +1,439 @@
+---
+// Ficha 01 · Logística y minería. Páginas: Tapa (cornisa), Conducción, En el terreno, De dónde vengo, Casos y demo y, mientras
+// no haya PDF del CV de logística (lib/datos-pendientes.ts, `cv.logistica === null`), Experiencia.
+// Los textos son los de src/lib y los de la v4 (src/pages/logistica.astro e index.astro); donde el prototipo difería,
+// mandan estos. Lo que no tiene fuente en lib se escribe acá, en un solo lugar.
+import { Image } from 'astro:assets';
+import { getCollection, getEntry } from 'astro:content';
+import fotoNieve from '../../assets/fotos/foto-nieve.jpg';
+import fotoRipio from '../../assets/fotos/foto-ripio.jpg';
+import { cv, telefono } from '../../lib/datos-pendientes';
+import { experiencia, partesDeMes, textoPeriodo } from '../../lib/experiencia';
+import { puertaAlArchivo } from '../../lib/contenido';
+import { esPublicable, soloPublicable } from '../../lib/estados';
+import { listaConY, minuscula } from '../../lib/presentacion';
+import { duracionAltaMontana, minas } from '../datos';
+import { colorDeCarpeta } from '../interiores/archivo';
+import { carpetaDe } from '../interiores/caso';
+import EnlaceArchivo from '../EnlaceArchivo.astro';
+import Ficha from '../Ficha.astro';
+import Pagina from '../Pagina.astro';
+import TituloFicha from '../TituloFicha.astro';
+
+// ---- Tapa ----
+// «Un año … (2025–2026)»: la duración y los años salen del puesto de logística en proyectos mineros de experiencia.ts.
+const altaMontana = experiencia.find((p) => p.altaMontana);
+const duracion = duracionAltaMontana() === '1 año' ? 'Un año' : duracionAltaMontana();
+const periodoAltaMontana = altaMontana
+	? `${partesDeMes(altaMontana.desde).anio}–${partesDeMes(altaMontana.hasta === 'hoy' ? altaMontana.desde : altaMontana.hasta).anio}`
+	: '';
+
+// Las postas de la cornisa: tareas del año en proyectos mineros (condensan los puntos de experiencia.ts y el hito «flota,
+// combustible y traslados»). Posición en el dibujo (viewBox 0 195 400 315): cuadrito y texto.
+const postas = [
+	{ clase: 'pf1', cuadro: [26.5, 446.5], texto: [40, 474], rotulo: 'Documentación de ingreso' },
+	{ clase: 'pf2', cuadro: [139, 421.5], texto: [48, 405], rotulo: 'Flota y vencimientos' },
+	{ clase: 'pf3', cuadro: [144, 361.5], texto: [156, 357], rotulo: 'Traslados en 4x4' },
+	{ clase: 'pf4', cuadro: [136.5, 284], texto: [14, 268], rotulo: 'Combustible en campo' },
+];
+const postaFinal = 'Proyecto';
+const tituloCornisa = `Dibujo esquemático, sin escala: un camino de cornisa sube la cordillera hasta el proyecto minero; sobre el camino, las tareas del año: ${listaConY(postas.map((p) => minuscula(p.rotulo)))}.`;
+
+// ---- Conducción (la ficha del perfil de la v4: pages/logistica.astro) ----
+const chapas = [
+	{ valor: 'B2', sub: 'auto y camioneta' },
+	{ valor: '4x4', sub: 'alta y baja, en montaña y ripio' },
+	{ valor: '350 cc', sub: 'moto y cuatriciclo' },
+];
+
+// ---- En el terreno ----
+const notaTerreno = 'Pachón: Hombre Nuevo. Foto propia, camino de montaña.';
+
+// ---- De dónde vengo (pages/index.astro de la v4, con sus fechas del 25/11) ----
+const hitos = [
+	{ anio: '2021–2024', texto: 'Mantenimiento, administración y logística en empresas de San Juan, y formación en programación e IA.' },
+	{
+		anio: periodoAltaMontana,
+		texto: `${duracion} de logística en proyectos mineros y energéticos: flota, combustible y traslados.`,
+	},
+	{
+		anio: '2026',
+		// Fechas de los casos: partes diarios a comienzos de 2026 (sistema-gestion-operativa), bajas «antes de julio de 2026»
+		// (cargador-bajas) y facturas desde julio, en uso diario desde agosto (automatizacion-facturas). Como solo las bajas
+		// no tienen fecha más precisa que «antes de julio», no se dice «desde comienzos de año» de las dos. El largo del texto
+		// está medido: con más no entra a 360 × 740 ni a 320 × 640.
+		texto: 'Paso a administración a pedido de la gerencia. En logística ya automatizaba (partes diarios y bajas); en julio empiezo el cargador de facturas, en uso diario desde agosto.',
+	},
+];
+
+// Los casos publicados, de los dos caminos: se llega a todos por una sola entrada, «Casos de estudio» (/casos/).
+const casosPublicados = await getCollection('casos', ({ data }) => esPublicable(data));
+const totalCasos = casosPublicados.length;
+// Página «Casos y demo»: los dos casos de logística que cuenta «De dónde vengo» (el cargador de bajas y el sistema de partes
+// diarios) y la demo de control de flota, con su título y su resumen reales. Solo los publicados; si falta alguno, no se dibuja.
+// Van en una página propia porque, sumados al pie de «De dónde vengo», esa página no entra en un celular (medido: 1,17 a
+// 390 × 844 y 1,28 a 360 × 740, con topes de 1,00 y 1,02).
+interface EnlaceDeCasos {
+	/** «Caso» o «Demo»: el rótulo que precede al título en el enlace. */
+	rotulo: 'Caso' | 'Demo';
+	href: string;
+	titulo: string;
+	resumen: string;
+	/** Color de la cortina al salir (solo los casos; la demo abre otra dirección). */
+	color?: string;
+}
+const enlacesDeCasos: EnlaceDeCasos[] = ['cargador-bajas', 'sistema-gestion-operativa']
+	.map((id) => casosPublicados.find((c) => c.id === id))
+	.filter((c) => c !== undefined)
+	.map((c) => ({ rotulo: 'Caso', href: `/casos/${c.id}/`, titulo: c.data.titulo, resumen: c.data.resumen, color: colorDeCarpeta(carpetaDe(c.data.caminos)) }));
+const demoFlota = soloPublicable(await getEntry('demos', 'control-flota'));
+if (demoFlota?.data.estado === 'en-vivo' && demoFlota.data.demo) {
+	enlacesDeCasos.push({ rotulo: 'Demo', href: demoFlota.data.demo, titulo: demoFlota.data.titulo, resumen: demoFlota.data.resumen });
+}
+
+// ---- CV y experiencia ----
+const cvLogistica = cv.logistica;
+// Sin PDF, la experiencia completa va en una página propia; con PDF se reemplaza por el botón de descarga.
+const conExperiencia = cvLogistica === null;
+// Cada puesto: período, título y lugar (sin los puntos de logística, que viven en el CV).
+const puestos = experiencia.map((p) => ({ periodo: textoPeriodo(p), titulo: p.titulo, lugar: p.lugar }));
+// Los siete puestos no entran en una pantalla a 360 × 740 (medido: 1,25) ni a 390 × 844 (1,03): van en dos páginas.
+const PUESTOS_POR_PAGINA = 4;
+const paginasExperiencia: (typeof puestos)[] = [];
+for (let i = 0; i < puestos.length; i += PUESTOS_POR_PAGINA) paginasExperiencia.push(puestos.slice(i, i + PUESTOS_POR_PAGINA));
+---
+
+<Ficha id="logistica">
+	<Pagina titulo="Tapa" tapa clase="log">
+		<TituloFicha id="logistica" palabra="Logística" resto="y minería" />
+		<p class="lead-tapa">
+			<b>{duracion}</b> de logística de flota, combustible y traslados en proyectos mineros y energéticos de San Juan ({periodoAltaMontana}), para una empresa
+			contratista de seguridad.
+		</p>
+		{
+			cvLogistica && (
+				<div class="acciones">
+					<a class="boton baja" href={cvLogistica.archivo} download>
+						Descargar el CV de logística<span class="solo-lector"> ({cvLogistica.detalle})</span>
+					</a>
+				</div>
+			)
+		}
+		<figure class="cornisa der">
+			<svg viewBox="0 195 400 315" preserveAspectRatio="xMidYMax meet" role="img" aria-labelledby="cornisa-t" focusable="false">
+				<title id="cornisa-t">{tituloCornisa}</title>
+				<g class="s3">
+					<polygon class="c3" points="-1000,600 -1000,170 -800,110 -640,160 -480,90 -330,150 -250,120 -170,165 -90,100 -40,150 0,190 45,160 90,175 150,95 190,130 240,110 300,55 350,95 400,75 460,120 520,60 580,110 640,70 720,130 820,90 820,600"></polygon>
+					<polygon class="f3" points="150,95 190,130 166,150"></polygon>
+					<polygon class="f3" points="300,55 350,95 314,118"></polygon>
+					<polygon class="f3" points="520,60 580,110 540,128"></polygon>
+				</g>
+				<g class="s2">
+					<polygon class="c2" points="-1000,600 -1000,240 -820,190 -660,250 -500,200 -330,250 -260,210 -200,240 -120,180 -60,230 0,240 55,205 100,222 160,160 205,185 265,140 320,175 400,150 470,190 540,150 610,200 690,160 820,190 820,600"></polygon>
+					<polygon class="f2" points="160,160 205,185 176,226"></polygon>
+					<polygon class="f2" points="265,140 320,175 282,204"></polygon>
+					<polygon class="f2" points="540,150 610,200 566,222"></polygon>
+				</g>
+				<g class="s1">
+					<polygon class="c1" points="-1000,600 -1000,330 -840,300 -680,350 -500,320 -330,360 -240,330 -150,350 -80,310 0,300 60,270 110,290 170,235 215,250 300,205 340,230 400,260 470,240 540,280 620,250 700,290 820,270 820,600"></polygon>
+					<polygon class="f1" points="60,270 110,290 84,342"></polygon>
+					<polygon class="f1" points="170,235 215,250 186,322"></polygon>
+					<polygon class="f1" points="300,205 340,230 312,292"></polygon>
+					<polygon class="f1" points="470,240 540,280 492,330"></polygon>
+					<polyline class="huella" points="30,450 255,400 40,330 240,245"></polyline>
+					<polyline class="camino" pathLength="1" points="30,450 255,400 40,330 240,245"></polyline>
+					{
+						postas.map((p) => (
+							<g class={`posta ${p.clase}`}>
+								<rect x={p.cuadro[0]} y={p.cuadro[1]} width="7" height="7"></rect>
+								<text x={p.texto[0]} y={p.texto[1]}>{p.rotulo}</text>
+							</g>
+						))
+					}
+					<g class="posta fin pf5">
+						<polygon points="236,246 236,222 262,222 270,232 236,232"></polygon>
+						<text x="144" y="222">{postaFinal}</text>
+					</g>
+				</g>
+			</svg>
+			<figcaption>Esquema, sin escala.</figcaption>
+		</figure>
+	</Pagina>
+
+	<Pagina titulo="Conducción">
+		<p class="rotulo">Logística y minería · habilitaciones</p>
+		<h3 class="pg-sub">Conducción</h3>
+		<figure class="foto foto-ripio der">
+			<Image src={fotoRipio} width={767} height={653} alt="" loading="lazy" decoding="async" />
+			<svg class="dibujo" viewBox="0 0 120 100" preserveAspectRatio="xMidYMax slice" aria-hidden="true" focusable="false">
+				<polygon class="s3" points="0,46 22,30 36,38 62,10 80,26 96,18 120,2 120,100 0,100"></polygon>
+				<polygon class="s2" points="0,60 26,44 46,52 74,28 92,38 120,22 120,100 0,100"></polygon>
+				<polygon class="s1" points="0,76 40,62 58,66 92,46 106,52 120,44 120,100 0,100"></polygon>
+			</svg>
+			<div class="chapas">
+				{chapas.map((c) => <div><b>{c.valor}</b><span>{c.sub}</span></div>)}
+			</div>
+		</figure>
+		<dl class="datos dos">
+			<div><dt class="rotulo">Manejo defensivo</dt><dd>Teórico y práctico</dd></div>
+			<div><dt class="rotulo">Aptitud médica</dt><dd>Apto médico para trabajo en altura geográfica, 2026</dd></div>
+		</dl>
+	</Pagina>
+
+	<Pagina titulo="En el terreno">
+		<p class="rotulo">Logística y minería · inducciones</p>
+		<h3 class="pg-sub">En el terreno</h3>
+		<figure class="foto foto-nieve der">
+			<Image src={fotoNieve} width={1000} height={563} alt="" loading="lazy" decoding="async" />
+			<svg class="dibujo" viewBox="0 0 120 100" preserveAspectRatio="xMidYMax slice" aria-hidden="true" focusable="false">
+				<polygon class="s3" points="0,46 22,30 36,38 62,10 80,26 96,18 120,2 120,100 0,100"></polygon>
+				<polygon class="s2" points="0,60 26,44 46,52 74,28 92,38 120,22 120,100 0,100"></polygon>
+				<polygon class="s1" points="0,76 40,62 58,66 92,46 106,52 120,44 120,100 0,100"></polygon>
+			</svg>
+			<p class="lugares">{minas.map((m) => <span>{m}</span>)}</p>
+		</figure>
+		<p class="nota">{notaTerreno}</p>
+		<dl class="datos">
+			<div><dt class="rotulo">Disponibilidad</dt><dd>Turnos rotativos y campamento</dd></div>
+		</dl>
+	</Pagina>
+
+	<Pagina titulo="De dónde vengo">
+		<h3 class="pg-sub">De dónde vengo</h3>
+		<ol class="hitos ancho">
+			{
+				hitos.map((h) => (
+					<li>
+						<span class="anio">{h.anio}</span>
+						<p>{h.texto}</p>
+					</li>
+				))
+			}
+		</ol>
+		{
+			(cvLogistica || telefono?.whatsapp || puertaAlArchivo(totalCasos)) && (
+				<div class="acciones pg-pie ancho">
+					{cvLogistica && (
+						<a class="boton baja" href={cvLogistica.archivo} download>
+							Descargar el CV<span class="solo-lector"> de logística ({cvLogistica.detalle})</span>
+						</a>
+					)}
+					{telefono?.whatsapp && (
+						<a class="enlace ext" href={telefono.whatsapp} rel="noopener">
+							Escribir por WhatsApp
+						</a>
+					)}
+					<EnlaceArchivo total={totalCasos} />
+				</div>
+			)
+		}
+	</Pagina>
+
+	{
+		enlacesDeCasos.length > 0 && (
+			<Pagina titulo="Casos y demo">
+				<p class="rotulo">Logística y minería · casos y demo</p>
+				<h3 class="pg-sub">Casos y demo</h3>
+				<ul class="ver-casos ancho">
+					{enlacesDeCasos.map((e) => (
+						<li>
+							{e.rotulo === 'Caso' ? (
+								<a class="enlace" href={e.href} data-salir data-color={e.color}>
+									{e.rotulo}: {e.titulo}<span class="flecha" aria-hidden="true">→</span>
+								</a>
+							) : (
+								<a class="enlace ext" href={e.href} rel="noopener">
+									{e.rotulo}: {e.titulo}
+								</a>
+							)}
+							<p>{e.resumen}</p>
+						</li>
+					))}
+				</ul>
+			</Pagina>
+		)
+	}
+
+	{
+		conExperiencia &&
+			paginasExperiencia.map((grupo, i) => (
+				<Pagina titulo={i === 0 ? 'Experiencia' : 'Experiencia, continuación'}>
+					<h3 class="pg-sub">
+						Experiencia
+						{i > 0 && (
+							<Fragment>
+								<span class="solo-lector">,</span> <span class="resto">continuación</span>
+							</Fragment>
+						)}
+					</h3>
+					<ol class="puestos ancho">
+						{grupo.map((p) => (
+							<li>
+								<span class="periodo">{p.periodo}</span>
+								<span class="cargo">{p.titulo}</span>
+								{p.lugar && <span class="donde">{p.lugar}</span>}
+							</li>
+						))}
+					</ol>
+				</Pagina>
+			))
+	}
+</Ficha>
+
+<style is:global>
+	/* Estilos propios de la ficha Logística. Todos los selectores empiezan con .f-logistica.
+	   Salen de portada.css y piezas.css del prototipo; los colores, de tokens.css (las caras de la cordillera y la
+	   huella son mezclas de esos tokens, no colores nuevos). */
+
+	/* --- La cornisa de la tapa: cordillera con el camino y cinco postas; se dibuja al llegar --- */
+	.f-logistica .cornisa { position: relative; flex: 1 1 auto; min-height: 250px; margin: 0 calc(-1 * var(--margen)) -22px; }
+	.f-logistica .cornisa svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+	.f-logistica .cornisa .s3 { transform: translateY(calc((1 - var(--p)) * 60px)); }
+	.f-logistica .cornisa .s2 { transform: translateY(calc((1 - var(--p)) * 110px)); }
+	.f-logistica .cornisa .s1 { transform: translateY(calc((1 - var(--p)) * 170px)); }
+	.f-logistica .cornisa .c3 { fill: var(--cerro-3); }
+	.f-logistica .cornisa .f3 { fill: color-mix(in srgb, var(--cerro-3) 92%, var(--negro)); }
+	.f-logistica .cornisa .c2 { fill: var(--cerro-2); }
+	.f-logistica .cornisa .f2 { fill: color-mix(in srgb, var(--cerro-2) 88%, var(--negro)); }
+	.f-logistica .cornisa .c1 { fill: var(--cerro-1); }
+	.f-logistica .cornisa .f1 { fill: color-mix(in srgb, var(--cerro-1) 84%, var(--negro)); }
+	.f-logistica .cornisa .camino { --q: clamp(0, (var(--p) - 0.35) / 0.5, 1); fill: none; stroke: var(--claro); stroke-width: 2.2; stroke-linejoin: round; stroke-linecap: round; stroke-dasharray: 1 1; stroke-dashoffset: calc(1 - var(--q)); }
+	.f-logistica .cornisa .huella { fill: none; stroke: color-mix(in srgb, var(--claro) 20%, transparent); stroke-width: 1; stroke-dasharray: 3 4; vector-effect: non-scaling-stroke; }
+	.f-logistica .cornisa .posta { --q: clamp(0, (var(--p) - 0.35) / 0.5, 1); --v: clamp(0, (var(--q) - var(--f)) * 12, 1); opacity: var(--v); }
+	.f-logistica .cornisa .pf1 { --f: 0; }
+	.f-logistica .cornisa .pf2 { --f: 0.17; }
+	.f-logistica .cornisa .pf3 { --f: 0.51; }
+	.f-logistica .cornisa .pf4 { --f: 0.83; }
+	.f-logistica .cornisa .pf5 { --f: 0.92; }
+	.f-logistica .cornisa .posta rect { fill: var(--claro); }
+	.f-logistica .cornisa .posta text { fill: var(--claro); font-family: var(--f-texto); font-size: 14.5px; font-weight: 600; }
+	.f-logistica .cornisa .posta.fin polygon { fill: var(--claro); }
+	.f-logistica .cornisa .posta.fin text { font-family: var(--f-cartel); font-stretch: 85%; font-weight: 700; font-size: 17px; }
+	.f-logistica .cornisa figcaption { position: absolute; right: var(--margen); bottom: 30px; font-size: 13px; color: var(--texto-2); }
+	.f-logistica .lead-tapa { font-size: 17px; line-height: 1.38; max-width: 34ch; text-wrap: pretty; }
+	.f-logistica .lead-tapa b { font-weight: 700; }
+
+	/* --- Fotos propias, teñidas de cobre: gris y multiplicar sobre el fondo de la sección, así el texto encima nunca
+	   baja del contraste del texto sobre el cobre pleno. Debajo de cada foto está el dibujo de cerros: se ve solo si
+	   la foto no carga (clase «sin-foto» que pone el script) o si se pide con ?fotos=no. --- */
+	.f-logistica .foto { position: relative; isolation: isolate; overflow: hidden; background: var(--fondo); }
+	.f-logistica .foto img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: grayscale(1) contrast(1.12) brightness(1.08); mix-blend-mode: multiply; }
+	.f-logistica .foto .dibujo { position: absolute; inset: 0; width: 100%; height: 100%; display: none; }
+	html:not(.con-fotos) .f-logistica .foto img, .f-logistica .foto.sin-foto img { display: none; }
+	html:not(.con-fotos) .f-logistica .foto .dibujo, .f-logistica .foto.sin-foto .dibujo { display: block; }
+	.f-logistica .foto .dibujo .s3 { fill: var(--cerro-3); }
+	.f-logistica .foto .dibujo .s2 { fill: var(--cerro-2); }
+	.f-logistica .foto .dibujo .s1 { fill: var(--cerro-1); }
+	.f-logistica .foto-nieve img { object-position: 50% 62%; }
+	.f-logistica .foto-ripio img { object-position: 70% 60%; }
+	@media (prefers-reduced-motion: no-preference) {
+		.f-logistica .viva .foto img { animation: f-log-revela 1100ms var(--peso) backwards 120ms; }
+	}
+	@keyframes f-log-revela { from { transform: scale(1.14) translateY(4%); } }
+
+	/* --- Conducción: las habilitaciones sobre el camino de ripio --- */
+	.f-logistica .chapas { position: relative; z-index: 1; display: grid; grid-template-columns: max-content minmax(0, 1fr); column-gap: 16px; }
+	.f-logistica .chapas > div { grid-column: 1 / -1; display: grid; grid-template-columns: subgrid; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--regla); }
+	.f-logistica .chapas > div:last-child { border-bottom: 0; }
+	.f-logistica .chapas > div:nth-child(1) { --k: 0; }
+	.f-logistica .chapas > div:nth-child(2) { --k: 1; }
+	.f-logistica .chapas > div:nth-child(3) { --k: 2; }
+	.f-logistica .chapas b { font-family: var(--f-cartel); font-stretch: 75%; font-weight: 800; font-size: clamp(50px, 15vw, 104px); line-height: 0.85; letter-spacing: -0.03em; white-space: nowrap; }
+	.f-logistica .chapas span { font-size: 15px; line-height: 1.3; color: var(--texto); font-weight: 600; }
+	.f-logistica .viva .chapas > div { animation: f-log-patente 700ms var(--rebote) backwards calc(220ms + var(--k) * 110ms); }
+	@keyframes f-log-patente { from { transform: translateX(-24px); clip-path: inset(0 100% 0 0); } }
+	.f-logistica .foto-ripio { flex: 1 1 auto; min-height: 300px; margin: 0 calc(-1 * var(--margen)); padding: 18px var(--margen); display: flex; flex-direction: column; justify-content: flex-end; }
+	.f-logistica .datos.dos { grid-template-columns: 1fr 1fr; column-gap: 16px; }
+
+	/* --- En el terreno: los tres nombres, grandes, sobre el camino entre paredes de nieve --- */
+	.f-logistica .foto-nieve { flex: 1 1 auto; min-height: 280px; margin: 0 calc(-1 * var(--margen)); padding: 16px var(--margen); display: flex; flex-direction: column; justify-content: flex-end; }
+	.f-logistica .lugares { position: relative; z-index: 1; display: grid; }
+	.f-logistica .lugares span { font-family: var(--f-cartel); font-stretch: 75%; font-weight: 800; font-size: clamp(56px, 17vw, 128px); line-height: 0.9; letter-spacing: -0.03em; color: var(--claro); }
+	.f-logistica .lugares span:nth-child(1) { --k: 0; }
+	.f-logistica .lugares span:nth-child(2) { --k: 1; padding-left: 0.5em; }
+	.f-logistica .lugares span:nth-child(3) { --k: 2; padding-left: 1em; }
+	.f-logistica .viva .lugares span { animation: f-log-sube-lugar 760ms var(--rebote) backwards calc(380ms + var(--k) * 120ms); }
+	@keyframes f-log-sube-lugar { from { transform: translateY(0.6em); clip-path: inset(0 0 100% 0); } }
+
+	/* --- De dónde vengo --- */
+	.f-logistica .hitos { display: grid; gap: 14px; }
+	.f-logistica .hitos li { display: grid; align-content: start; gap: 2px; padding-left: 16px; border-left: 3px solid var(--texto); }
+	.f-logistica .hitos .anio { font-family: var(--f-cartel); font-stretch: 75%; font-weight: 800; font-size: 34px; line-height: 1; letter-spacing: -0.02em; }
+	.f-logistica .hitos p { font-size: 16px; line-height: 1.42; max-width: 44ch; }
+	.f-logistica .viva .hitos li { animation: f-log-corre 620ms var(--rebote) backwards calc(150ms + var(--k, 0) * 130ms); }
+	.f-logistica .hitos li:nth-child(2) { --k: 1; }
+	.f-logistica .hitos li:nth-child(3) { --k: 2; }
+	@keyframes f-log-corre { from { transform: translateX(-30px); clip-path: inset(0 100% 0 0); } }
+
+	/* --- Casos y demo: cada enlace con el resumen del caso, con la misma regla lateral que los hitos --- */
+	.f-logistica .ver-casos { display: grid; gap: 14px; }
+	.f-logistica .ver-casos li { display: grid; align-content: start; gap: 2px; padding-left: 16px; border-left: 3px solid var(--texto); }
+	.f-logistica .ver-casos .enlace { font-family: var(--f-cartel); font-stretch: 85%; font-weight: 700; font-size: 22px; line-height: 1.1; padding: 6px 0; justify-self: start; }
+	.f-logistica .ver-casos .flecha { text-decoration: none; }
+	.f-logistica .ver-casos p { font-size: 15px; line-height: 1.4; max-width: 44ch; }
+	.f-logistica .viva .ver-casos li { animation: f-log-corre 620ms var(--rebote) backwards calc(150ms + var(--k, 0) * 130ms); }
+	.f-logistica .ver-casos li:nth-child(2) { --k: 1; }
+	.f-logistica .ver-casos li:nth-child(3) { --k: 2; }
+
+	/* --- Experiencia (sin PDF del CV): un puesto por fila --- */
+	.f-logistica .puestos { display: grid; border-top: 1px solid var(--regla); }
+	.f-logistica .puestos li { display: grid; gap: 1px; padding: 9px 0 10px; border-bottom: 1px solid var(--regla); }
+	.f-logistica .puestos .periodo { font-family: var(--f-cartel); font-stretch: 75%; font-weight: 800; font-size: 22px; line-height: 1.05; letter-spacing: -0.01em; }
+	.f-logistica .puestos .cargo { font-size: 17px; font-weight: 600; line-height: 1.25; }
+	.f-logistica .puestos .donde { font-size: 15px; line-height: 1.3; color: var(--texto-2); }
+
+	/* --- Escritorio --- */
+	@media (min-width: 768px) {
+		.f-logistica .cornisa { margin-bottom: -30px; }
+	}
+	@media (min-width: 1024px), (orientation: landscape) and (max-height: 520px) and (min-width: 640px) {
+		/* la cordillera sigue a la izquierda, por detrás del texto (la caja de la pieza queda a la derecha) */
+		.f-logistica .cornisa { margin: -40px calc(-1 * var(--margen)) -36px 0; min-height: 0; z-index: 0; }
+		.f-logistica .cornisa svg { overflow: visible; }
+		.f-logistica .tapa.log .pg > :not(.cornisa) { position: relative; z-index: 1; }
+		.f-logistica .cornisa figcaption { bottom: 46px; }
+		.f-logistica .foto-ripio, .f-logistica .foto-nieve { margin: -40px calc(-1 * var(--margen)) -36px 0; padding: 40px var(--margen) 40px 48px; min-height: 0; }
+		.f-logistica .chapas b { font-size: min(7.6vw, 13svh); }
+		.f-logistica .lugares span { font-size: min(8vw, 14svh); }
+		.f-logistica .hitos, .f-logistica .ver-casos { grid-template-columns: repeat(3, 1fr); gap: 32px; }
+		.f-logistica .hitos .anio { font-size: 52px; }
+		.f-logistica .puestos { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 32px; }
+	}
+	/* Pantallas bajas en vertical (360 × 740 y menos): todo un poco más compacto para que cada página entre */
+	@media (max-height: 760px) and (max-width: 767px) {
+		.f-logistica .cornisa { min-height: 200px; }
+		.f-logistica .foto-ripio, .f-logistica .foto-nieve { min-height: 220px; }
+		.f-logistica .chapas b { font-size: clamp(44px, 13vw, 60px); }
+		.f-logistica .chapas > div { padding: 8px 0; }
+		.f-logistica .lugares span { font-size: clamp(48px, 15vw, 64px); }
+		.f-logistica .hitos { gap: 10px; }
+		.f-logistica .hitos .anio { font-size: 30px; }
+		.f-logistica .hitos p { font-size: 15px; }
+		.f-logistica .ver-casos { gap: 8px; }
+		.f-logistica .ver-casos .enlace { font-size: 19px; padding: 0; }
+		.f-logistica .ver-casos p { font-size: 14px; line-height: 1.35; }
+	}
+	/* Angosto (menos de 360 px): el año y el aire entre hitos bajan, para que «Casos de estudio» entre sin desplazar */
+	@media (max-width: 359px) {
+		.f-logistica .hitos .anio { font-size: 28px; }
+		.f-logistica .hitos { gap: 8px; }
+	}
+	/* Teléfono vertical de 640 de alto o menos (360 × 640, 320 × 640): la cornisa cede 40 px para que «Esquema, sin escala» no
+	   quede tapada por el paginador */
+	@media (max-width: 767px) and (max-height: 660px) {
+		.f-logistica .cornisa { min-height: 160px; }
+	}
+	/* Celular apaisado y zoom alto (844 × 390, 720 × 450): dos columnas, el texto a la izquierda y la pieza a la
+	   derecha a toda la altura; si algo no entra, la página se desplaza por dentro, con aviso */
+	@media (orientation: landscape) and (max-height: 520px) {
+		.f-logistica .cornisa, .f-logistica .foto-ripio, .f-logistica .foto-nieve { min-height: 0; margin: -12px calc(-1 * var(--margen)) -14px 0; }
+		.f-logistica .cornisa figcaption { bottom: 10px; }
+		.f-logistica .foto-ripio, .f-logistica .foto-nieve { padding: 14px var(--margen) 14px 22px; }
+		.f-logistica .chapas b { font-size: 40px; }
+		.f-logistica .chapas > div { padding: 6px 0; }
+		.f-logistica .lugares span { font-size: 44px; }
+		.f-logistica .hitos .anio { font-size: 30px; }
+		.f-logistica .hitos { gap: 18px; }
+		.f-logistica .lead-tapa { font-size: 16px; }
+	}
+</style>

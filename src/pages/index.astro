@@ -1,0 +1,40 @@
+---
+// Portada de la web v5 «Mezcla». La portada y sus
+// cinco pestañas; cada pestaña abre su ficha (src/v5/fichas/*.astro) a pantalla completa. Los lomos aparecen con una
+// ficha abierta. El comportamiento está en src/scripts/v5/pestanas.ts.
+import { getCollection } from 'astro:content';
+import BaseV5 from '../layouts/BaseV5.astro';
+import { esPublicable, demoVisible } from '../lib/estados';
+import { capitalizar, inventarioPublicado } from '../lib/presentacion';
+import Lomos from '../v5/Lomos.astro';
+import Portada from '../v5/Portada.astro';
+import Contacto from '../v5/fichas/Contacto.astro';
+import Demos from '../v5/fichas/Demos.astro';
+import Logistica from '../v5/fichas/Logistica.astro';
+import Proyectos from '../v5/fichas/Proyectos.astro';
+import Tecnico from '../v5/fichas/Tecnico.astro';
+import { nombre } from '../v5/datos';
+
+const casos = await getCollection('casos', ({ data }) => esPublicable(data));
+const demos = await getCollection('demos', ({ data }) => demoVisible(data));
+const inventario = inventarioPublicado(casos, demos);
+---
+
+<BaseV5
+	imagenSocial="portada"
+	titulo={`${nombre.completo} · logística minera y automatización con IA`}
+	descripcion={`${nombre.completo}: logística minera en San Juan y automatización administrativa con IA.${inventario ? ` ${capitalizar(inventario)}.` : ''}`}
+>
+	<Portada />
+	<main>
+		<Logistica />
+		<Tecnico />
+		<Demos />
+		<Proyectos />
+		<Contacto />
+	</main>
+	<Lomos />
+	<script>
+		import '../scripts/v5/pestanas';
+	</script>
+</BaseV5>

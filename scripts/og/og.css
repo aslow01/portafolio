@@ -1,0 +1,93 @@
+/*
+ * Imágenes para compartir (1200 × 630), en el estilo de la web v5: «la ficha sacada de la pila». Cada lámina es una pieza
+ * del sitio fotografiada (la pila de la portada, la ficha con su solapa, el cajón de /casos/, la tapa de un caso).
+ * Este archivo no pasa por el build del sitio (lo abre scripts/og/generar.mjs en Chromium), así que los colores y las
+ * sombras se repiten de src/styles/v5/tokens.css con el MISMO nombre de variable; scripts/og.test.mjs comprueba que valgan
+ * lo mismo. Las fuentes son las del sitio (public/fonts), por ruta relativa.
+ */
+@font-face { font-family: 'Bricolage Grotesque'; src: url('../../public/fonts/bricolage-grotesque-latin-v1.woff2') format('woff2'); font-weight: 200 800; font-stretch: 75% 100%; }
+@font-face { font-family: 'Schibsted Grotesk'; src: url('../../public/fonts/schibsted-grotesk-latin-v1.woff2') format('woff2'); font-weight: 400 800; }
+:root {
+	--hueso: #f0f0ec; --tinta: #1c1a17; --tinta-2: #554e47; --claro: #f4eee4;
+	--cobre: #8c3823; --azurita: #2e4a80; --malaquita: #1c5b47; --azufre: #c2a23b; --grafito: #23211e;
+	--cerro-3: #7c311e; --cerro-2: #65261a; --cerro-1: #4c1c12; --cifra-azurita: #4d6aa5;
+	--sombra-cara: 0 -8px 16px -12px rgba(20, 16, 10, 0.45);
+	--sombra-hoja: 0 18px 30px -22px rgba(8, 14, 30, 0.75);
+	--f-cartel: 'Bricolage Grotesque', 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif;
+	--f-texto: 'Schibsted Grotesk', 'Helvetica Neue', Arial, sans-serif;
+}
+.c-hueso { --fondo: var(--hueso); --texto: var(--tinta); --texto-2: var(--tinta-2); }
+.c-cobre { --fondo: var(--cobre); --texto: var(--claro); --texto-2: #ecd9cc; }
+.c-azurita { --fondo: var(--azurita); --texto: var(--claro); --texto-2: #dfe4f1; --oscuro: #22386a; }
+.c-malaquita { --fondo: var(--malaquita); --texto: var(--claro); --texto-2: #cfe0d8; }
+.c-azufre { --fondo: var(--azufre); --texto: var(--tinta); --texto-2: #2e2618; }
+.c-grafito { --fondo: var(--grafito); --texto: var(--claro); --texto-2: #c9c2b8; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+[hidden] { display: none !important; }
+html, body { width: 1200px; height: 630px; overflow: hidden; background: var(--hueso); }
+body { font-family: var(--f-texto); -webkit-font-smoothing: antialiased; }
+.titulo, .nombre, .w, .h, .firma, .firma2, .linea, .pieza-tec, .asoma, .o b, .solapa .n, .ir, .cc { font-family: var(--f-cartel); font-optical-sizing: none; font-variation-settings: 'opsz' 96; }
+.lamina { display: none; position: relative; width: 1200px; height: 630px; overflow: hidden; }
+body[data-tipo='ficha'] #ficha, body[data-tipo='portada'] #portada, body[data-tipo='casos'] #casos { display: block; }
+
+/* ---------- B y D: la ficha ---------- */
+.ficha { background: var(--hueso); }
+.cabeza { position: relative; height: 72px; background: var(--hueso); }
+.solapa { position: absolute; left: 64px; bottom: -1px; height: 49px; display: flex; align-items: center; gap: 12px; padding: 2px 52px 0 22px; background: var(--fondo); color: var(--texto); font: 700 26px/1 var(--f-texto); clip-path: polygon(0 0, calc(100% - 28px) 0, 100% 100%, 0 100%); white-space: nowrap; }
+.solapa .n { font-weight: 800; font-stretch: 75%; font-size: 26px; color: var(--texto-2); }
+.firma { position: absolute; right: 64px; top: 0; bottom: 0; display: flex; align-items: center; color: var(--tinta); font-weight: 800; font-stretch: 75%; font-size: 36px; letter-spacing: -.01em; }
+.cuerpo { position: relative; height: 558px; padding: 52px 64px 44px; background: var(--fondo); color: var(--texto); display: flex; flex-direction: column; }
+.rotulo { font: 600 22px/1.3 var(--f-texto); text-transform: uppercase; letter-spacing: .06em; color: var(--texto-2); margin-bottom: 18px; }
+.titulo { position: relative; z-index: 1; font-size: var(--t, 150px); line-height: .86; letter-spacing: -.03em; max-width: var(--ancho, 1072px); text-wrap: balance; }
+.titulo .palabra { font-weight: 800; font-stretch: var(--wdth, 100%); }
+.titulo .resto { display: block; margin-top: .12em; font-weight: 300; font-stretch: 75%; font-size: .5em; letter-spacing: -.005em; line-height: .95; }
+/* La tapa de un caso: el resto del título sigue en la misma línea, más liviano (la regla de la tapa de un caso). */
+.caso .titulo .resto { display: inline; margin-top: 0; font-size: .62em; }
+.linea { margin-top: 26px; font-weight: 600; font-stretch: 85%; font-size: 40px; line-height: 1.05; color: var(--texto); }
+.pie { margin-top: auto; position: relative; z-index: 1; font: 400 24px/1.3 var(--f-texto); color: var(--texto-2); }
+.pieza { display: none; }
+.tecnico .pieza-tec { display: block; position: absolute; right: 56px; bottom: 30px; font-weight: 800; font-stretch: 75%; font-size: 250px; line-height: .8; letter-spacing: -.02em; }
+.pieza-tec .cifra { color: var(--cifra-azurita); }
+.pieza-tec b { display: inline-block; padding: 0 .04em; margin-left: .02em; background: var(--claro); color: var(--azurita); font-weight: 800; }
+.logistica .pieza-log { display: block; position: absolute; right: 0; bottom: 0; width: 700px; height: 330px; }
+.c3 { fill: var(--cerro-3); } .c2 { fill: var(--cerro-2); } .c1 { fill: var(--cerro-1); }
+.camino { fill: none; stroke: var(--claro); stroke-width: 6; stroke-linejoin: miter; }
+/* La cifra de un caso: 360 px a la derecha, abajo; la cifra nunca va sin su medición. */
+.caso.con-cifra .cifra-caso { display: block; position: absolute; right: 64px; bottom: 44px; width: 360px; color: var(--texto); }
+.cc { font-weight: 800; font-stretch: 75%; line-height: .82; letter-spacing: -.02em; }
+.cc .a { font-size: 72px; } .cc .f { font-size: 40px; margin: 0 .2em; color: var(--texto-2); vertical-align: .35em; } .cc .b2 { display: block; font-size: var(--cifra, 168px); }
+.uni { margin-top: 8px; font: 700 26px/1.15 var(--f-texto); }
+.med { margin-top: 8px; font: 400 20px/1.3 var(--f-texto); color: var(--texto-2); }
+
+/* ---------- A: la portada (la pila de cinco pestañas) ---------- */
+.portada { background: var(--hueso); }
+.portada .izq { position: absolute; left: 64px; top: 0; bottom: 0; width: 440px; display: flex; flex-direction: column; justify-content: center; color: var(--tinta); }
+.nombre { font-weight: 800; font-stretch: 75%; font-size: 136px; line-height: .86; letter-spacing: -.025em; margin-left: -.04em; }
+.nombre span { display: block; }
+.titular { margin-top: 30px; font: 600 30px/1.2 var(--f-texto); max-width: 15ch; }
+.pila { list-style: none; position: absolute; left: 540px; right: 0; top: 0; bottom: 0; }
+.b { position: absolute; left: 0; right: 0; bottom: 0; background: var(--fondo); color: var(--texto); box-shadow: var(--sombra-cara); }
+.b .o { position: absolute; bottom: calc(100% - 1px); left: calc(var(--x) * 120px); width: 140px; height: 32px; display: flex; align-items: center; padding-left: 16px; background: var(--fondo); clip-path: polygon(0 0, calc(100% - 20px) 0, 100% 100%, 0 100%); }
+.o b { font-weight: 800; font-stretch: 75%; font-size: 21px; color: var(--texto); }
+.w { position: absolute; left: 36px; top: 12px; font-weight: 800; font-stretch: 75%; font-size: 88px; line-height: 1; letter-spacing: -.012em; }
+/* Lo que asoma de Técnico (decorativo): «0,0» y «1» con su fondo claro. */
+.asoma { position: absolute; right: 30px; top: 8px; font-weight: 800; font-stretch: 75%; font-size: 104px; line-height: 1; }
+.asoma .cifra { color: var(--cifra-azurita); }
+.asoma b { background: var(--claro); color: var(--azurita); padding: 0 .04em; }
+
+/* ---------- C: el cajón de /casos/ ---------- */
+.casos { background: var(--hueso); color: var(--tinta); }
+.casos .izq { position: absolute; left: 64px; top: 0; bottom: 0; width: 420px; display: flex; flex-direction: column; justify-content: center; }
+.casos .rotulo { color: var(--tinta-2); }
+.h { font-size: 150px; line-height: .86; letter-spacing: -.03em; }
+.h .palabra { display: block; font-weight: 800; font-stretch: 75%; }
+.h .resto { display: block; font-weight: 300; font-stretch: 75%; font-size: .5em; margin-top: .1em; letter-spacing: -.005em; }
+.firma2 { position: absolute; left: 0; bottom: 48px; font-weight: 800; font-stretch: 75%; font-size: 36px; }
+.cajon { list-style: none; position: absolute; left: 540px; right: 0; top: 0; bottom: 0; }
+.e { position: absolute; left: 0; right: 0; bottom: 0; background: var(--fondo); color: var(--texto); box-shadow: var(--sombra-cara); }
+.e.honda { --fondo: var(--oscuro); }
+.e.principal { --fondo: var(--claro); --texto: var(--azurita); --texto-2: var(--tinta-2); }
+.e .o { position: absolute; bottom: calc(100% - 1px); left: calc(36px + var(--x) * (100% - 72px - 120px)); width: 120px; height: 34px; display: flex; align-items: center; padding-left: 16px; background: var(--fondo); clip-path: polygon(0 0, calc(100% - 20px) 0, 100% 100%, 0 100%); }
+.e .o b { font-size: 24px; }
+.ir { position: absolute; right: 44px; top: 8px; font-weight: 700; font-size: 60px; line-height: 1; }
+.e .t { position: absolute; left: 36px; right: 120px; top: 10px; font-family: var(--f-cartel); font-variation-settings: 'opsz' 96; font-weight: 700; font-stretch: 85%; font-size: var(--tt, 27px); line-height: 1.02; letter-spacing: -.008em; text-wrap: balance; }

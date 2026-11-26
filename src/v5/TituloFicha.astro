@@ -1,0 +1,17 @@
+---
+// El título grande de la tapa de cada ficha (<h2>). La palabra «palabra-h» es la que viaja desde la pestaña de la
+// portada hasta acá y se ensancha: el script la busca con esa clase. `resto` es la segunda parte, en peso liviano.
+// El id (t-<ficha>) es el que la ficha usa en aria-labelledby y donde cae el foco al abrirla.
+import type { IdFicha } from './datos';
+
+interface Props {
+	id: IdFicha;
+	/** La palabra que viaja: por ejemplo «Logística». */
+	palabra: string;
+	/** El resto del título: por ejemplo «y minería». */
+	resto?: string;
+}
+const { id, palabra, resto } = Astro.props;
+---
+
+<h2 class="pg-titulo cartel" id={`t-${id}`} tabindex="-1"><span class="palabra-h">{palabra}</span>{resto && <Fragment>{' '}<span class="resto">{resto}</span></Fragment>}</h2>

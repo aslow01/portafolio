@@ -1,0 +1,20 @@
+# build output
+dist/
+# generated types
+.astro/
+
+# dependencies
+node_modules/
+
+# logs
+npm-debug.log*
+
+# variables de entorno
+.env*
+
+# sistema / editores
+.DS_Store
+.idea/
+
+# palabras extra de la higiene (ver scripts/higiene.mjs): no se versiona
+scripts/higiene.local.json

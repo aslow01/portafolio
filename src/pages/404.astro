@@ -1,0 +1,61 @@
+---
+// 404, composición propia: fondo hueso, rótulo, título en cartel, una línea y el
+// botón a la portada. Debajo, una pestaña vacía (el contorno de una ficha, a rayas) y los lomos siempre visibles: de
+// ahí se sigue a cualquier sección, sin script. Sin índice: `noindex`.
+import BaseV5 from '../layouts/BaseV5.astro';
+import Lomos from '../v5/Lomos.astro';
+---
+
+<BaseV5
+	titulo="Página no encontrada"
+	descripcion="La página solicitada no existe."
+	noindex
+	imagenSocial="portada"
+	saltar={{ href: '#t-404', texto: 'Saltar al contenido' }}
+>
+	<main class="no-encontrada c-hueso">
+		<div class="aviso-404">
+			<p class="rotulo">Error 404</p>
+			<h1 class="cartel" id="t-404" tabindex="-1">No se encontró la página</h1>
+			<p class="texto">La dirección puede estar mal escrita o la página ya no existe.</p>
+			<p><a class="boton" href="/">Ir a la portada <span class="flecha" aria-hidden="true">→</span></a></p>
+		</div>
+		<div class="pestana-vacia" aria-hidden="true">
+			<svg class="solapa" viewBox="0 0 140 100" preserveAspectRatio="none" focusable="false">
+				<path d="M1 100 L1 1 L120 1 L140 100"></path>
+			</svg>
+			<svg class="cuerpo" focusable="false">
+				<line x1="1" y1="0" x2="1" y2="100%"></line>
+				<line x1="140" y1="0" x2="100%" y2="0"></line>
+				<line x1="100%" y1="0" x2="100%" y2="100%"></line>
+				<line x1="1" y1="100%" x2="100%" y2="100%"></line>
+			</svg>
+		</div>
+	</main>
+	<Lomos salida visibles />
+</BaseV5>
+
+<style is:global>
+	/* Todo cuelga de .no-encontrada. Los lomos fijos de abajo (o a la derecha) dejan su lugar con --lomos y --riel. */
+	.no-encontrada {
+		min-height: 100svh;
+		display: flex;
+		flex-direction: column;
+		gap: 22px;
+		padding: clamp(28px, 6svh, 56px) calc(var(--margen) + var(--riel)) calc(var(--lomos) + 26px + env(safe-area-inset-bottom, 0px)) var(--margen);
+		background: var(--fondo);
+		color: var(--texto);
+	}
+	.no-encontrada .aviso-404 { display: grid; gap: 14px; justify-items: start; }
+	.no-encontrada h1 { font-size: clamp(46px, 13.2vw, 120px); margin-left: -0.04em; max-width: 12ch; text-wrap: balance; }
+	.no-encontrada h1:focus { outline: none; }
+	.no-encontrada .texto { max-width: 34ch; }
+	.no-encontrada .aviso-404 .boton { margin-top: 6px; }
+	/* La pestaña vacía: solapa y cuerpo con el mismo corte que `.oreja`, solo contorno y a rayas */
+	.pestana-vacia { flex: 1 1 0; min-height: 120px; display: flex; flex-direction: column; }
+	.pestana-vacia svg { display: block; overflow: visible; }
+	.pestana-vacia .solapa { flex: none; width: 140px; height: var(--oreja); }
+	.pestana-vacia .cuerpo { flex: 1 1 0; width: 100%; min-height: 0; }
+	.pestana-vacia path,
+	.pestana-vacia line { fill: none; stroke: var(--texto-2); stroke-width: 2px; stroke-dasharray: 6 6; vector-effect: non-scaling-stroke; }
+</style>

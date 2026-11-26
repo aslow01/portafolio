@@ -1,0 +1,66 @@
+---
+// Los lomos: las otras pestañas, abajo (celular) o a la derecha (escritorio y apaisado) cuando hay una ficha abierta.
+// Salen del arreglo `fichas` de datos.ts. Tienen dos modos:
+//   · En la portada (por defecto): «Inicio» cierra la ficha y cada lomo cambia de ficha, sin salir de la página. El script
+//     (pestanas.ts) marca cuál es el actual.
+//   · `salida`: en una página interior (/tecnico/, un caso, la 404), cada lomo sale a otra página: «Inicio» a `/` y cada
+//     ficha a su lugar en la portada (`/#logistica`…); Técnico va a su página propia. `actual` marca el lomo de donde se
+//     viene: `aria-current="page"` si el enlace es esta misma página; si no (un caso dentro de su carpeta), solo la marca
+//     visual `data-actual` y un aviso para el lector de pantalla, porque `aria-current` es solo para la página actual.
+//     En la 404 no hay ninguno.
+import { fichas, type IdFicha } from './datos';
+
+interface Props {
+	/** Salir a otra página en vez de cambiar de ficha (las páginas interiores). */
+	salida?: boolean;
+	/** Solo con `salida`: el lomo marcado como actual (aria-current), o ninguno. */
+	actual?: IdFicha;
+	/** Solo con `salida`: los enlaces salen con la cortina de color (/tecnico/ y la página de caso); la 404 navega directo. */
+	cortina?: boolean;
+	/** Solo con `salida`: visibles de entrada, sin esperar al script (la 404). Sin JavaScript solo se ven así. */
+	visibles?: boolean;
+}
+const { salida = false, actual, cortina = false, visibles = false } = Astro.props;
+
+const destino = (id: IdFicha): string => (!salida ? `#${id}` : id === 'tecnico' ? '/tecnico/' : `/#${id}`);
+const sinBarra = (ruta: string): string => ruta.replace(/\/+$/, '');
+// Con cortina, los enlaces salen con ella; el de esta misma página no sale a ningún lado, así que no la lleva.
+const conCortina = (href: string): boolean => salida && cortina && sinBarra(href) !== sinBarra(Astro.url.pathname);
+const esActual = (id: IdFicha): boolean => salida && id === actual;
+const esEstaPagina = (id: IdFicha): boolean => esActual(id) && sinBarra(destino(id)) === sinBarra(Astro.url.pathname);
+---
+
+<nav class:list={['lomos', { visible: salida && visibles }]} aria-label="Secciones del sitio">
+	<ol>
+		<li class="inicio">
+			{
+				salida ? (
+					<a href="/" data-salir={conCortina('/') ? '' : undefined}>
+						<span class="corto">Inicio</span>
+					</a>
+				) : (
+					<a href="#inicio" data-cerrar>
+						<span class="corto">Inicio</span>
+					</a>
+				)
+			}
+		</li>
+		{
+			fichas.map((f) => (
+				<li class={`c-${f.color}`}>
+					<a
+						href={destino(f.id)}
+						data-lomo={salida ? undefined : f.id}
+						data-salir={conCortina(destino(f.id)) ? '' : undefined}
+						aria-current={esEstaPagina(f.id) ? 'page' : undefined}
+						data-actual={esActual(f.id) && !esEstaPagina(f.id) ? '' : undefined}
+					>
+						<span class="num">{f.numero}</span>
+						<span class="corto">{f.corto}</span>
+						{esActual(f.id) && !esEstaPagina(f.id) && <span class="solo-lector">: carpeta de este caso</span>}
+					</a>
+				</li>
+			))
+		}
+	</ol>
+</nav>

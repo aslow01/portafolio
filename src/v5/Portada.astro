@@ -1,0 +1,119 @@
+---
+// La portada de una pantalla: nombre, titular y la pila de cinco pestañas (la navegación y la pieza). Cada pestaña
+// muestra un fragmento de lo que tiene adentro. Los enlaces de la pila son #<ficha>: el script (pestanas.ts) los
+// intercepta y abre la ficha; sin JavaScript, llevan a la ficha, que queda en el flujo debajo.
+// Los textos salen de datos.ts y de src/lib/*: nada de cifras escritas a mano acá.
+import { getCollection } from 'astro:content';
+import { Image } from 'astro:assets';
+import '../styles/v5/portada.css';
+import flotaMovil from '../assets/capturas/flota-alertas-movil-clara.png';
+import { demoVisible } from '../lib/estados';
+import { proyectosV5 } from '../lib/proyectos';
+import { listaConY } from '../lib/presentacion';
+import { bajadaPortada, correo, cuentaDemos, duracionAltaMontana, ficha, linkedin, minas, nombre, telefono, textoProyectos, titular, ubicacion } from './datos';
+
+const demos = await getCollection('demos', ({ data }) => demoVisible(data));
+// Los mismos proyectos que la ficha Proyectos (si no, la pestaña diría «un juego» y la ficha mostraría también la novela).
+// De la novela no se lee ninguna entrada, solo sus textos fijos: ver lib/proyectos.ts.
+const proyectos = proyectosV5(await getCollection('proyectos'));
+
+const { vivas, desarrollo } = cuentaDemos(demos.map((d) => d.data.estado));
+const partesDemos = [vivas > 0 && `${vivas} en vivo`, desarrollo > 0 && `${desarrollo} en desarrollo`].filter((x): x is string => !!x);
+const { lista: listaProyectos, comparten } = textoProyectos(proyectos.map((p) => p.tipo));
+// WhatsApp solo si el teléfono público está activado (datos-pendientes.ts).
+const canales = listaConY(['correo', ...(telefono?.whatsapp ? ['WhatsApp'] : []), 'LinkedIn']);
+
+const log = ficha('logistica');
+const tec = ficha('tecnico');
+const dem = ficha('demos');
+const pro = ficha('proyectos');
+const con = ficha('contacto');
+---
+
+<span id="inicio"></span>
+<header class="portada c-hueso">
+	<div class="cabeza">
+		<p class="lugar">{ubicacion}</p>
+		<nav class="cabecera" aria-label="Enlaces rápidos">
+			<a class="enlace ext" href={linkedin} rel="noopener">LinkedIn</a>
+			<a class="boton" href={`mailto:${correo}`}>Escribir por correo</a>
+		</nav>
+	</div>
+
+	<h1 class="nombre cartel">
+		<span class="n n1">{nombre.primero}</span>
+		<span class="n n2">{nombre.segundo}</span>
+		<span class="n n3">{nombre.apellido}</span><span class="solo-lector">:</span>
+		<span class="titular">{titular}</span>
+	</h1>
+	<p class="bajada-portada">{bajadaPortada}</p>
+
+	<nav class="pila" id="secciones" aria-label="Secciones" tabindex="-1">
+		<ol>
+			<li class={`banda c-${log.color} p${log.posicion}`}>
+				<a href={`#${log.id}`} data-banda={log.id}>
+					<span class="oreja" aria-hidden="true"><span class="num">{log.numero}</span></span>
+					<span class="cara">
+						<span class="asoma asoma-log" aria-hidden="true">
+							<svg viewBox="0 0 120 70" preserveAspectRatio="xMaxYMax meet" focusable="false">
+								<polygon class="s3" points="0,46 22,30 36,38 62,10 80,26 96,18 120,2 120,70 0,70"></polygon>
+								<polygon class="s2" points="0,56 26,40 46,48 74,24 92,34 120,18 120,70 0,70"></polygon>
+								<polygon class="s1" points="10,70 40,54 58,58 92,38 106,44 120,36 120,70"></polygon>
+								<polyline class="cam" pathLength="1" points="18,66 92,58 28,48 88,34"></polyline>
+								<polygon class="ban" points="88,34 88,24 98,24 101,28 88,28"></polygon>
+							</svg>
+						</span>
+						<span class="palabra cartel">{log.corto}</span>
+						<span class="dato"><span class="resto">y minería</span> · {duracionAltaMontana()} en minas<span class="mas"> · inducciones en {listaConY([...minas])}</span></span>
+					</span>
+				</a>
+			</li>
+			<li class={`banda c-${tec.color} p${tec.posicion}`}>
+				<a href={`#${tec.id}`} data-banda={tec.id}>
+					<span class="oreja" aria-hidden="true"><span class="num">{tec.numero}</span></span>
+					<span class="cara">
+						<span class="asoma asoma-tec cartel" aria-hidden="true"><span>0,0<b>1</b></span></span>
+						<span class="palabra cartel">{tec.corto}</span>
+						<span class="dato"><span class="resto">e IA</span> · el importe, al centavo<span class="mas">, sin tolerancia</span></span>
+					</span>
+				</a>
+			</li>
+			<li class={`banda c-${dem.color} p${dem.posicion}`}>
+				<a href={`#${dem.id}`} data-banda={dem.id}>
+					<span class="oreja" aria-hidden="true"><span class="num">{dem.numero}</span></span>
+					<span class="cara">
+						<span class="asoma asoma-dem" aria-hidden="true">
+							<span class="marco-mini"><Image src={flotaMovil} width={360} alt="" loading="eager" decoding="async" /></span>
+						</span>
+						<span class="palabra cartel">{dem.corto}</span>
+						<span class="dato">
+							{partesDemos.length > 0 && <span class="resto">{partesDemos[0]}</span>}{partesDemos.slice(1).map((p) => ` · ${p}`)}<span class="mas"> · escritas desde cero, con datos ficticios</span>
+						</span>
+					</span>
+				</a>
+			</li>
+			<li class={`banda c-${pro.color} p${pro.posicion}`}>
+				<a href={`#${pro.id}`} data-banda={pro.id}>
+					<span class="oreja" aria-hidden="true"><span class="num">{pro.numero}</span></span>
+					<span class="cara">
+						<span class="asoma asoma-pro" aria-hidden="true"><span class="mancha"><span class="cartel">terror</span></span></span>
+						<span class="palabra cartel">{pro.corto}</span>
+						<span class="dato">
+							{listaProyectos && <span class="resto">{listaProyectos}</span>}{comparten && <span class="mas"> · comparten mundo</span>}
+						</span>
+					</span>
+				</a>
+			</li>
+			<li class={`banda c-${con.color} p${con.posicion}`}>
+				<a href={`#${con.id}`} data-banda={con.id}>
+					<span class="oreja" aria-hidden="true"><span class="num">{con.numero}</span></span>
+					<span class="cara">
+						<span class="asoma asoma-con cartel" aria-hidden="true"><i>@</i></span>
+						<span class="palabra cartel">{con.corto}</span>
+						<span class="dato"><span class="resto">{canales}</span></span>
+					</span>
+				</a>
+			</li>
+		</ol>
+	</nav>
+</header>

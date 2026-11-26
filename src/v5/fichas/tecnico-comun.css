@@ -1,0 +1,62 @@
+/*
+ * Lo que comparten la ficha Técnico (la de la portada) y la página /tecnico/: las marcas «40 → 300+» y el título largo del
+ * caso (la fuente del código, Red Hat Mono, está en fuentes.css y tokens.css). Todos los selectores cuelgan de .f-tecnico.
+ * Lo propio de cada una está en el <style> de su archivo (Tecnico.astro y pages/tecnico.astro).
+ */
+
+/* ---------- Caso: 40 contra 300+, una marca por factura ---------- */
+.f-tecnico .jornada { container-type: inline-size; }
+.f-tecnico .grupo { display: grid; grid-template-columns: 2.3em minmax(0, 1fr); grid-template-rows: auto 1fr; gap: 3px 12px; align-items: start; font-size: 52px; }
+.f-tecnico .grupo + .grupo { margin-top: 12px; }
+/* El rótulo de cada grupo («A mano», «Con el cargador»): debajo de la cifra, en su columna. Va primero en el HTML (se lee
+   antes que la cifra) y la grilla lo baja; así no suma una fila entera a la página. */
+.f-tecnico .rot-g { grid-column: 1; grid-row: 2; line-height: 1.15; }
+.f-tecnico .grupo.ahora .rot-g { color: var(--texto); }
+.f-tecnico .cifra-j { grid-column: 1; grid-row: 1; font-size: 1em; line-height: 0.8; letter-spacing: -0.03em; white-space: nowrap; }
+.f-tecnico .grupo.antes .cifra-j { color: var(--texto-2); }
+.f-tecnico .marcas { grid-column: 2; grid-row: 1 / span 2; display: grid; grid-template-columns: repeat(20, minmax(0, 1fr)); gap: 3px; padding-top: 2px; }
+.f-tecnico .marcas i { aspect-ratio: 1; background: var(--texto); }
+.f-tecnico .antes .marcas i { background: var(--texto-2); opacity: 0.75; }
+.sin-js .f-tecnico .marcas, .sin-js .f-tecnico .jornada .una { display: none; } /* sin script no hay marcas: el pie no las nombra */
+.f-tecnico .jornada figcaption { margin-top: 12px; }
+.f-tecnico .jornada .unidad { font-family: var(--f-cartel); font-stretch: 85%; font-weight: 700; font-size: 23px; line-height: 1.1; }
+.f-tecnico .jornada .una { font-family: var(--f-texto); font-stretch: 100%; font-weight: 500; font-size: 14px; color: var(--texto-2); }
+@media (min-width: 1024px) {
+	.f-tecnico .grupo { font-size: 64px; }
+}
+@media (max-height: 760px) and (max-width: 767px) {
+	.f-tecnico .grupo { font-size: 44px; }
+}
+@media (orientation: landscape) and (max-height: 520px) {
+	.f-tecnico .grupo { font-size: 34px; }
+	.f-tecnico .marcas { gap: 2px; }
+	.f-tecnico .jornada { max-width: 360px; }
+}
+
+/* ---------- Título largo del caso: «Automatización de la carga de facturas» ----------
+   El prototipo decía «Carga de facturas»; el título es el del contenido (src/content/casos) y es más largo, así que
+   baja un escalón para que la página siga entrando (misma idea que .titulo-proyecto.largo de Proyectos). */
+.f-tecnico .pagina .pg-sub.largo { font-size: clamp(36px, 9.4vw, 64px); }
+@media (min-width: 1024px), (orientation: landscape) and (max-height: 520px) and (min-width: 640px) {
+	.f-tecnico .pagina .pg-sub.largo { font-size: min(4.6vw, 9.4svh); }
+}
+@media (max-height: 760px) and (max-width: 767px) {
+	.f-tecnico .pagina .pg-sub.largo { font-size: clamp(32px, 9.4vw, 44px); }
+	.f-tecnico .pg { gap: 12px; }
+	.f-tecnico .grupo + .grupo { margin-top: 8px; }
+	.f-tecnico .jornada figcaption { margin-top: 8px; }
+	/* Pantallas bajas: 25 columnas en lugar de 20 (las 300 marcas pasan de 15 a 12 filas completas) y menos aire entre marcas */
+	.f-tecnico .marcas { grid-template-columns: repeat(25, minmax(0, 1fr)); gap: 2px; }
+}
+/* Celulares (hasta 430 px de ancho), también los altos (390 × 844): con la medición de la cifra más larga (dos oraciones),
+   las 300 marcas pasan a 25 columnas (12 filas en lugar de 15) y la página sigue entrando */
+@media (max-width: 430px) {
+	.f-tecnico .marcas { grid-template-columns: repeat(25, minmax(0, 1fr)); gap: 2px; }
+}
+/* Tableta en vertical (768 × 1024): las 300 marcas no pueden ocupar todo el ancho, o la página no entra */
+@media (min-width: 768px) and (max-width: 1023px) {
+	.f-tecnico .jornada { max-width: 520px; }
+}
+@media (orientation: landscape) and (max-height: 520px) {
+	.f-tecnico .pagina .pg-sub.largo { font-size: min(5vw, 10svh); }
+}

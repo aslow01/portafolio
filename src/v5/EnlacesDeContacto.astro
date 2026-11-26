@@ -1,0 +1,30 @@
+---
+// Los enlaces de cierre de las páginas de casos: «Descargar el CV …» y «Escribir por correo». La ruta y el detalle del PDF
+// salen de lib/datos-pendientes.ts y el correo, de lib/sitio.ts (`mailto`): nada se escribe a mano acá. Sin PDF, el
+// primero no se dibuja. Solo son los enlaces: el contenedor y su disposición los pone quien lo usa.
+import { cv } from '../lib/datos-pendientes.ts';
+import { mailto } from '../lib/sitio.ts';
+
+interface Props {
+	/** El CV que se ofrece: el del camino de la carpeta donde se lee (por defecto, el técnico). `ambos`: los dos (el índice de casos no es de ninguna carpeta). */
+	camino?: 'tecnico' | 'logistica' | 'ambos';
+}
+const { camino = 'tecnico' } = Astro.props;
+const ambos = camino === 'ambos';
+const caminos = ambos ? (['tecnico', 'logistica'] as const) : ([camino] as const);
+const nombreCv = { tecnico: 'CV técnico', logistica: 'CV de logística' } as const;
+---
+
+{
+	caminos.map((c) => {
+		const pdf = cv[c];
+		return (
+			pdf && (
+				<a class="enlace baja" href={pdf.archivo} download>
+					{ambos ? <span><span class="larga">Descargar el </span>{nombreCv[c]}</span> : `Descargar el ${nombreCv[c]}`}<span class="solo-lector">: {pdf.detalle}</span>
+				</a>
+			)
+		);
+	})
+}
+<a class="enlace" href={mailto()}>Escribir por correo</a>

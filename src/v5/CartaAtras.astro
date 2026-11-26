@@ -1,0 +1,42 @@
+---
+// «La carta de atrás»: detrás de cada carta grande de proyecto hay una segunda carta que
+// asoma por arriba con su solapa «+ Quién hizo qué». Al tocarla pasa adelante y tapa el frente con las tres filas (Yo, La IA,
+// Cómo lo verifiqué); al tocarla de nuevo, vuelve atrás. Es un <details> nativo: sin JavaScript. Va como último hijo de
+// `.carta-grande` (que suma `con-tras`). Sin ninguna fila con texto no se dibuja nada, ni la solapa.
+// El estilo está en src/styles/v5/cartas.css. «Quién hizo qué» es texto fijo del componente, no de contenido.
+import '../styles/v5/cartas.css';
+import type { filasAutoria } from '../lib/contenido';
+
+interface Props {
+	/** El nombre de la pieza: rotula la cara y completa el nombre accesible de la solapa («Quién hizo qué: Afterfall»). */
+	nombre: string;
+	/** Las filas de `filasAutoria` (una fila sin texto ya no está). */
+	filas: ReturnType<typeof filasAutoria>;
+	/** La carta de atrás es la inversa del frente: carta `c-grafito` → `hueso`; carta `c-hueso` → `grafito`. */
+	color: 'hueso' | 'grafito';
+	/** El lado libre de la solapa: contrario al de la solapa propia de la carta (la base, a la izquierda → `der`). */
+	lado: 'izq' | 'der';
+}
+const { nombre, filas, color, lado } = Astro.props;
+---
+
+{
+	filas.length > 0 && (
+		<details class:list={['tras', lado, `c-${color}`]}>
+			<summary>Quién hizo qué<span class="solo-lector">: {nombre}</span></summary>
+			<div class="tras-cara">
+				<p class="rotulo">{nombre}</p>
+				<dl class="filas-t">
+					{
+						filas.map((f) => (
+							<div class={`fila-t ${f.clave}`}>
+								<dt>{f.rotulo}</dt>
+								<dd>{f.texto}</dd>
+							</div>
+						))
+					}
+				</dl>
+			</div>
+		</details>
+	)
+}

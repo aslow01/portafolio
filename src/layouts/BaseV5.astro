@@ -1,0 +1,83 @@
+---
+// Disposición base de la web v5 «Mezcla»: metadatos, SEO, imagen social, fuentes y estilos del sistema v5 y enlace de
+// salto. No carga ningún script: la 404 es «sin JS». El de las pestañas lo piden las páginas que lo usan
+// (index.astro, y tecnico.ts y caso.ts, que lo importan).
+// Sin estilos ni scripts en línea (la política de contenido de public/_headers no los permite): los scripts son
+// módulos propios que Astro empaqueta en /_astro/ y se sirven desde el mismo origen.
+// Se precargan solo las fuentes de la primera pantalla de la portada: Bricolage Grotesque (el nombre) y Schibsted Grotesk
+// (los datos de las pestañas). `crossorigin` hace falta aunque el origen sea el mismo.
+// El color de la barra del navegador (`theme-color`) repite --hueso (tokens.css): el atributo no admite variables CSS.
+import '../styles/v5/fuentes.css';
+import '../styles/v5/tokens.css';
+import '../styles/v5/sistema.css';
+import { tituloConNombre } from '../lib/paginas';
+import { descripcionSitio, imagenSocial, nombre } from '../lib/sitio';
+
+interface Props {
+	titulo: string;
+	descripcion?: string;
+	/** Páginas que no deben indexarse (la 404). Las redirecciones tienen su propio encabezado (v5/Redireccion.astro). */
+	noindex?: boolean;
+	/** Clave de la imagen de la vista previa al compartir: `portada`, `tecnico`, `logistica`, `casos` o `caso-<id>` (se generan con scripts/og/generar.mjs). */
+	imagenSocial?: string;
+	/** `article` en las páginas de caso; `website` en el resto. */
+	tipoOg?: 'website' | 'article';
+	/** A dónde salta el enlace «saltar»: por defecto, la pila de secciones de la portada. */
+	saltar?: { href: string; texto: string };
+	/** Clases extra de <html> (p. ej. `con-fotos`). `sin-js` siempre va: el script la reemplaza por `js`. */
+	clasesHtml?: string;
+}
+const {
+	titulo,
+	descripcion = descripcionSitio,
+	noindex: sinIndexar = false,
+	imagenSocial: queImagen = 'portada',
+	tipoOg = 'website',
+	saltar = { href: '#secciones', texto: 'Ir a las secciones' },
+	clasesHtml = 'con-fotos',
+} = Astro.props;
+const noindex = sinIndexar;
+const tituloCompleto = tituloConNombre(titulo, nombre.completo);
+const canonica = new URL(Astro.url.pathname, Astro.site);
+// La imagen y su texto alternativo salen del archivo que escribe scripts/og/generar.mjs (lib/imagenes-sociales.ts).
+const { archivo, alt: altImagen } = imagenSocial(queImagen, import.meta.env.DEV);
+const imagen = new URL(archivo, Astro.site);
+---
+
+<!doctype html>
+<html lang="es-AR" class={`sin-js ${clasesHtml}`.trim()}>
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+		<meta name="color-scheme" content="light" />
+		<meta name="theme-color" content="#f0f0ec" />
+		<link rel="preload" href="/fonts/bricolage-grotesque-latin-v1.woff2" as="font" type="font/woff2" crossorigin />
+		<link rel="preload" href="/fonts/schibsted-grotesk-latin-v1.woff2" as="font" type="font/woff2" crossorigin />
+		<meta name="generator" content={Astro.generator} />
+		<title>{tituloCompleto}</title>
+		<meta name="description" content={descripcion} />
+		{noindex && <meta name="robots" content="noindex" />}
+		{!noindex && <link rel="canonical" href={canonica} />}
+		<link rel="icon" href="/favicon.ico" sizes="32x32" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="sitemap" href="/sitemap-index.xml" />
+		<meta property="og:type" content={tipoOg} />
+		<meta property="og:locale" content="es_AR" />
+		<meta property="og:site_name" content={nombre.completo} />
+		<meta property="og:title" content={tituloCompleto} />
+		<meta property="og:description" content={descripcion} />
+		{!noindex && <meta property="og:url" content={canonica} />}
+		<meta property="og:image" content={imagen} />
+		<meta property="og:image:type" content="image/png" />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta property="og:image:alt" content={altImagen} />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:image" content={imagen} />
+		<meta name="twitter:image:alt" content={altImagen} />
+	</head>
+	<body>
+		<a class="saltar" href={saltar.href}>{saltar.texto}</a>
+		<slot />
+	</body>
+</html>

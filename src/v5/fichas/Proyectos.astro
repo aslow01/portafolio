@@ -1,0 +1,98 @@
+---
+// Ficha Proyectos (04). Los textos salen de la colección `proyectos`: una carta en la tapa y una página por proyecto. Cada carta grande
+// lleva detrás «La carta de atrás» con quién hizo qué (src/v5/CartaAtras.astro).
+//
+// La novela se muestra SIN TÍTULO («Novela en desarrollo») hasta que tenga fecha (decisión de Matías, 25/11/2026). Todo lo que se dibuja de ella sale de los textos fijos de lib/opciones.ts: de la colección
+// no se lee ninguna entrada de novela (ni su título, ni su resumen, ni su sinopsis). Qué proyectos
+// entran y con qué texto lo decide `proyectosV5` (lib/proyectos.ts), el mismo que usa la portada.
+import { getCollection } from 'astro:content';
+import { proyectosV5, type ProyectoVista } from '../../lib/proyectos';
+import { bajadaProyectos, capitalizar, textoEstadoDemo } from '../../lib/presentacion';
+import CartaAtras from '../CartaAtras.astro';
+import Ficha from '../Ficha.astro';
+import Pagina from '../Pagina.astro';
+import TituloFicha from '../TituloFicha.astro';
+import '../../styles/v5/cartas.css';
+
+const proyectos = proyectosV5(await getCollection('proyectos'));
+
+const nombreTipo = { novela: 'Novela', juego: 'Juego', otro: 'Proyecto' } as const;
+
+function vistaDe(p: ProyectoVista) {
+	const { tipo, sinTitulo } = p;
+	const estadoTxt = textoEstadoDemo(p.estado);
+	return {
+		tipo,
+		titulo: p.titulo,
+		sinTitulo,
+		// Lo que dice la solapa del paginador y el nombre de la página.
+		pagina: p.pagina,
+		rotuloTapa: sinTitulo ? capitalizar(estadoTxt) : `${nombreTipo[tipo]} · ${estadoTxt}`,
+		grandeTapa: sinTitulo ? p.pagina : p.titulo,
+		rotuloPagina: sinTitulo ? p.pagina : `${nombreTipo[tipo]} · ${estadoTxt}`,
+		texto: p.texto,
+		aparte: p.aparte,
+		filas: p.filas,
+		tamanoTitulo: p.tamanoTitulo,
+		// El color sale de la clase `.c-*` de cada carta (juego: grafito; novela: hueso), no de `.a` o `.b`.
+		clase: tipo === 'novela' ? 'b c-hueso' : 'a c-grafito',
+		cartaClase: tipo === 'novela' ? 'h c-hueso' : 'g c-grafito',
+		// La carta de atrás es la inversa del frente y su solapa va del lado contrario a la propia.
+		atras: tipo === 'novela' ? ({ color: 'grafito', lado: 'izq' } as const) : ({ color: 'hueso', lado: 'der' } as const),
+	};
+}
+const vistas = proyectos.map(vistaDe);
+---
+
+<Ficha id="proyectos">
+	<Pagina titulo="Tapa" tapa>
+		<TituloFicha id="proyectos" palabra="Proyectos" />
+		<p class="texto">{bajadaProyectos(proyectos.map((p) => p.tipo))}</p>
+		<div class="cruce der">
+			{
+				vistas.map((v, i) => (
+					<button class={`carta-p ${v.clase}`} type="button" data-ir={i + 1}>
+						<span class="rotulo">{v.rotuloTapa}</span>
+						<b>{v.grandeTapa}</b>
+						<span class="ir">Abrir<span class="solo-lector">: {v.pagina}</span></span>
+					</button>
+				))
+			}
+		</div>
+	</Pagina>
+
+	{
+		vistas.map((v) => (
+			<Pagina titulo={v.pagina}>
+				<div class:list={['carta-grande', v.cartaClase, { 'con-tras': v.filas.length > 0 }, 'der']}>
+					<p class="rotulo">{v.rotuloPagina}</p>
+					{v.tipo === 'juego' ? (
+						<h3 class="titulo-proyecto" data-letras data-caida>{v.titulo}</h3>
+					) : (
+						<h3 class:list={['titulo-proyecto', v.tamanoTitulo]}>{v.titulo}</h3>
+					)}
+					<div class="carta-textos">
+						<p class="texto">{v.texto}</p>
+						{v.aparte && <p class="texto-2">{v.aparte}</p>}
+					</div>
+					<CartaAtras nombre={v.pagina} filas={v.filas} color={v.atras.color} lado={v.atras.lado} />
+				</div>
+			</Pagina>
+		))
+	}
+</Ficha>
+
+<style is:global>
+	/* Lo que es solo de la ficha Proyectos: el canto negro de la carta del juego (la noche ya tomó el borde derecho; sale de
+	   «terror por contagio»). Las cartas, los títulos y la carta de atrás están en src/styles/v5/cartas.css. */
+	.f-proyectos .carta-p.a::after { content: ''; position: absolute; right: -1px; top: 0; bottom: 0; width: 15%; background: var(--negro); clip-path: polygon(40% 0, 100% 0, 100% 100%, 0 100%, 0 76%, 22% 76%, 22% 52%, 10% 52%, 10% 28%, 40% 28%); pointer-events: none; }
+	.f-proyectos .carta-grande.g::after { content: ''; position: absolute; right: -1px; top: 0; bottom: 0; width: 13%; background: var(--negro); clip-path: polygon(40% 0, 100% 0, 100% 100%, 0 100%, 0 82%, 22% 82%, 22% 64%, 10% 64%, 10% 46%, 40% 46%); pointer-events: none; }
+	/* El texto no pasa por debajo del canto negro de la carta del juego */
+	.f-proyectos .carta-grande.g > p, .f-proyectos .carta-grande.g .carta-textos p { margin-right: 13%; }
+
+	@media (prefers-reduced-motion: no-preference) {
+		.f-proyectos .viva .carta-p.a::after { animation: proy-toma-canto 600ms steps(4, end) backwards 1100ms; }
+		.f-proyectos .viva .carta-grande.g::after { animation: proy-toma-canto 700ms steps(4, end) backwards 1400ms; }
+	}
+	@keyframes proy-toma-canto { from { clip-path: polygon(100% 0, 100% 0, 100% 100%, 100% 100%, 100% 76%, 100% 76%, 100% 52%, 100% 52%, 100% 28%, 100% 28%); } }
+</style>

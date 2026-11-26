@@ -1,0 +1,23 @@
+---
+// «Enlace al archivo»: la entrada corta a /casos/ desde las tres puertas (tapa de /tecnico/,
+// «De dónde vengo» de Logística y «Más casos» de cada caso). La cantidad sale de `total` (nunca escrita a mano) y se lee
+// como «(N)» detrás del texto; la solapita con la cifra es de CSS (`data-n`). Solo se dibuja con dos casos o más.
+// El estilo está en src/styles/v5/archivo.css.
+import '../styles/v5/archivo.css';
+import { puertaAlArchivo } from '../lib/contenido.ts';
+
+interface Props {
+	/** Casos publicables en total, de los dos caminos. */
+	total: number;
+	texto?: string;
+}
+const { total, texto = 'Casos de estudio' } = Astro.props;
+---
+
+{
+	puertaAlArchivo(total) && (
+		<a class="enlace a-archivo" href="/casos/" data-salir data-color="var(--hueso)" data-n={total}>
+			{texto}<span class="solo-lector"> ({total})</span><span class="flecha" aria-hidden="true">→</span>
+		</a>
+	)
+}

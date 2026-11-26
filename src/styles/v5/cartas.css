@@ -1,0 +1,266 @@
+/*
+ * Web v5: las cartas de proyecto y «La carta de atrás». Es lo que antes vivía en
+ * v5/fichas/Proyectos.astro, sin el prefijo de ficha, para que lo usen también la página 3 de la ficha Técnico y las
+ * páginas «Método» y «Laboratorio» de /tecnico/:
+ *   · .cruce y .carta-p: dos cartas que se cruzan (la tapa de Proyectos y la p. 3 de Técnico).
+ *   · .carta-grande, .titulo-proyecto y .carta-textos: un proyecto a toda la página.
+ *   · .tras: la segunda carta que asoma por arriba con su solapa «+ Quién hizo qué» (un <details>, sin JavaScript).
+ * El color de cada carta sale de su clase `.c-*` (--fondo / --texto), nunca de `.a` o `.b`. Colores, sombras y curvas: solo
+ * los de tokens.css. Lo que es solo de una ficha (el canto negro de Afterfall) queda en el archivo de esa ficha.
+ */
+
+/* El anillo de foco es el color de texto y el fondo de la FICHA, no los de la carta (la carta cambia --texto y --fondo):
+   tinta sobre azufre (7,05), claro sobre azurita (7,56). */
+.ficha { --anillo: var(--texto); --halo: var(--fondo); }
+
+/* ---------- Dos cartas cruzadas ---------- */
+.cruce { position: relative; flex: 1 1 auto; min-height: 300px; }
+.carta-p {
+	position: absolute;
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-start;
+	gap: 6px;
+	width: 74%;
+	height: 48%;
+	padding: 18px;
+	container-type: inline-size;
+	text-align: left;
+	text-decoration: none;
+	background: var(--fondo);
+	color: var(--texto);
+	box-shadow: var(--sombra-carta-p);
+	transition: transform 300ms var(--rebote);
+}
+.carta-p::before { /* su propia solapa */
+	content: '';
+	position: absolute;
+	bottom: calc(100% - 1px);
+	left: 0;
+	width: 42%;
+	height: 23px;
+	background: inherit;
+	clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 100%, 0 100%);
+}
+.carta-p b { font-family: var(--f-cartel); font-stretch: 75%; font-weight: 800; font-size: min(clamp(40px, 12.4vw, 92px), 21cqi); line-height: 0.86; letter-spacing: -0.025em; }
+.carta-p .rotulo { color: inherit; }
+.carta-p .ir { margin-top: auto; font-size: 15px; font-weight: 700; text-decoration: underline; text-underline-offset: 4px; }
+.carta-p.a { left: 0; top: 6%; transform: rotate(-3deg); z-index: 1; }
+.carta-p.b { right: 0; bottom: 2%; justify-content: flex-end; transform: rotate(2.5deg); z-index: 2; }
+.carta-p.b .ir { margin-top: 4px; }
+.carta-p.b::before { left: auto; right: 0; clip-path: polygon(14px 0, 100% 0, 100% 100%, 0 100%); }
+.carta-p:hover { transform: rotate(0deg) translateY(-6px); }
+.carta-p:focus-visible { outline: 3px solid var(--anillo); outline-offset: 3px; box-shadow: 0 0 0 6px var(--halo); }
+
+/* ---------- Un proyecto, a toda la página ---------- */
+.carta-grande {
+	position: relative;
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	margin-top: 30px;
+	padding: 22px 20px;
+	container-type: inline-size;
+	background: var(--fondo);
+	color: var(--texto);
+	box-shadow: var(--sombra-carta-grande);
+	transform: rotate(-1.2deg);
+}
+.carta-grande::before {
+	content: '';
+	position: absolute;
+	bottom: calc(100% - 1px);
+	left: 0;
+	width: 44%;
+	height: 28px;
+	background: inherit;
+	clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 100%, 0 100%);
+}
+.carta-grande.h { transform: rotate(1.2deg); }
+.carta-grande.h::before { left: auto; right: 0; clip-path: polygon(18px 0, 100% 0, 100% 100%, 0 100%); }
+/* Con carta de atrás la solapa nueva mide 44 px (la propia, 28): la carta deja más lugar arriba */
+.carta-grande.con-tras { margin-top: 48px; }
+.carta-textos { display: grid; gap: 12px; }
+.titulo-proyecto { margin-top: auto; font-family: var(--f-cartel); font-stretch: 75%; font-weight: 800; font-size: 31cqi; line-height: 0.84; letter-spacing: -0.03em; margin-left: -0.03em; }
+.titulo-proyecto.largo { font-size: 24cqi; }
+.titulo-proyecto.mas-largo { font-size: 19cqi; }
+/* Es el destino del foco al abrir la página (pestanas.ts), no un control: sin anillo, como los demás títulos de página */
+.titulo-proyecto:focus { outline: none; }
+.carta-grande p.texto { font-size: 17px; }
+/* El enlace de la pieza, cuando exista, tapado por la cara de atrás no puede recibir el foco (2.4.11) */
+.carta-grande:has(> .tras[open]) .carta-textos .enlace { visibility: hidden; }
+
+/* ---------- La carta de atrás ---------- */
+/* Sin z-index: el canto negro de Afterfall (`.g::after`) queda encima: es la silueta de la carta. */
+.tras { position: absolute; inset: 0; pointer-events: none; }
+.tras > summary {
+	position: absolute;
+	z-index: 2;
+	bottom: calc(100% - 1px);
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-height: 44px;
+	max-width: 58%;
+	padding: 8px 26px 0 12px; /* los 8 px de arriba son zona de toque, sin dibujo */
+	list-style: none;
+	cursor: pointer;
+	pointer-events: auto;
+	color: var(--texto);
+	font-family: var(--f-texto);
+	font-size: 14px;
+	font-weight: 700;
+	line-height: 1.1;
+	transition: transform var(--d-rapida) var(--sale);
+}
+.tras > summary::-webkit-details-marker { display: none; }
+/* La forma de la solapa va en un pseudo: el `summary`, que es lo que recibe el foco, no lleva recorte (hallazgo A1). */
+.tras > summary::before {
+	content: '';
+	position: absolute;
+	z-index: -1;
+	left: 0;
+	right: 0;
+	top: 8px;
+	bottom: 0;
+	background: var(--fondo);
+	clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 100%, 0 100%);
+}
+/* El cuadro «+» (el mismo de .ver-codigo, a 22 px); abierta, «×» */
+.tras > summary::after {
+	content: '+';
+	content: '+' / '';
+	order: -1;
+	flex: none;
+	display: grid;
+	place-items: center;
+	width: 22px;
+	height: 22px;
+	background: var(--texto);
+	color: var(--fondo);
+	font-size: 18px;
+	font-weight: 800;
+	line-height: 1;
+}
+.tras[open] > summary::after { content: '×'; content: '×' / ''; font-size: 20px; }
+.tras.izq > summary { left: 0; }
+.tras.der > summary { right: 0; padding: 8px 12px 0 26px; }
+.tras.der > summary::before { clip-path: polygon(16px 0, 100% 0, 100% 100%, 0 100%); }
+@media (hover: hover) { .tras > summary:hover { transform: translateY(-3px); } }
+.tras > summary:focus-visible { outline: 3px solid var(--anillo); outline-offset: 2px; box-shadow: none; }
+
+/* La cara: tapa la carta entera. Sin `bottom`: si el texto no entra crece hacia abajo y la página se desplaza (1.6); nunca se corta. */
+.tras-cara {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	min-height: 100%;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	padding: 22px 20px;
+	pointer-events: auto;
+	background: var(--fondo);
+	color: var(--texto);
+}
+/* No pasa por debajo del canto negro de la carta del juego */
+.carta-grande.g .tras-cara { padding-right: calc(13% + 10px); }
+.tras-cara .rotulo { color: var(--texto-2); }
+.filas-t { display: grid; border-top: 1px solid var(--regla); }
+.fila-t { display: grid; align-content: start; gap: 4px; padding: 10px 0; border-bottom: 1px solid var(--regla); }
+.fila-t dt { font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; line-height: 1.3; color: var(--texto-2); }
+.fila-t dd { margin: 0; max-width: 46ch; font-size: 16px; line-height: 1.42; text-wrap: pretty; }
+.fila-t.yo dd { font-family: var(--f-cartel); font-stretch: 85%; font-weight: 600; font-size: clamp(20px, 6.6cqi, 30px); line-height: 1.14; letter-spacing: -0.008em; max-width: 30ch; }
+
+/* Sin JavaScript no hace falta ninguno: <details> abre solo. Abierta, la cara va debajo del frente y la carta crece. */
+.sin-js .tras { position: static; }
+.sin-js .tras-cara { position: static; min-height: 0; margin: 12px -20px -22px; }
+
+/* ---------- Angosto (menos de 360 px): las dos cartas en columna, sin cruzarse ---------- */
+@media (max-width: 359px) {
+	.cruce { display: grid; gap: 34px; min-height: 0; padding-top: 24px; }
+	.carta-p { position: relative; inset: auto; width: 100%; height: auto; min-height: 150px; transform: none; }
+	.carta-p.a { transform: rotate(-1.5deg); }
+	.carta-p.b { transform: rotate(1.5deg); }
+}
+
+/* ---------- Escritorio y apaisado ancho ---------- */
+@media (min-width: 1024px), (orientation: landscape) and (max-height: 520px) and (min-width: 640px) {
+	.cruce { min-height: 0; height: 62svh; }
+	/* `.pagina` sube la especificidad: la carta ya no usa la columna 8–13 de `.der` */
+	.pagina .pg > .carta-grande { grid-column: 3 / 11; grid-row: auto; height: 64svh; margin-top: 30px; }
+	.pagina .pg > .carta-grande.con-tras { margin-top: 48px; }
+	.titulo-proyecto { font-size: min(13vw, 24svh); }
+	.titulo-proyecto.largo { font-size: min(10vw, 19svh); }
+	.titulo-proyecto.mas-largo { font-size: min(8.4vw, 17svh); }
+}
+@media (min-width: 1024px) {
+	.tras-cara { padding: 30px 34px; gap: 14px; }
+	.filas-t { grid-template-columns: 1fr 1fr; column-gap: 36px; }
+	.fila-t.yo { grid-column: 1 / -1; }
+	.fila-t dd { font-size: 18px; }
+	.fila-t.yo dd { font-size: min(3.2vw, 36px); }
+}
+/* Pantallas bajas en vertical (360 × 740 y menos) */
+@media (max-height: 760px) and (max-width: 767px) {
+	.cruce { min-height: 260px; }
+	.carta-p { min-height: 120px; }
+	.fila-t { padding: 8px 0; }
+	.fila-t dd { font-size: 15px; }
+	.fila-t.yo dd { font-size: 19px; }
+}
+/* Celular apaisado y zoom alto (844 × 390, 720 × 450) */
+@media (orientation: landscape) and (max-height: 520px) {
+	.cruce { min-height: 0; height: calc(100svh - var(--cabeza) - var(--pag) - 40px); }
+	.carta-p { padding: 12px 14px; }
+	.carta-p b { font-size: min(32px, 21cqi); }
+	.pagina .pg > .carta-grande { height: calc(100svh - var(--cabeza) - var(--pag) - 60px); margin-top: 26px; }
+	.titulo-proyecto, .titulo-proyecto.largo, .titulo-proyecto.mas-largo { font-size: min(9vw, 17svh); }
+	/* Con carta de atrás: la carta pasa a grilla (el título a la izquierda, los textos a la derecha) para que entre */
+	.pagina .pg > .carta-grande.con-tras { height: calc(100svh - var(--cabeza) - var(--pag) - 80px); margin-top: 46px; }
+	.carta-grande.con-tras {
+		display: grid;
+		grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+		grid-template-rows: auto 1fr;
+		column-gap: 22px;
+		row-gap: 8px;
+		padding: 14px 18px;
+	}
+	.carta-grande.con-tras > .rotulo { grid-column: 1 / -1; }
+	.carta-grande.con-tras > .titulo-proyecto { grid-column: 1; align-self: end; margin-top: 0; font-size: min(9vw, 17svh, 9.5cqi); }
+	.carta-grande.con-tras > .carta-textos { grid-column: 2; align-self: end; gap: 6px; }
+	.carta-grande.con-tras .carta-textos p { font-size: 15px; line-height: 1.35; }
+	.carta-grande.g.con-tras > .carta-textos { margin-right: 13%; }
+	.pagina .carta-grande.g.con-tras .carta-textos p { margin-right: 0; }
+	/* La cara de atrás, en dos columnas, y con el aire justo */
+	.tras-cara { padding: 14px 18px; gap: 6px; }
+	.filas-t { grid-template-columns: 1fr 1fr; column-gap: 22px; }
+	.fila-t.yo { grid-column: 1 / -1; }
+	.fila-t { padding: 6px 0; }
+	.fila-t dd { font-size: 14px; line-height: 1.35; }
+	.fila-t.yo dd { font-size: 17px; }
+}
+
+/* ---------- Movimiento (con `prefers-reduced-motion: reduce`, la regla global de sistema.css lo apaga todo) ---------- */
+@media (prefers-reduced-motion: no-preference) {
+	.viva .carta-p.a { animation: carta-desde-izq 900ms var(--rebote) backwards 260ms; }
+	.viva .carta-p.b { animation: carta-desde-der 900ms var(--rebote) backwards 380ms; }
+	.viva .carta-grande { animation: carta-saca 900ms var(--rebote) backwards 80ms; }
+	/* Abrir: la cara se despliega desde la solapa y cada fila baja a su lugar; cerrar es instantáneo (<details> no anima el cierre) */
+	.tras[open] > .tras-cara { animation: tras-baja 460ms var(--sale); }
+	.tras[open] .fila-t { animation: tras-fila 520ms var(--sale) backwards; }
+	.tras[open] .fila-t:nth-child(2) { animation-delay: 90ms; }
+	.tras[open] .fila-t:nth-child(3) { animation-delay: 180ms; }
+}
+@keyframes carta-desde-izq { from { transform: translateX(-105%) rotate(-14deg); } }
+@keyframes carta-desde-der { from { transform: translateX(105%) rotate(14deg); } }
+@keyframes carta-saca { from { transform: translateY(70%) rotate(-9deg) scale(0.6); } }
+@keyframes tras-baja { from { clip-path: inset(0 0 100% 0); } }
+@keyframes tras-fila { from { transform: translateY(-12px); opacity: 0; } }
+
+@media (forced-colors: active) {
+	.tras > summary { border: 2px solid ButtonText; }
+	.tras-cara { border: 2px solid CanvasText; }
+}

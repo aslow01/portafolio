@@ -1,0 +1,58 @@
+---
+// Índice de casos «El cajón»: una pila de expedientes, uno por caso publicado, con su
+// solapa (número y caminos) y el título; tocar uno lleva al caso con la cortina del color de su carpeta. Composición propia,
+// sin `Ficha`, como la portada y la 404. La lista, el orden, los tonos y las notas salen de v5/interiores/archivo.ts (ningún
+// número ni color se escribe acá). Los casos en borrador solo se ven con `npm run dev`.
+// El estilo está en src/styles/v5/archivo.css; los textos son los finales.
+import { getCollection, getEntry } from 'astro:content';
+import BaseV5 from '../../layouts/BaseV5.astro';
+import '../../styles/v5/archivo.css';
+import EnlacesDeContacto from '../../v5/EnlacesDeContacto.astro';
+import Lomos from '../../v5/Lomos.astro';
+import { esDeCamino, obraPrincipal } from '../../lib/contenido';
+import { esPublicable, soloPublicable } from '../../lib/estados';
+import { claseDeTono, colorDeCarpeta, expedientes, hayMuchos } from '../../v5/interiores/archivo.ts';
+
+const casos = await getCollection('casos', ({ data }) => esPublicable(data));
+// Solo la obra principal de Técnico lleva la banda clara y, si su demo está en vivo, la nota «Con demo en vivo».
+const principal = obraPrincipal(casos.filter((c) => esDeCamino(c.data, 'tecnico')));
+const demo = principal?.data.demo ? soloPublicable(await getEntry(principal.data.demo)) : undefined;
+const demoEnVivo = demo?.data.estado === 'en-vivo';
+const lista = expedientes(casos, principal?.id, demoEnVivo);
+---
+
+<BaseV5
+	titulo="Casos de estudio"
+	descripcion="Casos anonimizados de una empresa de seguridad privada de San Juan: problema, solución, resultado, mi parte y cómo lo verifiqué."
+	imagenSocial="casos"
+	saltar={{ href: '#t-casos', texto: 'Saltar al contenido' }}
+>
+	<main class="cajon-archivo c-hueso">
+		<div class="archivo-cab">
+			<p class="rotulo">Archivo · casos anonimizados</p>
+			<h1 class="cartel" id="t-casos" tabindex="-1">Casos <span class="resto">de estudio</span></h1>
+			<p class="bajada">Problema, qué se construyó y resultado de cada caso, en una empresa de seguridad privada de San Juan.</p>
+			<div class="acciones contacto-archivo">
+				<EnlacesDeContacto camino="ambos" />
+			</div>
+		</div>
+		<ol class:list={['cajon', { muchos: hayMuchos(lista.length) }]} aria-labelledby="t-casos">
+			{
+				lista.map((e) => (
+					<li class:list={['exp', claseDeTono(e.tono)]}>
+						<a href={e.href} data-salir data-color={colorDeCarpeta(e.carpeta)}>
+							<span class="num" aria-hidden="true"><b>{e.numero}</b> {e.caminos}</span>
+							<span class="tit-exp">{e.titulo}</span><span class="solo-lector"> ({e.caminos})</span>
+							{e.nota && <span class="rot-exp">{e.nota}</span>}
+							<span class="ir" aria-hidden="true">→</span>
+						</a>
+					</li>
+				))
+			}
+		</ol>
+	</main>
+	<Lomos salida cortina visibles />
+	<script>
+		import '../../scripts/v5/archivo';
+	</script>
+</BaseV5>

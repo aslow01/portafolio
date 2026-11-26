@@ -1,0 +1,305 @@
+/*
+ * Web v5 «Mezcla»: la portada de una pantalla con los fragmentos que asoman en cada pestaña.
+ * Las piezas de cada ficha (cornisa,
+ * centavo, capturas, cruce, canales…) NO van acá: van en el <style> de su archivo en src/v5/fichas/.
+ */
+
+/* ===================== PORTADA: una sola pantalla ===================== */
+.portada {
+	--banda-min: 90px;
+	--F: max(44px, min(30vw, calc((100svh - 64px - 5 * var(--banda-min)) / 2.62)));
+	position: relative;
+	z-index: 0;
+	/* alto mínimo, no fijo: con espaciado de texto ampliado o zoom, crece y todo queda alcanzable */
+	min-height: 100svh;
+	display: flex;
+	flex-direction: column;
+	overflow: clip;
+	background: var(--hueso);
+	color: var(--tinta);
+}
+.cabeza { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 8px var(--margen) 0; }
+.lugar { font-size: 13px; font-weight: 600; line-height: 1.3; color: var(--texto-2); }
+.cabecera { display: none; }
+@media (max-width: 1023px) {
+	.cabeza { position: absolute; top: 14px; right: var(--margen); padding: 0; z-index: 1; }
+	.lugar { width: 6.5em; text-align: right; }
+}
+.nombre {
+	display: grid;
+	grid-template-columns: auto 1fr;
+	grid-template-areas: 'n1 n1' 'n2 tit' 'n3 n3';
+	column-gap: 16px;
+	padding: 16px var(--margen) 0;
+	font-size: var(--F);
+	color: var(--texto);
+}
+.n { display: block; margin-left: -0.045em; }
+.n1 { grid-area: n1; }
+.n2 { grid-area: n2; }
+.n3 { grid-area: n3; }
+.titular {
+	grid-area: tit;
+	align-self: end;
+	margin-bottom: 0.13em;
+	max-width: 15ch;
+	font-family: var(--f-texto);
+	font-stretch: 100%;
+	font-size: 17px;
+	font-weight: 600;
+	line-height: 1.2;
+	letter-spacing: -0.005em;
+	text-wrap: balance;
+}
+.bajada-portada { display: none; }
+
+/* La pila: cinco pestañas. Es la navegación y es la pieza.
+   pan-y: el dedo puede desplazar la página si con zoom crece; el abanico se arma con los eventos táctiles. */
+.pila { flex: 1; display: flex; flex-direction: column; margin-top: calc(var(--oreja) + 14px); min-height: calc(5 * var(--banda-min)); touch-action: pan-y pinch-zoom; }
+/* El destino del salto «Ir a las secciones» recibe el foco para que el siguiente Tab caiga en la primera pestaña: no es un control, no lleva anillo. */
+.pila:focus-visible { outline: none; box-shadow: none; }
+.pila ol { flex: 1; display: grid; grid-template-rows: repeat(5, minmax(var(--banda-min), 1fr)); }
+.banda { position: relative; transform-origin: 0 100%; }
+.banda:nth-child(1) { z-index: 1; --i: 0; }
+.banda:nth-child(2) { z-index: 2; --i: 1; }
+.banda:nth-child(3) { z-index: 3; --i: 2; }
+.banda:nth-child(4) { z-index: 4; --i: 3; }
+.banda:nth-child(5) { z-index: 5; --i: 4; }
+.banda > a {
+	--y: 0px;
+	--r: 0deg;
+	--yf: 0px;
+	/* en el flujo (no absoluta): si el texto crece (zoom, espaciado ampliado), la pestaña crece y no corta nada */
+	position: relative;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	color: var(--texto);
+	text-decoration: none;
+	transform-origin: 0 100%;
+	transform: translateY(calc(var(--y) + var(--yf))) rotate(var(--r));
+	-webkit-tap-highlight-color: transparent;
+	user-select: none;
+	-webkit-user-select: none;
+	-webkit-touch-callout: none;
+}
+.banda > a::after {
+	content: '';
+	position: absolute;
+	left: 0; right: -40px; top: 100%;
+	height: 100vh;
+	background: var(--fondo);
+}
+.cara {
+	position: relative;
+	flex: 1;
+	margin-right: -40px;
+	display: flex;
+	flex-direction: column;
+	/* abajo deja libre el alto de la solapa de la pestaña siguiente */
+	padding: 4px calc(var(--margen) + 40px) calc(var(--oreja) + 4px) var(--margen);
+	background: var(--fondo);
+	box-shadow: var(--sombra-cara);
+}
+.banda:first-child .cara { box-shadow: none; }
+.banda .oreja { z-index: 1; }
+.palabra { position: relative; z-index: 1; font-size: clamp(42px, 11.6vw, 96px); line-height: 0.92; letter-spacing: -0.012em; }
+.dato { position: relative; z-index: 1; margin-top: 2px; max-width: 68%; font-size: 14px; font-weight: 500; line-height: 1.3; color: var(--texto-2); text-wrap: balance; }
+.dato .resto { font-weight: 700; color: var(--texto); }
+.dato .mas { display: none; }
+.banda > a:focus-visible { outline: none; box-shadow: none; --yf: -10px; }
+.banda > a:focus-visible .cara { outline: 3px solid var(--texto); outline-offset: -9px; }
+.sin-js .banda > a:hover .palabra { text-decoration: underline; text-decoration-thickness: 0.06em; text-underline-offset: 0.12em; }
+@media (prefers-reduced-motion: reduce) {
+	.banda > a:hover .palabra { text-decoration: underline; text-decoration-thickness: 0.06em; text-underline-offset: 0.12em; }
+}
+
+/* Lo que asoma de cada ficha en su pestaña: la pila deja de ser color plano.
+   Vive a la derecha y termina ANTES de la solapa de la pestaña de abajo: nada queda tapado (la coma del 0,01). */
+.asoma {
+	position: absolute;
+	z-index: 0;
+	top: 6px;
+	bottom: calc(var(--oreja) + 2px);
+	right: calc(40px + 10px);
+	width: 30%;
+	pointer-events: none;
+	container-type: size;
+}
+.banda:last-child .asoma { bottom: 8px; }
+.asoma svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+/* 01 · la cornisa en miniatura: cerros, el camino en zigzag y el banderín de campamento */
+.asoma-log .s3 { fill: var(--cerro-3); }
+.asoma-log .s2 { fill: var(--cerro-2); }
+.asoma-log .s1 { fill: var(--cerro-1); }
+.asoma-log .cam { fill: none; stroke: var(--claro); stroke-width: 2; stroke-linejoin: round; stroke-dasharray: 1 1; stroke-dashoffset: 0; }
+.asoma-log .ban { fill: var(--claro); }
+/* 02 · el centavo: «0,01», con el 1 en claro */
+.asoma-tec { display: flex; align-items: flex-end; justify-content: flex-end; }
+.asoma-tec span { font-size: min(92cqh, 44cqi); line-height: 0.74; color: var(--cifra-azurita); font-variant-numeric: tabular-nums lining-nums; white-space: nowrap; letter-spacing: -0.02em; }
+.asoma-tec b { font-weight: inherit; display: inline-block; margin-left: 0.04em; padding: 0.06em 0.04em 0; background: var(--claro); color: var(--azurita); line-height: 0.74; }
+/* 03 · la captura real de la demo de flota, en un teléfono que asoma por detrás de la pestaña de abajo */
+.asoma-dem { bottom: -40px; overflow: hidden; }
+.asoma-dem .marco-mini { position: absolute; right: 8%; top: 4px; width: 56%; height: 200%; overflow: hidden; border: 1px solid var(--captura-borde); background: #fff; box-shadow: var(--sombra-captura); transform: rotate(-6deg); transform-origin: 0 0; }
+.asoma-dem .marco-mini img { width: 100%; transform: translateY(-34%); }
+/* 04 · la noche ya tomó un borde: bloque negro de canto escalonado, con «terror» adentro (sin el título de la novela) */
+.asoma-pro .mancha { position: absolute; inset: 0 0 0 10%; display: flex; align-items: flex-start; padding: 6px 0 0 22%; background: var(--negro); color: var(--terror); clip-path: polygon(18% 0, 100% 0, 100% 100%, 26% 100%, 26% 78%, 9% 78%, 9% 54%, 0 54%, 0 30%, 9% 30%, 9% 10%, 18% 10%); }
+.asoma-pro .mancha span { font-size: min(56cqh, 22cqi); line-height: 0.86; letter-spacing: -0.03em; }
+/* 05 · la arroba del correo */
+.asoma-con { display: flex; align-items: center; justify-content: flex-end; overflow: hidden; }
+.asoma-con i { font-style: normal; font-size: 118cqh; line-height: 0.8; color: var(--arroba); }
+
+/* Entrada, una vez (≈ 2,3 s). A los 0,5 s ya hay nombre y pestañas en pantalla:
+   1. el nombre cae renglón por renglón (0–0,6 s);
+   2. las cinco pestañas suben ABIERTAS EN ABANICO, como un mazo tirado sobre la mesa (0–0,55 s);
+   3. EL GOLPE (≈ 0,6–0,9 s): el abanico se cierra de un golpe, se pasa y rebota; el nombre acusa el impacto;
+   4. cada pestaña enciende lo que asoma de su ficha (0,95–1,9 s) y el fichero se hojea una vez (1,5–2,3 s). */
+@media (prefers-reduced-motion: no-preference) {
+	.n { animation: aterriza 600ms backwards; }
+	.n2 { animation-delay: 60ms; }
+	.n3 { animation-delay: 120ms; }
+	.nombre { animation: acusa 420ms 640ms; }
+	.titular { animation: aparece 400ms ease-out 450ms backwards; }
+	.cabeza { animation: aparece 400ms ease-out 500ms backwards; }
+	.banda {
+		animation:
+			abanico 1000ms backwards calc(20ms + var(--i) * 45ms),
+			hojea 520ms ease-in-out calc(1500ms + var(--i) * 70ms);
+	}
+	.asoma-log .s3 { animation: sube-cerro 800ms var(--sale) 950ms backwards; }
+	.asoma-log .s2 { animation: sube-cerro 800ms var(--sale) 1030ms backwards; }
+	.asoma-log .s1 { animation: sube-cerro 800ms var(--sale) 1110ms backwards; }
+	.asoma-log .cam { animation: traza 700ms var(--peso) 1250ms backwards; }
+	.asoma-log .ban { animation: aparece 160ms steps(2) 1850ms backwards; }
+	.asoma-tec span { animation: corre-cifra 800ms var(--peso) 1050ms backwards; }
+	.asoma-tec b { animation: marca-centavo 380ms var(--rebote) 1700ms backwards; }
+	.asoma-dem .marco-mini { animation: entra-captura 800ms var(--sale) 1150ms backwards; }
+	.asoma-dem .marco-mini img { animation: corre-pantalla 900ms var(--peso) 1250ms backwards; }
+	.asoma-pro .mancha { animation: toma 560ms steps(5, end) 1250ms backwards; }
+	.asoma-con i { animation: entra-canal 800ms var(--peso) 1300ms backwards; }
+}
+@keyframes aterriza {
+	0% { transform: translateY(-0.6em); opacity: 0; animation-timing-function: cubic-bezier(0.55, 0, 0.9, 0.45); }
+	12% { opacity: 1; }
+	62% { transform: translateY(0.045em); animation-timing-function: cubic-bezier(0.2, 0.7, 0.3, 1); }
+	100% { transform: none; }
+}
+@keyframes aparece { from { opacity: 0; } }
+@keyframes abanico {
+	0% { transform: translateY(70vh) rotate(calc(-24deg + var(--i) * 3deg)); animation-timing-function: cubic-bezier(0.2, 0.75, 0.3, 1); }
+	52% { transform: translateY(0) rotate(calc(-3.4deg * (5 - var(--i)))); animation-timing-function: cubic-bezier(0.75, 0, 0.9, 0.5); }
+	72% { transform: translateY(3px) rotate(0.9deg); animation-timing-function: cubic-bezier(0.3, 0.6, 0.5, 1); }
+	86% { transform: translateY(-1px) rotate(-0.35deg); }
+	100% { transform: none; }
+}
+@keyframes acusa {
+	0% { transform: none; }
+	22% { transform: translateY(7px); }
+	55% { transform: translateY(-2px); }
+	100% { transform: none; }
+}
+@keyframes hojea {
+	0%, 100% { transform: none; }
+	40% { transform: translateY(-14px) rotate(-0.6deg); }
+}
+@keyframes sube-cerro { from { transform: translateY(80%); } }
+@keyframes traza { from { stroke-dashoffset: 1; } }
+@keyframes corre-cifra { from { transform: translateX(110%); } }
+@keyframes marca-centavo { from { transform: translateY(-120%); } }
+@keyframes entra-captura { from { transform: translateY(110%) rotate(4deg); } }
+@keyframes corre-pantalla { from { transform: translateY(0); } }
+@keyframes toma { from { clip-path: polygon(100% 0, 100% 0, 100% 100%, 100% 100%, 100% 78%, 100% 78%, 100% 54%, 100% 54%, 100% 30%, 100% 30%, 100% 10%, 100% 10%); } }
+@keyframes entra-canal { from { transform: translateX(60%) rotate(-90deg); opacity: 0; } }
+
+/* Angosto (menos de 380 px): el fragmento queda solo en la fila de la palabra, y el dato usa todo el ancho */
+@media (max-width: 379px) {
+	.asoma, .asoma-dem, .banda:last-child .asoma { bottom: auto; height: 46px; width: 25%; right: calc(40px + 6px); }
+	.asoma-dem { overflow: hidden; }
+	.asoma-dem .marco-mini { height: 400%; }
+	.dato { max-width: none; font-size: 13px; }
+}
+@media (min-width: 768px) {
+	.portada { --F: min(21vw, 13svh); --banda-min: 110px; }
+	.titular { font-size: clamp(19px, 2.4vw, 26px); max-width: 16ch; }
+	.palabra { font-size: clamp(48px, 8vw, 72px); }
+	.cara { padding-top: 10px; }
+	.dato { font-size: 16px; margin-top: 6px; max-width: 58%; }
+	.dato .mas { display: inline; }
+	.asoma { width: 38%; }
+}
+/* Dos columnas desde 1024 px y también en tabletas apaisadas más angostas (1023 × 768: en una columna medía 1,45 pantallas) */
+@media (min-width: 1024px), (min-width: 800px) and (orientation: landscape) and (min-height: 521px) {
+	.portada { display: grid; grid-template-columns: minmax(0, 43fr) minmax(0, 57fr); grid-template-rows: auto 1fr auto; min-height: max(640px, 100svh); }
+	.cabeza { position: static; grid-column: 1; grid-row: 1; padding: 22px 40px 0 var(--margen); }
+	.lugar { width: auto; text-align: left; font-size: 14px; }
+	.cabecera { display: flex; align-items: center; gap: 24px; }
+	.cabecera .enlace { font-size: 15px; }
+	.cabecera .boton { min-height: 44px; font-size: 15px; padding: 0 16px; }
+	.nombre { grid-column: 1; grid-row: 2; align-self: center; font-size: min(12.6vw, 20.5svh); padding-right: 40px; }
+	.titular { font-size: clamp(19px, 1.6vw, 25px); }
+	.bajada-portada {
+		display: block;
+		grid-column: 1;
+		grid-row: 3;
+		padding: 0 40px 44px var(--margen);
+		max-width: calc(34ch + var(--margen));
+		font-size: 17px;
+		line-height: 1.45;
+		color: var(--tinta-2);
+		text-wrap: pretty;
+	}
+	.pila { grid-column: 2; grid-row: 1 / 4; margin-top: calc(var(--oreja) + 24px); min-height: 0; }
+	.pila ol { grid-template-rows: repeat(5, minmax(0, 1fr)); }
+	.pila .p1 .oreja { padding-left: 40px; }
+	.palabra { font-size: min(7vw, 9.6svh); }
+	.cara { padding-left: 40px; padding-top: 8px; }
+	.dato { font-size: 17px; max-width: 64%; text-wrap: nowrap; }
+	.dato .mas { display: none; }
+	.asoma { width: 32%; right: calc(40px + 24px); }
+}
+/* Todo el alto de la portada tiene que entrar en la pantalla (QA Q5): estos ajustes cubren los tamaños donde la pila,
+   con sus dos líneas de dato, era más alta que lo que dejaba el nombre. */
+/* Tableta en vertical: el nombre y las palabras bajan un escalón y los renglones extra del dato (`.mas`) se omiten */
+@media (min-width: 768px) and (max-width: 1023px) and (orientation: portrait) {
+	.portada { --F: min(21vw, 10.5svh); }
+	.palabra { font-size: clamp(44px, 5.4svh, 72px); }
+	.dato .mas { display: none; }
+}
+/* Teléfono vertical bajo (375 × 667, 360 × 640, 320 × 640): pestañas más compactas */
+@media (max-width: 767px) and (max-height: 700px) {
+	.portada { --banda-min: 86px; --F: max(44px, min(30vw, calc((100svh - 90px - 5 * var(--banda-min)) / 2.62))); }
+	.palabra { font-size: clamp(36px, 10.4vw, 96px); }
+	.dato { font-size: 13px; }
+}
+/* Teléfono vertical muy bajo (320 × 568): el nombre y las pestañas un escalón más chicos, para que «Contacto» entre sin desplazar */
+@media (max-width: 767px) and (max-height: 600px) {
+	.portada { --banda-min: 72px; --F: 34px; }
+	.nombre { padding-top: 8px; }
+	.pila { margin-top: calc(var(--oreja) + 6px); }
+	.palabra { font-size: 32px; }
+	.dato { font-size: 12px; }
+	.cara { padding-bottom: calc(var(--oreja) + 1px); }
+}
+/* Portátil de poca altura (1366 × 657, 1280 × 720) */
+@media (max-height: 740px) and ((min-width: 1024px) or ((min-width: 800px) and (orientation: landscape) and (min-height: 521px))) {
+	.palabra { font-size: min(7vw, 8svh); }
+	.cara { padding-top: 6px; }
+}
+/* Celular apaisado (844 × 390) y zoom alto: nombre a la izquierda, pila a la derecha, todo en una pantalla */
+@media (orientation: landscape) and (max-height: 520px) and (max-width: 1023px) {
+	/* solapa más baja: con pestañas de ~70 px, palabra y dato quedan enteros por encima de la solapa de abajo */
+	.portada { display: grid; grid-template-columns: minmax(0, 42fr) minmax(0, 58fr); grid-template-rows: auto 1fr; --banda-min: 56px; --oreja: 18px; --corte: 11px; }
+	.portada .oreja { font-size: 11px; }
+	.portada .oreja .num { font-size: 12px; }
+	.cabeza { position: static; grid-column: 1; grid-row: 1; padding: 12px 16px 0 var(--margen); justify-content: flex-start; }
+	.lugar { width: auto; text-align: left; }
+	.nombre { grid-column: 1; grid-row: 2; align-self: center; font-size: min(10.5vw, 21svh); padding: 0 16px 12px var(--margen); }
+	.titular { font-size: 15px; }
+	.pila { grid-column: 2; grid-row: 1 / 3; margin-top: calc(var(--oreja) + 10px); min-height: calc(5 * var(--banda-min)); }
+	.pila ol { grid-template-rows: repeat(5, minmax(var(--banda-min), 1fr)); }
+	.palabra { font-size: min(4.6vw, 8svh); }
+	.dato { font-size: 13px; margin-top: 1px; max-width: 56%; }
+	.dato .mas { display: none; }
+	.cara { padding-top: 2px; }
+	.asoma { width: 30%; }
+}

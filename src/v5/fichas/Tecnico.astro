@@ -1,0 +1,199 @@
+---
+// Ficha Técnico de la portada: tres páginas.
+// 1 · Tapa: el barrido del centavo (la factura contra el sistema, dígito por dígito) y «Cómo trabajo».
+// 2 · El caso: «40 → 300+» con una marca por factura.
+// 3 · Herramientas propias: dos cartas cruzadas, el método con Claude y el laboratorio de modelos, que llevan a su página de
+//     /tecnico/. Sin piezas publicables, esta página no se genera.
+// Los textos y las cifras salen de src/lib y src/content; el circuito y la autoría completos viven en /tecnico/.
+import { getCollection } from 'astro:content';
+import Ficha from '../Ficha.astro';
+import Pagina from '../Pagina.astro';
+import TituloFicha from '../TituloFicha.astro';
+import './tecnico-comun.css';
+import '../../styles/v5/cartas.css';
+import { circuitoLector } from '../../lib/circuito.ts';
+import { cv } from '../../lib/datos-pendientes.ts';
+import { esDeCamino, obraPrincipal } from '../../lib/contenido.ts';
+import { esPublicable } from '../../lib/estados.ts';
+import { capitalizar, textoEstadoDemo } from '../../lib/presentacion.ts';
+import { piezasTecnico } from '../../lib/proyectos.ts';
+import { comoTrabajo } from '../../lib/sitio.ts';
+import { estiloDePieza, idDePieza } from './piezas-tecnico';
+import { frases, jornada, rotulosJornada } from './tecnico-datos';
+
+// El caso principal (el de menor `orden` entre los destacados) y su cifra: sin `medicion` no se muestra.
+const casos = (await getCollection('casos', ({ data }) => esPublicable(data))).filter((c) => esDeCamino(c.data, 'tecnico'));
+const caso = obraPrincipal(casos);
+const cifras = jornada(caso?.data.resultado);
+const linea = caso?.data.lineaObra;
+
+// El centavo: la fila de la factura y la del sistema, carácter por carácter. Sale del paso del circuito que compara.
+const acerca = circuitoLector.find((p) => p.acercamiento)?.acercamiento;
+const factura = acerca ? [...acerca.factura] : [];
+const sistema = acerca ? [...acerca.sistema.join('')] : [];
+const espacio = '\u00A0';
+// Una columna «dif» es la que cambia; el resto coincide (y lleva «=»; el espacio fijo no lleva signo).
+const difiere = (i: number): boolean => factura[i] !== sistema[i];
+const signo = (i: number): string | undefined => (factura[i] === espacio ? undefined : difiere(i) ? '≠' : '=');
+
+// «Cómo trabajo»: la primera oración es el principio y la segunda, lo que dice de sí mismo (todo de lib/sitio.ts). La tercera
+// («En cada trabajo digo…») queda para /tecnico/, donde el párrafo va entero.
+const [principio, ...resto] = frases(comoTrabajo);
+
+// Las piezas propias del camino técnico (método, laboratorio): salen de la colección `proyectos`, por `orden`.
+const piezas = piezasTecnico(await getCollection('proyectos'));
+---
+
+<Ficha id="tecnico">
+	<Pagina titulo="Tapa" tapa>
+		<TituloFicha id="tecnico" palabra="Técnico" resto="e IA" />
+		{
+			acerca && factura.length === sistema.length && (
+				<figure class="centavo-b der">
+					<div class="tabla-b cartel">
+						<p class="rot-b">Factura</p>
+						<p class="cifras arriba">{factura.map((c) => <span>{c}</span>)}</p>
+						<p class="signos" aria-hidden="true">{factura.map((_, i) => <span class:list={{ dif: difiere(i) }} data-s={signo(i)} />)}</p>
+						<p class="cifras abajo">{sistema.map((c, i) => <span class:list={{ dif: difiere(i) }}>{i === 0 && <span class="solo-lector">Sistema: </span>}{c}</span>)}</p>
+						<p class="rot-b abajo-r" aria-hidden="true">Sistema</p>
+					</div>
+					<figcaption class="veredicto">{acerca.veredicto}</figcaption>
+				</figure>
+			)
+		}
+		<section class="como" aria-labelledby="t-como">
+			<h3 class="rotulo" id="t-como">Cómo trabajo</h3>
+			<p class="principio-c">{principio}</p>
+			{resto.length > 0 && <p class="honesto">{resto[0]}</p>}
+		</section>
+		<div class="acciones pg-pie">
+			<a class="boton" href={caso ? `/casos/${caso.id}/` : '/tecnico/'} data-salir>Ver el caso <span class="flecha" aria-hidden="true">→</span></a>
+			{
+				cv.tecnico && (
+					<a class="enlace baja" href={cv.tecnico.archivo} download>
+						<span class="etq"><span class="largo">Descargar </span>CV</span><span class="solo-lector">: {cv.tecnico.detalle}</span>
+					</a>
+				)
+			}
+		</div>
+	</Pagina>
+	{
+		caso && (
+			<Pagina titulo="El caso">
+				<p class="rotulo">Caso de estudio · anonimizado</p>
+				<h3 class="pg-sub largo">{caso.data.titulo}</h3>
+				{
+					cifras && (
+						<figure class="jornada der">
+							<div class="grupo antes">
+								<span class="rot-g rotulo">{rotulosJornada.antes}</span>
+								<span class="cifra-j cartel">{cifras.antes.cifra}</span>
+								<span class="marcas" data-marcas={cifras.antes.marcas} aria-hidden="true" />
+							</div>
+							<div class="grupo ahora">
+								<span class="rot-g rotulo">{rotulosJornada.ahora}</span>
+								<span class="cifra-j cartel">{cifras.ahora.cifra}</span>
+								<span class="marcas" data-marcas={cifras.ahora.marcas} aria-hidden="true" />
+							</div>
+							<figcaption>
+								<span class="unidad">{cifras.unidad}<span class="una" aria-hidden="true"> · una marca, una factura</span></span>
+							</figcaption>
+						</figure>
+					)
+				}
+				{cifras && <p class="nota">{cifras.medicion}{linea ? ` ${linea}` : ''}</p>}
+				<div class="acciones pg-pie">
+					<a class="boton" href="/tecnico/#el-caso" data-salir>Ver el caso y la demo <span class="flecha" aria-hidden="true">→</span></a>
+				</div>
+			</Pagina>
+		)
+	}
+	{
+		piezas.length > 0 && (
+			<Pagina titulo="Herramientas propias">
+				<p class="rotulo">Proyectos propios</p>
+				<h3 class="pg-sub">Herramientas propias</h3>
+				<p class="texto">Lo que diseñé para trabajar con IA: un método y un laboratorio de pruebas.</p>
+				<div class="cruce der">
+					{
+						piezas.map((p, i) => (
+							<a class={`carta-p ${estiloDePieza(i).chica}`} href={`/tecnico/#${idDePieza(p)}`} data-salir data-color="var(--azurita)">
+								<span class="rotulo">{capitalizar(textoEstadoDemo(p.estado))}</span>
+								<b>{p.pagina}</b>
+								<span class="ir">Ver resumen<span class="solo-lector">: {p.titulo}</span></span>
+							</a>
+						))
+					}
+				</div>
+			</Pagina>
+		)
+	}
+</Ficha>
+
+<style is:global>
+	/* Estilos propios de la ficha Técnico. Todos los selectores empiezan con .f-tecnico.
+	   Las marcas «40 → 300+» están en tecnico-comun.css; la fuente Red Hat Mono, en fuentes.css. */
+
+	/* --- Tapa: el barrido del centavo. Las cifras son texto real; el JS solo mueve --p --- */
+	.f-tecnico .centavo-b { --s: calc(clamp(0, (var(--p) - 0.15) / 0.7, 1) * 10); flex: 1 1 auto; min-height: 210px; display: flex; flex-direction: column; justify-content: center; container-type: size; }
+	.f-tecnico .tabla-b {
+		display: grid;
+		grid-template-columns: repeat(10, auto);
+		justify-content: start;
+		font-size: min(24.5cqi, calc((100cqh - 92px) / 2.2), 170px);
+		line-height: 0.82;
+	}
+	.f-tecnico .tabla-b > * { grid-column: 1 / -1; }
+	.f-tecnico .tabla-b .cifras, .f-tecnico .tabla-b .signos { display: grid; grid-template-columns: subgrid; }
+	.f-tecnico .tabla-b .cifras { font-variant-numeric: tabular-nums lining-nums; white-space: nowrap; letter-spacing: 0; }
+	.f-tecnico .tabla-b .cifras > span, .f-tecnico .tabla-b .signos > span {
+		--a: clamp(0, (var(--s) - var(--i)) * 2, 1);
+		--b: clamp(0, (var(--s) - var(--i) - 1) * 2, 1);
+		position: relative;
+		display: block;
+		text-align: center;
+		padding: 0.06em 0.012em;
+		background: color-mix(in srgb, var(--claro) calc((var(--a) - var(--b)) * 18%), transparent);
+	}
+	.f-tecnico .tabla-b .abajo > span { opacity: calc(0.35 + 0.65 * var(--a)); }
+	.f-tecnico .tabla-b .signos { font-family: var(--f-texto); font-weight: 700; line-height: 1; }
+	.f-tecnico .tabla-b .signos > span { height: 0.4em; font-size: 1em; }
+	.f-tecnico .tabla-b .signos > span::before { content: attr(data-s); position: absolute; left: 50%; top: 50%; font-size: 0.22em; color: var(--texto-2); opacity: var(--b); transform: translate(-50%, -50%) scale(calc(0.5 + 0.5 * var(--b))); }
+	.f-tecnico .tabla-b .signos > span.dif::before { font-size: 0.34em; color: var(--claro); opacity: var(--a); transform: translate(-50%, -50%) scale(calc(0.4 + 0.6 * var(--a))); }
+	.f-tecnico .tabla-b .abajo > span.dif { z-index: 0; color: color-mix(in srgb, var(--azurita) calc(var(--a) * 100%), var(--claro)); opacity: 1; }
+	.f-tecnico .tabla-b .abajo > span.dif::before { content: ''; position: absolute; z-index: -1; inset: 0.02em -0.02em 0.02em; background: var(--claro); transform: scaleY(var(--a)); transform-origin: 50% 100%; }
+	.f-tecnico .tabla-b span:nth-child(1) { --i: 0; } .f-tecnico .tabla-b span:nth-child(2) { --i: 1; } .f-tecnico .tabla-b span:nth-child(3) { --i: 2; }
+	.f-tecnico .tabla-b span:nth-child(4) { --i: 3; } .f-tecnico .tabla-b span:nth-child(5) { --i: 4; } .f-tecnico .tabla-b span:nth-child(6) { --i: 5; }
+	.f-tecnico .tabla-b span:nth-child(7) { --i: 6; } .f-tecnico .tabla-b span:nth-child(8) { --i: 7; } .f-tecnico .tabla-b span:nth-child(9) { --i: 8; }
+	.f-tecnico .tabla-b span:nth-child(10) { --i: 9; }
+	.f-tecnico .tabla-b .rot-b { display: flex; font-family: var(--f-texto); font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; line-height: 1.3; color: var(--texto-2); padding: 0 0 4px; }
+	.f-tecnico .tabla-b .rot-b.abajo-r { padding: 4px 0 0; }
+	.f-tecnico .centavo-b .veredicto { margin-top: 14px; font-family: var(--f-cartel); font-stretch: 85%; font-weight: 700; font-size: clamp(22px, 6.2vw, 32px); line-height: 1.1; opacity: clamp(0, (var(--s) - 9) * 2, 1); transform: translateX(calc((1 - clamp(0, (var(--s) - 9) * 2, 1)) * 24px)); }
+
+	/* --- Tapa: Cómo trabajo --- */
+	.f-tecnico .como { padding-top: 12px; border-top: 1px solid var(--regla); }
+	.f-tecnico .como .principio-c { margin-top: 4px; font-family: var(--f-cartel); font-stretch: 85%; font-weight: 600; font-size: clamp(21px, 5.9vw, 38px); line-height: 1.08; letter-spacing: -0.012em; text-wrap: balance; }
+	.f-tecnico .como .honesto { margin-top: 6px; font-size: 15px; line-height: 1.4; color: var(--texto-2); max-width: 44ch; }
+
+	@media (min-width: 1024px), (orientation: landscape) and (max-height: 520px) and (min-width: 640px) {
+		.f-tecnico .centavo-b { min-height: 0; }
+	}
+	@media (max-height: 760px) and (max-width: 767px) {
+		.f-tecnico .centavo-b { min-height: 170px; }
+		.f-tecnico .como .principio-c { font-size: 20px; }
+	}
+	@media (orientation: landscape) and (max-height: 520px) {
+		.f-tecnico .centavo-b { min-height: 0; max-height: calc(100svh - var(--cabeza) - var(--pag) - 30px); }
+		.f-tecnico .como .principio-c { font-size: 19px; }
+	}
+	/* Herramientas propias, en el celular: «Ver resumen» de la carta de arriba sube un poco, para que la carta de abajo, que
+	   la cruza, no le tape el subrayado (con «Abrir» no llegaba a tocarla) */
+	@media (max-width: 767px) {
+		.f-tecnico .carta-p.a .ir { margin-bottom: 14px; }
+	}
+	/* Angosto (menos de 360 px): «Ver el caso» y la descarga entran en una fila. «Descargar » sale de la vista, pero queda
+	   en el nombre accesible («Descargar CV: PDF · …»), que así contiene el rótulo visible (2.5.3). */
+	@media (max-width: 359px) {
+		.f-tecnico .tapa .acciones .largo { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+	}
+</style>
