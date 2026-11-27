@@ -17,7 +17,7 @@ import { leerBloque, leerFrontmatter } from '../frontmatter.mjs';
 const RAIZ = fileURLToPath(new URL('../..', import.meta.url));
 
 // Los literales: cada uno copia lo que dice una página del sitio.
-const TECNICO = { palabra: 'Desarrollo', resto: 'de software y automatización', linea: 'El importe, al centavo.' }; // tecnico.astro, Portada.astro
+const TECNICO = { palabra: 'Desarrollo', resto: 'de software y automatización', linea: 'Con IA · remoto' }; // tecnico.astro, Portada.astro (la etiqueta de la pestaña dice «e IA · desarrollo de software y automatización · remoto»: lo primero y lo último; el título ya dice lo del medio)
 const LOGISTICA = { palabra: 'Logística', resto: 'y minería' }; // fichas/Logistica.astro
 const CASOS = { rotulo: 'Archivo · casos anonimizados', palabra: 'Casos', resto: 'de estudio' }; // casos/index.astro
 const ROTULO_CASO = 'Caso de estudio · anonimizado'; // interiores/Expediente.astro
@@ -121,7 +121,7 @@ export async function laminas() {
 			resto: TECNICO.resto,
 			linea: TECNICO.linea,
 			tamano: TAMANO.tecnico,
-			alt: `${nombre.completo}. ${tecnico.nombre}: ${TECNICO.palabra.toLowerCase()} ${TECNICO.resto}. ${TECNICO.linea.replace(/\.$/, '')}: una diferencia de 0,01 resaltada.`,
+			alt: `${nombre.completo}. ${tecnico.nombre}: ${TECNICO.palabra.toLowerCase()} ${TECNICO.resto}, remoto. Una diferencia de 0,01 resaltada.`,
 		},
 		{
 			clave: 'logistica',

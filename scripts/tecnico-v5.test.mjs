@@ -27,7 +27,7 @@ test('frases: parte en oraciones sin cortar cifras ni abreviaturas del texto rea
 	const f = frases(comoTrabajo);
 	assert.equal(f.length, 3);
 	assert.ok(f[0].startsWith('Entiendo el problema'));
-	assert.ok(f[1].startsWith('Programo desde 2014'));
+	assert.ok(f[1].startsWith('Diseño los sistemas'));
 	assert.ok(f[2].startsWith('Las ideas y los diseños son míos'));
 	assert.equal(f.join(' '), comoTrabajo);
 });

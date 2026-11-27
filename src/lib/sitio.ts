@@ -11,7 +11,7 @@ export const ubicacion = 'San Juan, Argentina';
 export const nombre = { primero: 'Matías', segundo: 'Ariel', apellido: 'Ormeño', completo: 'Matías Ariel Ormeño' } as const;
 
 /** Titular y bajada de la portada v5 (la bajada repite la afirmación del camino técnico). */
-export const titular = 'Logística minera y automatización con IA';
+export const titular = 'Desarrollo de software y automatización con IA';
 export const bajadaPortada =
 	'Diseño automatizaciones para el área administrativa, dirijo su desarrollo con IA y las verifico con pruebas automáticas.';
 
@@ -48,7 +48,7 @@ export const comprobantesPorMes = 'más de 2.000 comprobantes por mes';
 /** Párrafo "Cómo trabajo" de la portada y del camino técnico. */
 export const comoTrabajo =
 	'Entiendo el problema, defino las reglas y compruebo que funcione, con pruebas automáticas. ' +
-	'Programo desde 2014; hoy diseño los sistemas y dirijo el desarrollo con IA, con pruebas y revisión de seguridad. ' +
+	'Diseño los sistemas y dirijo el desarrollo con IA, con pruebas y revisión de seguridad. ' +
 	'Las ideas y los diseños son míos; la IA escribe el código bajo mi dirección y cada trabajo detalla mi parte.';
 
 /** Las dos frases que /tecnico/ resalta en la primera oración de `comoTrabajo` (están dentro de ella: sitio.test.mjs lo comprueba). */

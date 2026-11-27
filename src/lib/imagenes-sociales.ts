@@ -8,6 +8,6 @@ export const imagenesSociales = {
 	'caso-tableros-gerencia': { archivo: '/og/caso-tableros-gerencia-2e33944b1d.png', alt: 'Matías Ariel Ormeño. Caso de estudio anonimizado: Tableros de gestión para la gerencia, con números que cierran.' },
 	casos: { archivo: '/og/casos-aa86b27b78.png', alt: 'Matías Ariel Ormeño. Casos de estudio anonimizados, apilados como expedientes de colores.' },
 	logistica: { archivo: '/og/logistica-ef2b8c9bd8.png', alt: 'Matías Ariel Ormeño. Logística y minería: Vicuña, Veladero y Pachón, sobre el dibujo de una cordillera.' },
-	portada: { archivo: '/og/portada-7173a532e9.png', alt: 'Matías Ariel Ormeño. Logística minera y automatización con IA. Cinco pestañas de colores: Logística, Técnico, Demos, Proyectos y Contacto.' },
-	tecnico: { archivo: '/og/tecnico-9ec4c12906.png', alt: 'Matías Ariel Ormeño. Técnico e IA: desarrollo de software y automatización. El importe, al centavo: una diferencia de 0,01 resaltada.' },
+	portada: { archivo: '/og/portada-b6544d996f.png', alt: 'Matías Ariel Ormeño. Desarrollo de software y automatización con IA. Cinco pestañas de colores: Logística, Técnico, Demos, Proyectos y Contacto.' },
+	tecnico: { archivo: '/og/tecnico-8a4beb8675.png', alt: 'Matías Ariel Ormeño. Técnico e IA: desarrollo de software y automatización, remoto. Una diferencia de 0,01 resaltada.' },
 } as const satisfies Record<string, { archivo: string; alt: string }>;

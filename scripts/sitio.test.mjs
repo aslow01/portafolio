@@ -38,12 +38,13 @@ test('telefonoVisible: espacios duros (U+00A0) para que el número no se parta, 
 
 test('"Cómo trabajo" y "Estudios" tienen una sola fuente (sitio.ts): ningún archivo de src/ los repite', () => {
 	assert.match(comoTrabajo, /^Entiendo el problema, defino las reglas/);
-	assert.match(comoTrabajo, /Programo desde 2014/);
+	assert.match(comoTrabajo, /Diseño los sistemas y dirijo el desarrollo con IA/);
+	assert.doesNotMatch(comoTrabajo, /2014/);
 	assert.match(estudiosActuales, /UTN\), en curso$/);
 	assert.ok(fuentesDelTexto.some((r) => rel(r).startsWith('v5/')), 'la prueba no está mirando los archivos de la v5');
 	for (const ruta of fuentesDelTexto) {
 		const t = texto(ruta);
-		assert.doesNotMatch(t, /Programo desde 2014/, rel(ruta));
+		assert.doesNotMatch(t, /Diseño los sistemas y dirijo el desarrollo con IA/, rel(ruta));
 		assert.doesNotMatch(t, /Tecnicatura Universitaria en Programación a Distancia/, rel(ruta));
 		assert.doesNotMatch(t, /Entiendo el problema, defino las reglas/, rel(ruta));
 	}

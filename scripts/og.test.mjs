@@ -68,9 +68,12 @@ test('el texto de las láminas (lo que se dibuja y los alt) no trae datos privad
 });
 
 test('los literales de la plantilla siguen escritos en su página de src/ (si el sitio cambia, la imagen no queda diciendo otra cosa)', () => {
+	// [lo que dice la página, la página, lo que dibuja la lámina si no es la misma frase]
 	const fuentes = [
 		['de software y automatización', 'src/pages/tecnico.astro'],
-		['el importe, al centavo', 'src/v5/Portada.astro'],
+		// «Con IA · remoto» resume la etiqueta de la pestaña («e IA · … · remoto»): si cambia cualquiera de las dos puntas, hay que mirar la lámina
+		['>e IA<', 'src/v5/Portada.astro', 'Con IA'],
+		['· remoto', 'src/v5/Portada.astro'],
 		['y minería', 'src/v5/fichas/Logistica.astro'],
 		['Archivo · casos anonimizados', 'src/pages/casos/index.astro'],
 		['Caso de estudio · anonimizado', 'src/v5/interiores/Expediente.astro'],
@@ -80,7 +83,7 @@ test('los literales de la plantilla siguen escritos en su página de src/ (si el
 	}
 	// Y la lámina los usa tal cual.
 	const texto = JSON.stringify(lista).toLowerCase();
-	for (const [frase] of fuentes) assert.ok(texto.includes(frase.toLowerCase()), `ninguna lámina dice «${frase}»`);
+	for (const [frase, , enLamina = frase] of fuentes) assert.ok(texto.includes(enLamina.toLowerCase()), `ninguna lámina dice «${enLamina}»`);
 });
 
 // --- Los colores de og.css son los de tokens.css ----------------------------------------------------------------

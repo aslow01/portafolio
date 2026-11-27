@@ -56,7 +56,7 @@ El script usa Playwright como `verificar:paginas` (no es dependencia; ver más a
 
 Matías Ariel Ormeño diseñó el sitio, decidió qué se muestra y qué no, dirigió el trabajo y verificó el resultado. **El código, los estilos y las pruebas se desarrollaron con una IA (Claude, de Anthropic) bajo su dirección**: los commits llevan su coautoría. Las revisiones de código, de accesibilidad y las pruebas de uso las hicieron también agentes de IA; las decisiones de contenido y de diseño son de Matías.
 
-Matías programa desde 2014 y cursa la Tecnicatura Universitaria en Programación a Distancia (UTN). En este sitio delegó la escritura del código en la IA y se ocupó de dirigirla: qué construir, cómo probarlo y qué revisar antes de publicar. El pie de la ficha de Contacto lo dice también: «Sitio diseñado y dirigido por mí; desarrollado con IA».
+Matías cursa la Tecnicatura Universitaria en Programación a Distancia (UTN). En este sitio delegó la escritura del código en la IA y se ocupó de dirigirla: qué construir, cómo probarlo y qué revisar antes de publicar. El pie de la ficha de Contacto lo dice también: «Sitio diseñado y dirigido por mí; desarrollado con IA».
 
 ## Stack
 
