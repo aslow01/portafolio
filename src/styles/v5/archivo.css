@@ -306,3 +306,13 @@
 	transition: transform 200ms var(--sale);
 }
 .a-archivo:hover .flecha { transform: translateX(4px); }
+
+/* Selector de idioma del índice de casos: arriba a la derecha de la cabeza, sin empujar el rótulo. */
+.archivo-cab { position: relative; }
+.archivo-cab .idioma { position: absolute; top: 0; right: calc(var(--margen) - 3px); }
+
+/* «(ES)»: la forma corta del aviso «(Spanish)» junto al CV en español, solo donde «Download the» se oculta (EnlacesDeContacto.astro). */
+.contacto-archivo .corta { display: none; }
+@media (max-width: 767px) and (orientation: portrait) {
+	.contacto-archivo .corta { display: inline; }
+}

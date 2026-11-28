@@ -325,12 +325,16 @@ test('las páginas que se indexan: canónica propia, descripción, imagen social
 		// X lee las etiquetas twitter: iguales a las og: (la imagen y su texto alternativo), y el tipo depende de la página.
 		if (p.meta.twitterImagen !== p.meta.ogImagen) problemas.push(`${ruta}: twitter:image (${p.meta.twitterImagen}) no es og:image (${p.meta.ogImagen})`);
 		if (p.meta.twitterImagenAlt !== p.meta.ogImagenAlt) problemas.push(`${ruta}: twitter:image:alt no es og:image:alt`);
-		const esCaso = /^\/casos\/[^/]+\/$/.test(ruta);
+		// /en/… es la misma página en inglés: su imagen es la de la misma clave con el prefijo `en-`.
+		const enIngles = ruta.startsWith('/en/');
+		const base = enIngles ? ruta.slice(3) : ruta;
+		const esCaso = /^\/casos\/[^/]+\/$/.test(base);
 		const tipo = esCaso ? 'article' : 'website';
 		if (p.meta.ogTipo !== tipo) problemas.push(`${ruta}: og:type es ${p.meta.ogTipo} y debería ser ${tipo}`);
 		// Cada página, con SU imagen: la portada, Técnico, el índice de casos y cada caso (nombre de archivo: clave y huella).
-		const clave = esCaso ? `caso-${ruta.split('/')[2]}` : IMAGEN_DE_PAGINA[ruta];
-		if (clave && !imagen?.pathname.startsWith(`/og/${clave}-`)) problemas.push(`${ruta}: og:image debería ser /og/${clave}-… y es ${imagen?.pathname}`);
+		const clave = esCaso ? `caso-${base.split('/')[2]}` : IMAGEN_DE_PAGINA[base];
+		const prefijo = `/og/${enIngles ? 'en-' : ''}${clave}-`;
+		if (clave && !imagen?.pathname.startsWith(prefijo)) problemas.push(`${ruta}: og:image debería ser ${prefijo}… y es ${imagen?.pathname}`);
 	}
 	assert.deepEqual(problemas, []);
 });

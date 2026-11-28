@@ -1,7 +1,7 @@
 // Los topes de página de la web v5, en funciones puras. Node puro: npm test
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { PAGINAS_SIN_FICHA, TAMANOS, TAMANOS_CASOS, TOPE_ABSOLUTO, esPaginaSinFicha, paginasAMedir, problemaDeRazon, razonDeDocumento, rutasDeCasos, topeDeRazon } from './criterios-pantalla.mjs';
+import { PAGINAS_SIN_FICHA, TAMANOS, TAMANOS_CASOS, TOPE_ABSOLUTO, esPaginaSinFicha, paginasAMedir, paginasAMedirEn, problemaDeRazon, razonDeDocumento, rutasDeCasos, topeDeRazon } from './criterios-pantalla.mjs';
 
 const tam = (nombre) => TAMANOS.find((t) => t.nombre === nombre);
 
@@ -56,6 +56,10 @@ test('las páginas sin ficha (el índice /casos/ y la 404) se miden como documen
 	assert.equal(esPaginaSinFicha('/casos/uno/'), false);
 	assert.equal(esPaginaSinFicha('/tecnico/'), false);
 	assert.equal(esPaginaSinFicha('/#logistica'), false);
+	// El índice en inglés también es una página sin ficha.
+	assert.equal(esPaginaSinFicha('/en/casos/'), true);
+	assert.equal(esPaginaSinFicha('/en/casos/uno/'), false);
+	assert.equal(esPaginaSinFicha('/en/tecnico/'), false);
 });
 
 test('razonDeDocumento: alto del documento ÷ alto visible, con los mismos topes; sin alto visible, infinito', () => {
@@ -64,6 +68,12 @@ test('razonDeDocumento: alto del documento ÷ alto visible, con los mismos topes
 	assert.equal(razonDeDocumento(100, 0), Infinity);
 	assert.equal(problemaDeRazon(razonDeDocumento(649, 640), tam('320x640')), undefined);
 	assert.notEqual(problemaDeRazon(razonDeDocumento(900, 640), tam('320x640')), undefined);
+});
+
+test('paginasAMedirEn y rutasDeCasos con prefijo: lo mismo bajo /en/, sin la 404', () => {
+	assert.deepEqual(paginasAMedirEn(['/en/casos/uno/']), ['/en/#logistica', '/en/#tecnico', '/en/#demos', '/en/#proyectos', '/en/#contacto', '/en/tecnico/', '/en/casos/', '/en/casos/uno/']);
+	const dir = (nombre, esDir) => ({ name: nombre, isDirectory: () => esDir });
+	assert.deepEqual(rutasDeCasos([dir('uno', true), dir('index.html', false)], '/en'), ['/en/casos/uno/']);
 });
 
 test('paginasAMedir: el índice /casos/ va entre las ya conocidas, antes de los casos; la 404 al final', () => {

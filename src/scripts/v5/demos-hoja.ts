@@ -13,8 +13,14 @@
 // la hoja abierta deja la misma ficha abierta (el hash no cambia), así que el manejador de pestanas.ts no tiene nada que hacer.
 
 // El import también hace de este archivo un módulo: si no, TypeScript lo toma por un script global y sus constantes chocan con las de pestanas.ts.
-import { tituloAutoria } from '../../lib/contenido.ts';
+import { tituloAutoriaDe } from '../../lib/contenido.ts';
 import { cierraPorFondo } from '../../lib/paginas.ts';
+import { idiomaDe, traductor } from '../../i18n/idioma.ts';
+
+// El idioma de la página es el de <html lang> (lo pone BaseV5 según la dirección).
+const idioma = idiomaDe(document.documentElement.lang);
+const tr = traductor(idioma);
+const tituloAutoria = tituloAutoriaDe(idioma);
 
 const d = document;
 const quieto = matchMedia('(prefers-reduced-motion: reduce)');
@@ -70,14 +76,14 @@ if (typeof HTMLDialogElement === 'function') {
 		const oreja = crear('div', 'hoja-oreja');
 		oreja.setAttribute('aria-hidden', 'true');
 		const solapa = crear('span', 'oreja');
-		solapa.append(crear('span', 'num', '03'), crear('span', '', 'Autoría'));
+		solapa.append(crear('span', 'num', '03'), crear('span', '', tr('Autoría', 'Authorship')));
 		oreja.append(solapa);
 		const cuerpo = crear('div', 'hoja-cuerpo');
 		const cabeza = crear('div', 'hoja-cabeza');
 		const h = crear('h2', '', textoTitulo);
 		h.id = `${dlg.id}-t`;
 		h.tabIndex = -1;
-		const x = crear('button', 'cerrar-hoja', 'Cerrar');
+		const x = crear('button', 'cerrar-hoja', tr('Cerrar', 'Close'));
 		x.type = 'button';
 		cabeza.append(h, x);
 		cuerpo.append(cabeza, flujo);

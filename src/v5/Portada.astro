@@ -3,41 +3,48 @@
 // muestra un fragmento de lo que tiene adentro. Los enlaces de la pila son #<ficha>: el script (pestanas.ts) los
 // intercepta y abre la ficha; sin JavaScript, llevan a la ficha, que queda en el flujo debajo.
 // Los textos salen de datos.ts y de src/lib/*: nada de cifras escritas a mano acá.
-import { getCollection } from 'astro:content';
 import { Image } from 'astro:assets';
 import '../styles/v5/portada.css';
 import flotaMovil from '../assets/capturas/flota-alertas-movil-clara.png';
 import { demoVisible } from '../lib/estados';
 import { proyectosV5 } from '../lib/proyectos';
 import { listaConY } from '../lib/presentacion';
-import { bajadaPortada, correo, cuentaDemos, duracionAltaMontana, ficha, linkedin, minas, nombre, telefono, textoProyectos, titular, ubicacion } from './datos';
+import { textosSitio } from '../lib/sitio';
+import { correo, cuentaDemos, duracionAltaMontana, ficha, linkedin, minas, nombre, telefono, textoProyectos } from './datos';
+import SelectorIdioma from './SelectorIdioma.astro';
+import { demosDe, proyectosDe } from '../i18n/colecciones';
+import { idiomaDe, traductor } from '../i18n/idioma';
 
-const demos = await getCollection('demos', ({ data }) => demoVisible(data));
+const idioma = idiomaDe(Astro.currentLocale);
+const t = traductor(idioma);
+const { titular, bajadaPortada, ubicacion } = textosSitio(idioma);
+const demos = await demosDe(idioma, ({ data }) => demoVisible(data));
 // Los mismos proyectos que la ficha Proyectos (si no, la pestaña diría «un juego» y la ficha mostraría también la novela).
 // De la novela no se lee ninguna entrada, solo sus textos fijos: ver lib/proyectos.ts.
-const proyectos = proyectosV5(await getCollection('proyectos'));
+const proyectos = proyectosV5(await proyectosDe(idioma), undefined, idioma);
 
 const { vivas, desarrollo } = cuentaDemos(demos.map((d) => d.data.estado));
-const partesDemos = [vivas > 0 && `${vivas} en vivo`, desarrollo > 0 && `${desarrollo} en desarrollo`].filter((x): x is string => !!x);
-const { lista: listaProyectos, comparten } = textoProyectos(proyectos.map((p) => p.tipo));
+const partesDemos = [vivas > 0 && `${vivas} ${t('en vivo', 'live')}`, desarrollo > 0 && `${desarrollo} ${t('en desarrollo', 'in development')}`].filter((x): x is string => !!x);
+const { lista: listaProyectos, comparten } = textoProyectos(proyectos.map((p) => p.tipo), idioma);
 // WhatsApp solo si el teléfono público está activado (datos-pendientes.ts).
-const canales = listaConY(['correo', ...(telefono?.whatsapp ? ['WhatsApp'] : []), 'LinkedIn']);
+const canales = listaConY([t('correo', 'email'), ...(telefono?.whatsapp ? ['WhatsApp'] : []), 'LinkedIn'], idioma);
 
-const log = ficha('logistica');
-const tec = ficha('tecnico');
-const dem = ficha('demos');
-const pro = ficha('proyectos');
-const con = ficha('contacto');
+const log = ficha('logistica', idioma);
+const tec = ficha('tecnico', idioma);
+const dem = ficha('demos', idioma);
+const pro = ficha('proyectos', idioma);
+const con = ficha('contacto', idioma);
 ---
 
 <span id="inicio"></span>
 <header class="portada c-hueso">
 	<div class="cabeza">
 		<p class="lugar">{ubicacion}</p>
-		<nav class="cabecera" aria-label="Enlaces rápidos">
+		<nav class="cabecera" aria-label={t('Enlaces rápidos', 'Quick links')}>
 			<a class="enlace ext" href={linkedin} rel="noopener">LinkedIn</a>
-			<a class="boton" href={`mailto:${correo}`}>Escribir por correo</a>
+			<a class="boton" href={`mailto:${correo}`}>{t('Escribir por correo', 'Send an email')}</a>
 		</nav>
+		<SelectorIdioma />
 	</div>
 
 	<h1 class="nombre cartel">
@@ -48,7 +55,7 @@ const con = ficha('contacto');
 	</h1>
 	<p class="bajada-portada">{bajadaPortada}</p>
 
-	<nav class="pila" id="secciones" aria-label="Secciones" tabindex="-1">
+	<nav class="pila" id="secciones" aria-label={t('Secciones', 'Sections')} tabindex="-1">
 		<ol>
 			<li class={`banda c-${log.color} p${log.posicion}`}>
 				<a href={`#${log.id}`} data-banda={log.id}>
@@ -64,7 +71,7 @@ const con = ficha('contacto');
 							</svg>
 						</span>
 						<span class="palabra cartel">{log.corto}</span>
-						<span class="dato"><span class="resto">y minería</span> · {duracionAltaMontana()} en minas<span class="mas"> · inducciones en {listaConY([...minas])}</span></span>
+						<span class="dato"><span class="resto">{t('y minería', 'and mining')}</span> · {duracionAltaMontana(idioma)} {t('en minas', 'in mining logistics')}<span class="mas"> · {t('inducciones en', 'mine-site inductions at')} {listaConY([...minas], idioma)}</span></span>
 					</span>
 				</a>
 			</li>
@@ -72,9 +79,9 @@ const con = ficha('contacto');
 				<a href={`#${tec.id}`} data-banda={tec.id}>
 					<span class="oreja" aria-hidden="true"><span class="num">{tec.numero}</span></span>
 					<span class="cara">
-						<span class="asoma asoma-tec cartel" aria-hidden="true"><span>0,0<b>1</b></span></span>
+						<span class="asoma asoma-tec cartel" aria-hidden="true"><span>{t('0,0', '0.0')}<b>1</b></span></span>
 						<span class="palabra cartel">{tec.corto}</span>
-						<span class="dato dato-tec"><span class="resto">e IA</span> · desarrollo de software y automatización<span class="remoto"> · remoto</span></span>
+						<span class="dato dato-tec"><span class="resto">{t('e IA', 'and AI')}</span> · {t('desarrollo de software y automatización', 'software development and automation')}<span class="remoto"> · {t('remoto', 'remote')}</span></span>
 					</span>
 				</a>
 			</li>
@@ -87,7 +94,7 @@ const con = ficha('contacto');
 						</span>
 						<span class="palabra cartel">{dem.corto}</span>
 						<span class="dato">
-							{partesDemos.length > 0 && <span class="resto">{partesDemos[0]}</span>}{partesDemos.slice(1).map((p) => ` · ${p}`)}<span class="mas"> · escritas desde cero, con datos ficticios</span>
+							{partesDemos.length > 0 && <span class="resto">{partesDemos[0]}</span>}{partesDemos.slice(1).map((p) => ` · ${p}`)}<span class="mas"> · {t('escritas desde cero, con datos ficticios', 'built from scratch, with fictitious data')}</span>
 						</span>
 					</span>
 				</a>
@@ -99,7 +106,7 @@ const con = ficha('contacto');
 						<span class="asoma asoma-pro" aria-hidden="true"><span class="carta-mini"><span class="cartel">Afterfall</span></span></span>
 						<span class="palabra cartel">{pro.corto}</span>
 						<span class="dato">
-							{listaProyectos && <span class="resto">{listaProyectos}</span>}{comparten && <span class="mas"> · comparten mundo</span>}
+							{listaProyectos && <span class="resto">{listaProyectos}</span>}{comparten && <span class="mas"> · {t('comparten mundo', 'share a world')}</span>}
 						</span>
 					</span>
 				</a>

@@ -47,7 +47,8 @@ export function problemaDeRazon(razon, tamano) {
 /** Páginas sin ficha (composición propia: el índice de casos y la 404): se mide el documento entero. */
 export const PAGINAS_SIN_FICHA = ['/casos/', '/404.html'];
 
-export const esPaginaSinFicha = (ruta) => PAGINAS_SIN_FICHA.includes(ruta);
+/** `/en/casos/` es la misma página sin ficha en inglés. */
+export const esPaginaSinFicha = (ruta) => PAGINAS_SIN_FICHA.includes(ruta.replace(/^\/en(?=\/)/, ''));
 
 /** Razón de un documento: alto de todo el contenido ÷ alto visible (`documentElement.scrollHeight / innerHeight`). */
 export const razonDeDocumento = (altoDocumento, altoVisible) => (altoVisible > 0 ? altoDocumento / altoVisible : Infinity);
@@ -56,7 +57,10 @@ export const razonDeDocumento = (altoDocumento, altoVisible) => (altoVisible > 0
  * Las rutas de los casos a partir de las entradas de dist/casos/ (`readdirSync(…, { withFileTypes: true })`): solo las
  * carpetas. `index.html` es el índice /casos/, no un caso: tomarlo daría `/casos/index.html/` y la medición fallaría.
  */
-export const rutasDeCasos = (entradas) => entradas.filter((e) => e.isDirectory()).map((e) => `/casos/${e.name}/`);
+export const rutasDeCasos = (entradas, prefijo = '') => entradas.filter((e) => e.isDirectory()).map((e) => `${prefijo}/casos/${e.name}/`);
 
 /** La lista que mide `verificar-paginas.mjs`: las cinco fichas de la portada, /tecnico/, el índice, los casos y la 404. */
 export const paginasAMedir = (casos) => ['/#logistica', '/#tecnico', '/#demos', '/#proyectos', '/#contacto', '/tecnico/', '/casos/', ...casos, '/404.html'];
+
+/** Lo mismo en inglés (/en/): el inglés es más largo, así que se mide con los mismos topes. Sin 404: no hay una en /en/. */
+export const paginasAMedirEn = (casosEn) => ['/en/#logistica', '/en/#tecnico', '/en/#demos', '/en/#proyectos', '/en/#contacto', '/en/tecnico/', '/en/casos/', ...casosEn];

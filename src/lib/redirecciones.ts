@@ -3,6 +3,7 @@
 // `v5/Redireccion.astro`, con `noindex`, y queda fuera del sitemap (astro.config.mjs filtra con `esRedireccion`).
 // Pura, sin Astro: se prueba con `npm test` (scripts/redirecciones.test.mjs).
 import type { IdFicha } from '../v5/datos.ts';
+import { quitarPrefijo } from '../i18n/idioma.ts';
 
 export interface Redireccion {
 	/** Ruta vieja, con barra inicial y final. */
@@ -18,9 +19,10 @@ export const redirecciones: readonly Redireccion[] = [
 	{ desde: '/proyectos/', ficha: 'proyectos' },
 ];
 
-/** `ruta` puede ser la ruta (`/demos/`, con o sin barra final) o la URL completa. */
+/** `ruta` puede ser la ruta (`/demos/`, con o sin barra final) o la URL completa; `/en/demos/` (la misma puerta en inglés) también lo es. */
 export function esRedireccion(ruta: string): boolean {
 	const { pathname } = new URL(ruta, 'https://sitio.invalido');
-	const normal = pathname.endsWith('/') ? pathname : `${pathname}/`;
+	const sinIdioma = quitarPrefijo(pathname);
+	const normal = sinIdioma.endsWith('/') ? sinIdioma : `${sinIdioma}/`;
 	return redirecciones.some((r) => r.desde === normal);
 }

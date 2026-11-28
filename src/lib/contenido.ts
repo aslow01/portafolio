@@ -1,4 +1,5 @@
 // Reglas de contenido (puras, sin Astro): se prueban con `npm test`.
+import type { Idioma } from '../i18n/idioma.ts';
 
 export type Camino = 'logistica' | 'tecnico';
 
@@ -26,16 +27,21 @@ export function cifraVisible(resultado: Resultado | undefined): Resultado | unde
 /** Título de la sección de autoría y texto del botón que la abre (fichas Demos y hoja de autoría). */
 export const tituloAutoria = 'Mi parte y autoría';
 export const botonAutoria = 'Ver mi parte y la autoría';
+/** Lo mismo, en el idioma pedido. */
+export const tituloAutoriaDe = (idioma: Idioma): string => (idioma === 'en' ? 'My part and authorship' : tituloAutoria);
+export const botonAutoriaDe = (idioma: Idioma): string => (idioma === 'en' ? 'See my part and authorship' : botonAutoria);
 
 /** Filas del recuadro de autoría; una fila sin texto no va (nunca se muestra vacía). */
 export function filasAutoria(
 	autoria: Autoria | undefined,
+	idioma: Idioma = 'es',
 ): { clave: 'yo' | 'ia' | 'verif'; rotulo: string; texto: string }[] {
 	if (!autoria) return [];
+	const en = idioma === 'en';
 	const filas = [
-		{ clave: 'yo', rotulo: 'Mi parte', texto: autoria.yo },
-		{ clave: 'ia', rotulo: 'Autoría', texto: autoria.ia },
-		{ clave: 'verif', rotulo: 'Cómo lo verifiqué', texto: autoria.verificacion },
+		{ clave: 'yo', rotulo: en ? 'My part' : 'Mi parte', texto: autoria.yo },
+		{ clave: 'ia', rotulo: en ? 'Authorship' : 'Autoría', texto: autoria.ia },
+		{ clave: 'verif', rotulo: en ? 'How I verified it' : 'Cómo lo verifiqué', texto: autoria.verificacion },
 	] as const;
 	return filas.flatMap((f) => (lleno(f.texto) ? [{ clave: f.clave, rotulo: f.rotulo, texto: f.texto }] : []));
 }

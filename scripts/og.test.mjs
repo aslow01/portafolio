@@ -9,7 +9,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { imagenesSociales } from '../src/lib/imagenes-sociales.ts';
 import { datosPrivados } from './higiene.mjs';
-import { MAX_EN_CAJON, huella, laminas, recortarCajon } from './og/laminas.mjs';
+import { MAX_EN_CAJON, huella, laminas, nombreDeArchivo, recortarCajon } from './og/laminas.mjs';
 
 const RAIZ = fileURLToPath(new URL('..', import.meta.url));
 const leer = (...partes) => readFileSync(join(RAIZ, ...partes), 'utf8');
@@ -20,17 +20,22 @@ const MAX_BYTES = 200 * 1024;
 
 const lista = await laminas();
 
-test('las imágenes generadas son exactamente las láminas de hoy: portada, tecnico, logistica, casos y una por caso publicado', () => {
+test('las imágenes generadas son exactamente las láminas de hoy: portada, tecnico, logistica, casos y una por caso publicado, en español y en inglés (`en/…`)', () => {
 	const pedidas = lista.map((l) => l.clave).sort();
 	const generadas = Object.keys(imagenesSociales).sort();
-	for (const base of ['portada', 'tecnico', 'logistica', 'casos']) assert.ok(pedidas.includes(base), `laminas() no trae «${base}»`);
+	for (const base of ['portada', 'tecnico', 'logistica', 'casos']) {
+		assert.ok(pedidas.includes(base), `laminas() no trae «${base}»`);
+		assert.ok(pedidas.includes(`en/${base}`), `laminas() no trae «en/${base}»`);
+	}
+	const casosEs = pedidas.filter((c) => c.startsWith('caso-')).map((c) => `en/${c}`).sort();
+	assert.deepEqual(pedidas.filter((c) => c.startsWith('en/caso-')), casosEs, 'cada caso tiene su lámina en inglés');
 	assert.ok(pedidas.filter((c) => c.startsWith('caso-')).length >= 1, 'laminas() no trae ningún caso');
 	assert.deepEqual(generadas, pedidas, DESACTUALIZADAS);
 });
 
 test('cada archivo se llama como su lámina y la huella de hoy (un título cambiado sin regenerar se nota); el alt es el de hoy', () => {
 	for (const l of lista) {
-		const hoy = `/og/${l.clave}-${huella(l, plantilla, css)}.png`;
+		const hoy = `/og/${nombreDeArchivo(l.clave)}-${huella(l, plantilla, css)}.png`;
 		assert.equal(imagenesSociales[l.clave]?.archivo, hoy, `${l.clave}: ${DESACTUALIZADAS}`);
 		assert.equal(imagenesSociales[l.clave]?.alt, l.alt, `${l.clave}: el texto alternativo cambió. ${DESACTUALIZADAS}`);
 	}
@@ -72,8 +77,8 @@ test('los literales de la plantilla siguen escritos en su página de src/ (si el
 	const fuentes = [
 		['de software y automatización', 'src/pages/tecnico.astro'],
 		// «Con IA · remoto» resume la etiqueta de la pestaña («e IA · … · remoto»): si cambia cualquiera de las dos puntas, hay que mirar la lámina
-		['>e IA<', 'src/v5/Portada.astro', 'Con IA'],
-		['· remoto', 'src/v5/Portada.astro'],
+		["t('e IA', 'and AI')", 'src/v5/Portada.astro', 'Con IA'],
+		["t('remoto', 'remote')", 'src/v5/Portada.astro', '· remoto'],
 		['y minería', 'src/v5/fichas/Logistica.astro'],
 		['Archivo · casos anonimizados', 'src/pages/casos/index.astro'],
 		['Caso de estudio · anonimizado', 'src/v5/interiores/Expediente.astro'],
@@ -82,8 +87,25 @@ test('los literales de la plantilla siguen escritos en su página de src/ (si el
 		assert.ok(leer(...ruta.split('/')).toLowerCase().includes(frase.toLowerCase()), `«${frase}» ya no está en ${ruta}`);
 	}
 	// Y la lámina los usa tal cual.
-	const texto = JSON.stringify(lista).toLowerCase();
+	const texto = JSON.stringify(lista.filter((l) => !l.clave.startsWith('en/'))).toLowerCase();
 	for (const [frase, , enLamina = frase] of fuentes) assert.ok(texto.includes(enLamina.toLowerCase()), `ninguna lámina dice «${enLamina}»`);
+});
+
+test('lo mismo en inglés: los literales de las láminas `en/…` siguen escritos en su página (la versión en inglés va al lado de la española)', () => {
+	// [lo que dice la página, la página, lo que dibuja la lámina si no es la misma frase]
+	const fuentes = [
+		['development and AI automation', 'src/pages/tecnico.astro'],
+		['Software <span', 'src/pages/tecnico.astro', 'Software'],
+		["'and mining'", 'src/v5/fichas/Logistica.astro', 'and mining'],
+		["'Archive · anonymized cases'", 'src/pages/casos/index.astro', 'Archive · anonymized cases'],
+		["'Case study · anonymized'", 'src/v5/interiores/Expediente.astro', 'Case study · anonymized'],
+		["t('Casos', 'Case')", 'src/pages/casos/index.astro', 'Case'],
+		["t('de estudio', 'studies')", 'src/pages/casos/index.astro', 'studies'],
+		["'remote'", 'src/v5/Portada.astro', 'Remote'],
+	];
+	for (const [frase, ruta] of fuentes) assert.ok(leer(...ruta.split('/')).includes(frase), `«${frase}» ya no está en ${ruta}`);
+	const texto = JSON.stringify(lista.filter((l) => l.clave.startsWith('en/')));
+	for (const [frase, , enLamina = frase] of fuentes) assert.ok(texto.toLowerCase().includes(enLamina.toLowerCase()), `ninguna lámina en inglés dice «${enLamina}»`);
 });
 
 // --- Los colores de og.css son los de tokens.css ----------------------------------------------------------------
@@ -130,6 +152,7 @@ test('la lámina del cajón dibuja todos los casos publicados (si hay más que l
 	const cajon = lista.find((l) => l.clave === 'casos');
 	assert.equal(cajon.expedientes.length, casos, 'hay casos publicados que la lámina del cajón no dibuja');
 	assert.ok(casos <= MAX_EN_CAJON);
+	assert.equal(lista.find((l) => l.clave === 'en/casos').expedientes.length, lista.filter((l) => l.clave.startsWith('en/caso-')).length, 'lo mismo en inglés');
 });
 
 test('recortarCajon: devuelve lo que entra y cuántos quedan afuera, sin cambiar la lista', () => {

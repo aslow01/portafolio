@@ -6,19 +6,23 @@
 // La autoría de cada demo (`autoria`) va en una hoja que abre un botón (src/scripts/v5/demos-hoja.ts); sin JavaScript, el
 // bloque queda en el flujo debajo de las acciones.
 import { Image } from 'astro:assets';
-import { getCollection, type CollectionEntry } from 'astro:content';
-import { botonAutoria, filasAutoria, tituloAutoria } from '../../lib/contenido';
+import { botonAutoriaDe, filasAutoria, tituloAutoriaDe } from '../../lib/contenido';
 import { demoVisible } from '../../lib/estados';
 import { capitalizar, listaConY, textoEstadoDemo } from '../../lib/presentacion';
 import { cuentaDemos } from '../datos';
+import { demosDe, type Demo } from '../../i18n/colecciones';
+import { idiomaDe, traductor } from '../../i18n/idioma';
 import Ficha from '../Ficha.astro';
 import Pagina from '../Pagina.astro';
 import TituloFicha from '../TituloFicha.astro';
 
-type Demo = CollectionEntry<'demos'>;
 type Lamina = Demo['data']['laminas'][number];
 
-const demos = (await getCollection('demos', ({ data }) => demoVisible(data))).sort((a, b) => a.data.orden - b.data.orden);
+const idioma = idiomaDe(Astro.currentLocale);
+const t = traductor(idioma);
+const botonAutoria = botonAutoriaDe(idioma);
+const tituloAutoria = tituloAutoriaDe(idioma);
+const demos = (await demosDe(idioma, ({ data }) => demoVisible(data))).sort((a, b) => a.data.orden - b.data.orden);
 const vivas = demos.filter((d) => d.data.estado === 'en-vivo');
 const enDesarrollo = demos.filter((d) => d.data.estado === 'en-desarrollo');
 const cuenta = cuentaDemos(demos.map((d) => d.data.estado));
@@ -35,25 +39,25 @@ interface Vista {
 	entera?: boolean;
 }
 const vistas: Record<string, Vista> = {
-	'lector-facturas': { corto: 'Lector de facturas', tapa: 'celular', pagina: 'atencion', telefono: false },
-	'control-flota': { corto: 'Control de flota', tapa: 'alertas', pagina: 'alertas', telefono: true },
-	'tablero-gestion': { corto: 'Tablero de cobranzas', tapa: 'resumen', pagina: 'resumen', telefono: false, entera: true },
+	'lector-facturas': { corto: t('Lector de facturas', 'Invoice reader'), tapa: 'celular', pagina: 'atencion', telefono: false },
+	'control-flota': { corto: t('Control de flota', 'Fleet control'), tapa: 'alertas', pagina: 'alertas', telefono: true },
+	'tablero-gestion': { corto: t('Tablero de cobranzas', 'Collections dashboard'), tapa: 'resumen', pagina: 'resumen', telefono: false, entera: true },
 };
 const vistaDe = (d: Demo): Vista => vistas[d.id] ?? { corto: d.data.titulo, tapa: d.data.laminas[0]?.id ?? '', pagina: d.data.laminas[0]?.id ?? '', telefono: false };
 const laminaDe = (d: Demo, id: string): Lamina | undefined => d.data.laminas.find((l) => l.id === id) ?? d.data.laminas[0];
 // Si la lámina trae el recorte para teléfono, es el que se muestra (la de escritorio no se lee a este tamaño).
 const imagenDe = (l: Lamina) => l.movil?.clara ?? l.clara;
 
-const etiqueta = (estado: string): string => capitalizar(textoEstadoDemo(estado));
-const hechoCon = (d: Demo): string => (d.data.stack.length > 0 ? `Hecho con ${listaConY(d.data.stack)}.` : '');
+const etiqueta = (estado: string): string => capitalizar(textoEstadoDemo(estado, idioma));
+const hechoCon = (d: Demo): string => (d.data.stack.length > 0 ? `${t('Hecho con', 'Built with')} ${listaConY(d.data.stack, idioma)}.` : '');
 ---
 
 <Ficha id="demos">
-	<Pagina titulo="Tapa" tapa>
+	<Pagina titulo={t('Tapa', 'Cover')} tapa>
 		<TituloFicha id="demos" palabra="Demos" />
 		<p class="cuenta-l">
-			{cuenta.vivas > 0 && <span class="estado"><span class="lampara prendida" aria-hidden="true"></span>{cuenta.vivas} en vivo</span>}
-			{cuenta.desarrollo > 0 && <span class="estado"><span class="lampara" aria-hidden="true"></span>{cuenta.desarrollo} en desarrollo</span>}
+			{cuenta.vivas > 0 && <span class="estado"><span class="lampara prendida" aria-hidden="true"></span>{cuenta.vivas} {t('en vivo', 'live')}</span>}
+			{cuenta.desarrollo > 0 && <span class="estado"><span class="lampara" aria-hidden="true"></span>{cuenta.desarrollo} {t('en desarrollo', 'in development')}</span>}
 		</p>
 		{
 			vivas.length > 0 && (
@@ -66,7 +70,7 @@ const hechoCon = (d: Demo): string => (d.data.stack.length > 0 ? `Hecho con ${li
 								<a class={`captura cap-${i === 0 ? 'a' : 'b'}`} href={d.data.demo} rel="noopener">
 									<span class="cap-oreja">{v.corto}</span>
 									<span class="cap-marco">
-										<Image src={imagenDe(lam)} width={i === 0 ? 540 : 480} alt={`Probar la demo: ${d.data.titulo}`} loading="lazy" decoding="async" />
+										<Image src={imagenDe(lam)} width={i === 0 ? 540 : 480} alt={`${t('Probar la demo', 'Try the demo')}: ${d.data.titulo}`} loading="lazy" decoding="async" />
 									</span>
 								</a>
 							)
@@ -75,14 +79,17 @@ const hechoCon = (d: Demo): string => (d.data.stack.length > 0 ? `Hecho con ${li
 				</div>
 			)
 		}
-		<p class="pie-cap">Capturas reales de las demos en vivo. Datos inventados. Herramientas propias, escritas desde cero.</p>
+		<p class="pie-cap">
+			{t('Capturas reales de las demos en vivo. Datos inventados. Herramientas propias, escritas desde cero.', 'Real screenshots of the live demos. Fictitious data. My own tools, built from scratch.')}
+			{idioma === 'en' && ' The demos’ interface is in Spanish.'}
+		</p>
 	</Pagina>
 
 	{
 		vivas.map((d) => {
 			const v = vistaDe(d);
 			const lam = laminaDe(d, v.pagina);
-			const filas = filasAutoria(d.data.autoria);
+			const filas = filasAutoria(d.data.autoria, idioma);
 			const corto = v.corto.toLowerCase();
 			return (
 				<Pagina titulo={v.corto}>
@@ -101,12 +108,12 @@ const hechoCon = (d: Demo): string => (d.data.stack.length > 0 ? `Hecho con ${li
 					<div class="acciones pg-pie">
 						{d.data.demo && (
 							<a class="boton ext" href={d.data.demo} rel="noopener">
-								Probar la demo<span class="solo-lector">: {corto}</span>
+								{t('Probar la demo', 'Try the demo')}<span class="solo-lector">: {corto}</span>
 							</a>
 						)}
 						{d.data.repo && (
 							<a class="enlace ext" href={d.data.repo} rel="noopener">
-								Ver el código<span class="solo-lector">: {corto}</span>
+								{t('Ver el código', 'View the code')}<span class="solo-lector">: {corto}</span>
 							</a>
 						)}
 						{filas.length > 0 && (
@@ -135,12 +142,12 @@ const hechoCon = (d: Demo): string => (d.data.stack.length > 0 ? `Hecho con ${li
 
 	{
 		enDesarrollo.length > 0 && (
-			<Pagina titulo="En desarrollo">
-				<p class="rotulo">Todavía sin demo en vivo</p>
-				<h3 class="pg-sub">En desarrollo</h3>
+			<Pagina titulo={t('En desarrollo', 'In development')}>
+				<p class="rotulo">{t('Todavía sin demo en vivo', 'No live demo yet')}</p>
+				<h3 class="pg-sub">{t('En desarrollo', 'In development')}</h3>
 				<div class="en-desarrollo ancho">
 					{enDesarrollo.map((d) => {
-						const filas = filasAutoria(d.data.autoria);
+						const filas = filasAutoria(d.data.autoria, idioma);
 						return (
 							<article aria-labelledby={`d-${d.id}`}>
 								<span class="estado"><span class="lampara" aria-hidden="true"></span>{etiqueta(d.data.estado)}</span>
@@ -168,7 +175,7 @@ const hechoCon = (d: Demo): string => (d.data.stack.length > 0 ? `Hecho con ${li
 						);
 					})}
 				</div>
-				<p class="nota ancho">El código de cada demo se publica cuando está terminada y probada.</p>
+				<p class="nota ancho">{t('El código de cada demo se publica cuando está terminada y probada.', 'The code of each demo is published once it is finished and tested.')}</p>
 			</Pagina>
 		)
 	}

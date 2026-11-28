@@ -6,7 +6,8 @@
 // puede no llevarla.
 import { filasAutoria, type Autoria } from './contenido.ts';
 import { proyectoVisible } from './estados.ts';
-import { novela } from './opciones.ts';
+import { novelaDe } from './opciones.ts';
+import type { Idioma } from '../i18n/idioma.ts';
 
 export type TipoProyecto = 'novela' | 'juego' | 'otro';
 /** Dónde se muestra: las cartas de Proyectos o las piezas propias del camino técnico. */
@@ -86,8 +87,8 @@ function entraEnTecnico(e: EntradaProyecto, dev?: boolean): boolean {
 }
 
 /** La novela, con los textos fijos. */
-function vistaDeNovela(): ProyectoVista {
-	const { tipo, estado, titulo, pagina, texto, aparte, orden, autoria } = novela;
+function vistaDeNovela(idioma: Idioma): ProyectoVista {
+	const { tipo, estado, titulo, pagina, texto, aparte, orden, autoria } = novelaDe(idioma);
 	return {
 		id: 'novela',
 		tipo,
@@ -98,14 +99,14 @@ function vistaDeNovela(): ProyectoVista {
 		aparte,
 		sinTitulo: true,
 		orden,
-		filas: filasAutoria(autoria),
+		filas: filasAutoria(autoria, idioma),
 		enlaces: [],
 		tamanoTitulo: tamanoTitulo(titulo),
 	};
 }
 
 /** Un proyecto de una entrada (no la novela). */
-export function vistaDeProyecto(e: EntradaProyecto): ProyectoVista {
+export function vistaDeProyecto(e: EntradaProyecto, idioma: Idioma = 'es'): ProyectoVista {
 	const { tipo, estado, titulo, resumen, borrador, orden, pagina, autoria, enlaces } = e.data;
 	// Primera oración arriba; el resto (o, sin resto, el cuerpo publicable) en tono atenuado.
 	const [primera, ...resto] = resumen.split(/(?<=\.)\s+/);
@@ -120,7 +121,7 @@ export function vistaDeProyecto(e: EntradaProyecto): ProyectoVista {
 		aparte,
 		sinTitulo: false,
 		orden,
-		filas: filasAutoria(autoria),
+		filas: filasAutoria(autoria, idioma),
 		enlaces: enlaces ?? [],
 		tamanoTitulo: tamanoTitulo(titulo),
 	};
@@ -129,16 +130,16 @@ export function vistaDeProyecto(e: EntradaProyecto): ProyectoVista {
 const rango: Record<TipoProyecto, number> = { juego: 0, novela: 1, otro: 2 };
 
 /** Los proyectos que se muestran en Proyectos, ya ordenados (el juego primero, después la novela) y listos para dibujar. */
-export function proyectosV5(entradas: EntradaProyecto[], dev?: boolean): ProyectoVista[] {
-	return [...entradas.filter((e) => entraEnV5(e, dev)).map(vistaDeProyecto), vistaDeNovela()].sort(
+export function proyectosV5(entradas: EntradaProyecto[], dev?: boolean, idioma: Idioma = 'es'): ProyectoVista[] {
+	return [...entradas.filter((e) => entraEnV5(e, dev)).map((e) => vistaDeProyecto(e, idioma)), vistaDeNovela(idioma)].sort(
 		(a, b) => rango[a.tipo] - rango[b.tipo] || a.orden - b.orden,
 	);
 }
 
 /** Las piezas propias del camino técnico (método, laboratorio), por `orden`. Sin ninguna publicable, lista vacía. */
-export function piezasTecnico(entradas: EntradaProyecto[], dev?: boolean): ProyectoVista[] {
+export function piezasTecnico(entradas: EntradaProyecto[], dev?: boolean, idioma: Idioma = 'es'): ProyectoVista[] {
 	return entradas
 		.filter((e) => entraEnTecnico(e, dev))
-		.map(vistaDeProyecto)
+		.map((e) => vistaDeProyecto(e, idioma))
 		.sort((a, b) => a.orden - b.orden);
 }

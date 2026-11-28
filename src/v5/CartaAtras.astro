@@ -6,6 +6,7 @@
 // El estilo está en src/styles/v5/cartas.css. «Quién hizo qué» es texto fijo del componente, no de contenido.
 import '../styles/v5/cartas.css';
 import type { filasAutoria } from '../lib/contenido';
+import { idiomaDe, traductor } from '../i18n/idioma';
 
 interface Props {
 	/** El nombre de la pieza: rotula la cara y completa el nombre accesible de la solapa («Quién hizo qué: Afterfall»). */
@@ -18,12 +19,13 @@ interface Props {
 	lado: 'izq' | 'der';
 }
 const { nombre, filas, color, lado } = Astro.props;
+const t = traductor(idiomaDe(Astro.currentLocale));
 ---
 
 {
 	filas.length > 0 && (
 		<details class:list={['tras', lado, `c-${color}`]}>
-			<summary>Quién hizo qué<span class="solo-lector">: {nombre}</span></summary>
+			<summary>{t('Quién hizo qué', 'Who did what')}<span class="solo-lector">: {nombre}</span></summary>
 			<div class="tras-cara">
 				<p class="rotulo">{nombre}</p>
 				<dl class="filas-t">

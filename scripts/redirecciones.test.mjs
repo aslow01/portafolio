@@ -35,6 +35,11 @@ test('esRedireccion: con o sin barra final, con la URL completa; la portada y la
 	}
 });
 
+test('esRedireccion: las cuatro puertas también lo son en inglés (/en/demos/); la portada, /en/tecnico/ y los casos en inglés no', () => {
+	for (const r of ['/en/logistica/', '/en/demos', '/en/contacto/', '/en/proyectos/', 'https://matiasormeno.com.ar/en/demos/']) assert.equal(esRedireccion(r), true, r);
+	for (const r of ['/en/', '/en/tecnico/', '/en/casos/', '/en/casos/automatizacion-facturas/']) assert.equal(esRedireccion(r), false, r);
+});
+
 test('esRedireccion: la consulta y el hash no cambian la respuesta', () => {
 	assert.equal(esRedireccion('/proyectos/?x=1'), true);
 	assert.equal(esRedireccion('/proyectos/#algo'), true);

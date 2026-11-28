@@ -5,30 +5,36 @@
 // 3 · Herramientas propias: dos cartas cruzadas, el método con Claude y el laboratorio de modelos, que llevan a su página de
 //     /tecnico/. Sin piezas publicables, esta página no se genera.
 // Los textos y las cifras salen de src/lib y src/content; el circuito y la autoría completos viven en /tecnico/.
-import { getCollection } from 'astro:content';
 import Ficha from '../Ficha.astro';
 import Pagina from '../Pagina.astro';
 import TituloFicha from '../TituloFicha.astro';
 import './tecnico-comun.css';
 import '../../styles/v5/cartas.css';
-import { circuitoLector } from '../../lib/circuito.ts';
-import { cv } from '../../lib/datos-pendientes.ts';
+import { circuitoDe } from '../../lib/circuito.ts';
+import { cvDe, cvEnEspanol } from '../../lib/datos-pendientes.ts';
 import { esDeCamino, obraPrincipal } from '../../lib/contenido.ts';
 import { esPublicable } from '../../lib/estados.ts';
 import { capitalizar, textoEstadoDemo } from '../../lib/presentacion.ts';
 import { piezasTecnico } from '../../lib/proyectos.ts';
-import { comoTrabajo } from '../../lib/sitio.ts';
+import { textosSitio } from '../../lib/sitio.ts';
+import { casosDe, proyectosDe } from '../../i18n/colecciones';
+import { idiomaDe, rutaDe, traductor } from '../../i18n/idioma';
 import { estiloDePieza, idDePieza } from './piezas-tecnico';
-import { frases, jornada, rotulosJornada } from './tecnico-datos';
+import { frases, jornada, rotulosJornadaDe } from './tecnico-datos';
 
 // El caso principal (el de menor `orden` entre los destacados) y su cifra: sin `medicion` no se muestra.
-const casos = (await getCollection('casos', ({ data }) => esPublicable(data))).filter((c) => esDeCamino(c.data, 'tecnico'));
+const idioma = idiomaDe(Astro.currentLocale);
+const t = traductor(idioma);
+const cv = cvDe(idioma);
+const rotulosJornada = rotulosJornadaDe(idioma);
+const { comoTrabajo } = textosSitio(idioma);
+const casos = (await casosDe(idioma, ({ data }) => esPublicable(data))).filter((c) => esDeCamino(c.data, 'tecnico'));
 const caso = obraPrincipal(casos);
 const cifras = jornada(caso?.data.resultado);
 const linea = caso?.data.lineaObra;
 
 // El centavo: la fila de la factura y la del sistema, carácter por carácter. Sale del paso del circuito que compara.
-const acerca = circuitoLector.find((p) => p.acercamiento)?.acercamiento;
+const acerca = circuitoDe(idioma).find((p) => p.acercamiento)?.acercamiento;
 const factura = acerca ? [...acerca.factura] : [];
 const sistema = acerca ? [...acerca.sistema.join('')] : [];
 const espacio = '\u00A0';
@@ -41,37 +47,37 @@ const signo = (i: number): string | undefined => (factura[i] === espacio ? undef
 const [principio, ...resto] = frases(comoTrabajo);
 
 // Las piezas propias del camino técnico (método, laboratorio): salen de la colección `proyectos`, por `orden`.
-const piezas = piezasTecnico(await getCollection('proyectos'));
+const piezas = piezasTecnico(await proyectosDe(idioma), undefined, idioma);
 ---
 
 <Ficha id="tecnico">
-	<Pagina titulo="Tapa" tapa>
-		<TituloFicha id="tecnico" palabra="Técnico" resto="e IA" />
+	<Pagina titulo={t('Tapa', 'Cover')} tapa>
+		<TituloFicha id="tecnico" palabra={t('Técnico', 'Technical')} resto={t('e IA', 'and AI')} />
 		{
 			acerca && factura.length === sistema.length && (
 				<figure class="centavo-b der">
 					<div class="tabla-b cartel">
-						<p class="rot-b">Factura</p>
+						<p class="rot-b">{t('Factura', 'Invoice')}</p>
 						<p class="cifras arriba">{factura.map((c) => <span>{c}</span>)}</p>
 						<p class="signos" aria-hidden="true">{factura.map((_, i) => <span class:list={{ dif: difiere(i) }} data-s={signo(i)} />)}</p>
-						<p class="cifras abajo">{sistema.map((c, i) => <span class:list={{ dif: difiere(i) }}>{i === 0 && <span class="solo-lector">Sistema: </span>}{c}</span>)}</p>
-						<p class="rot-b abajo-r" aria-hidden="true">Sistema</p>
+						<p class="cifras abajo">{sistema.map((c, i) => <span class:list={{ dif: difiere(i) }}>{i === 0 && <span class="solo-lector">{t('Sistema: ', 'System: ')}</span>}{c}</span>)}</p>
+						<p class="rot-b abajo-r" aria-hidden="true">{t('Sistema', 'System')}</p>
 					</div>
 					<figcaption class="veredicto">{acerca.veredicto}</figcaption>
 				</figure>
 			)
 		}
 		<section class="como" aria-labelledby="t-como">
-			<h3 class="rotulo" id="t-como">Cómo trabajo</h3>
+			<h3 class="rotulo" id="t-como">{t('Cómo trabajo', 'How I work')}</h3>
 			<p class="principio-c">{principio}</p>
 			{resto.length > 0 && <p class="honesto">{resto[0]}</p>}
 		</section>
 		<div class="acciones pg-pie">
-			<a class="boton" href={caso ? `/casos/${caso.id}/` : '/tecnico/'} data-salir>Ver el caso <span class="flecha" aria-hidden="true">→</span></a>
+			<a class="boton" href={rutaDe(idioma, caso ? `/casos/${caso.id}/` : '/tecnico/')} data-salir>{t('Ver el caso', 'See the case')} <span class="flecha" aria-hidden="true">→</span></a>
 			{
 				cv.tecnico && (
 					<a class="enlace baja" href={cv.tecnico.archivo} download>
-						<span class="etq"><span class="largo">Descargar </span>CV</span><span class="solo-lector">: {cv.tecnico.detalle}</span>
+						<span class="etq"><span class="largo">{t('Descargar ', 'Download ')}</span>CV{cvEnEspanol('tecnico', idioma) && ' (Spanish)'}</span><span class="solo-lector">: {cv.tecnico.detalle}</span>
 					</a>
 				)
 			}
@@ -79,8 +85,8 @@ const piezas = piezasTecnico(await getCollection('proyectos'));
 	</Pagina>
 	{
 		caso && (
-			<Pagina titulo="El caso">
-				<p class="rotulo">Caso de estudio · anonimizado</p>
+			<Pagina titulo={t('El caso', 'The case')}>
+				<p class="rotulo">{t('Caso de estudio · anonimizado', 'Case study · anonymized')}</p>
 				<h3 class="pg-sub largo">{caso.data.titulo}</h3>
 				{
 					cifras && (
@@ -96,31 +102,31 @@ const piezas = piezasTecnico(await getCollection('proyectos'));
 								<span class="marcas" data-marcas={cifras.ahora.marcas} aria-hidden="true" />
 							</div>
 							<figcaption>
-								<span class="unidad">{cifras.unidad}<span class="una" aria-hidden="true"> · una marca, una factura</span></span>
+								<span class="unidad">{cifras.unidad}<span class="una" aria-hidden="true">{t(' · una marca, una factura', ' · one mark, one invoice')}</span></span>
 							</figcaption>
 						</figure>
 					)
 				}
 				{cifras && <p class="nota">{cifras.medicion}{linea ? ` ${linea}` : ''}</p>}
 				<div class="acciones pg-pie">
-					<a class="boton" href="/tecnico/#el-caso" data-salir>Ver el caso y la demo <span class="flecha" aria-hidden="true">→</span></a>
+					<a class="boton" href={rutaDe(idioma, '/tecnico/#el-caso')} data-salir>{t('Ver el caso y la demo', 'See the case and the demo')} <span class="flecha" aria-hidden="true">→</span></a>
 				</div>
 			</Pagina>
 		)
 	}
 	{
 		piezas.length > 0 && (
-			<Pagina titulo="Herramientas propias">
-				<p class="rotulo">Proyectos propios</p>
-				<h3 class="pg-sub">Herramientas propias</h3>
-				<p class="texto">Lo que diseñé para trabajar con IA: un método y un laboratorio de pruebas.</p>
+			<Pagina titulo={t('Herramientas propias', 'My own tools')}>
+				<p class="rotulo">{t('Proyectos propios', 'My projects')}</p>
+				<h3 class="pg-sub">{t('Herramientas propias', 'My own tools')}</h3>
+				<p class="texto">{t('Lo que diseñé para trabajar con IA: un método y un laboratorio de pruebas.', 'What I designed to work with AI: a method and a testing lab.')}</p>
 				<div class="cruce der">
 					{
 						piezas.map((p, i) => (
-							<a class={`carta-p ${estiloDePieza(i).chica}`} href={`/tecnico/#${idDePieza(p)}`} data-salir data-color="var(--azurita)">
-								<span class="rotulo">{capitalizar(textoEstadoDemo(p.estado))}</span>
+							<a class={`carta-p ${estiloDePieza(i).chica}`} href={rutaDe(idioma, `/tecnico/#${idDePieza(p)}`)} data-salir data-color="var(--azurita)">
+								<span class="rotulo">{capitalizar(textoEstadoDemo(p.estado, idioma))}</span>
 								<b>{p.pagina}</b>
-								<span class="ir">Ver resumen<span class="solo-lector">: {p.titulo}</span></span>
+								<span class="ir">{t('Ver resumen', 'See summary')}<span class="solo-lector">: {p.titulo}</span></span>
 							</a>
 						))
 					}

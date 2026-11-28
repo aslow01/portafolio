@@ -5,8 +5,9 @@
 // La novela se muestra SIN TÍTULO («Novela en desarrollo») hasta que tenga fecha (decisión de Matías, 25/11/2026). Todo lo que se dibuja de ella sale de los textos fijos de lib/opciones.ts: de la colección
 // no se lee ninguna entrada de novela (ni su título, ni su resumen, ni su sinopsis). Qué proyectos
 // entran y con qué texto lo decide `proyectosV5` (lib/proyectos.ts), el mismo que usa la portada.
-import { getCollection } from 'astro:content';
 import { proyectosV5, type ProyectoVista } from '../../lib/proyectos';
+import { proyectosDe } from '../../i18n/colecciones';
+import { idiomaDe, traductor } from '../../i18n/idioma';
 import { bajadaProyectos, capitalizar, textoEstadoDemo } from '../../lib/presentacion';
 import CartaAtras from '../CartaAtras.astro';
 import Ficha from '../Ficha.astro';
@@ -14,13 +15,15 @@ import Pagina from '../Pagina.astro';
 import TituloFicha from '../TituloFicha.astro';
 import '../../styles/v5/cartas.css';
 
-const proyectos = proyectosV5(await getCollection('proyectos'));
+const idioma = idiomaDe(Astro.currentLocale);
+const t = traductor(idioma);
+const proyectos = proyectosV5(await proyectosDe(idioma), undefined, idioma);
 
-const nombreTipo = { novela: 'Novela', juego: 'Juego', otro: 'Proyecto' } as const;
+const nombreTipo = { novela: t('Novela', 'Novel'), juego: t('Juego', 'Game'), otro: t('Proyecto', 'Project') } as const;
 
 function vistaDe(p: ProyectoVista) {
 	const { tipo, sinTitulo } = p;
-	const estadoTxt = textoEstadoDemo(p.estado);
+	const estadoTxt = textoEstadoDemo(p.estado, idioma);
 	return {
 		tipo,
 		titulo: p.titulo,
@@ -45,16 +48,16 @@ const vistas = proyectos.map(vistaDe);
 ---
 
 <Ficha id="proyectos">
-	<Pagina titulo="Tapa" tapa>
-		<TituloFicha id="proyectos" palabra="Proyectos" />
-		<p class="texto">{bajadaProyectos(proyectos.map((p) => p.tipo))}</p>
+	<Pagina titulo={t('Tapa', 'Cover')} tapa>
+		<TituloFicha id="proyectos" palabra={t('Proyectos', 'Projects')} />
+		<p class="texto">{bajadaProyectos(proyectos.map((p) => p.tipo), idioma)}</p>
 		<div class="cruce der">
 			{
 				vistas.map((v, i) => (
 					<button class={`carta-p ${v.clase}`} type="button" data-ir={i + 1}>
 						<span class="rotulo">{v.rotuloTapa}</span>
 						<b>{v.grandeTapa}</b>
-						<span class="ir">Abrir<span class="solo-lector">: {v.pagina}</span></span>
+						<span class="ir">{t('Abrir', 'Open')}<span class="solo-lector">: {v.pagina}</span></span>
 					</button>
 				))
 			}
@@ -87,6 +90,10 @@ const vistas = proyectos.map(vistaDe);
 	   «terror por contagio»). Las cartas, los títulos y la carta de atrás están en src/styles/v5/cartas.css. */
 	.f-proyectos .carta-p.a::after { content: ''; position: absolute; right: -1px; top: 0; bottom: 0; width: min(15%, 44px); background: var(--negro); clip-path: polygon(40% 0, 100% 0, 100% 100%, 0 100%, 0 76%, 22% 76%, 22% 52%, 10% 52%, 10% 28%, 40% 28%); pointer-events: none; }
 	.f-proyectos .carta-grande.g::after { content: ''; position: absolute; right: -1px; top: 0; bottom: 0; width: min(13%, 56px); background: var(--negro); clip-path: polygon(40% 0, 100% 0, 100% 100%, 0 100%, 0 82%, 22% 82%, 22% 64%, 10% 64%, 10% 46%, 40% 46%); pointer-events: none; }
+	/* La carta del juego no es una losa negra: el cuerpo va un punto más claro que el grafito (--luz, el mismo token de las piezas
+	   dibujadas; su solapa lo hereda) y lleva un filete claro por dentro. El único negro que queda es el canto, que es la silueta.
+	   El título cae letra por letra en ~1 s (pestanas.ts): antes tardaba ~2 s y la carta se veía vacía mientras tanto. */
+	.f-proyectos .carta-grande.g { background: var(--luz); box-shadow: inset 0 0 0 1px var(--regla), var(--sombra-carta-grande); }
 	/* El texto no pasa por debajo del canto negro de la carta del juego */
 	.f-proyectos .carta-grande.g > p, .f-proyectos .carta-grande.g .carta-textos p { margin-right: min(13%, 56px); }
 

@@ -2,10 +2,11 @@
 // Portada de la web v5 «Mezcla». La portada y sus
 // cinco pestañas; cada pestaña abre su ficha (src/v5/fichas/*.astro) a pantalla completa. Los lomos aparecen con una
 // ficha abierta. El comportamiento está en src/scripts/v5/pestanas.ts.
-import { getCollection } from 'astro:content';
 import BaseV5 from '../layouts/BaseV5.astro';
 import { esPublicable, demoVisible } from '../lib/estados';
 import { capitalizar, inventarioPublicado } from '../lib/presentacion';
+import { casosDe, demosDe } from '../i18n/colecciones';
+import { idiomaDe, traductor } from '../i18n/idioma';
 import Lomos from '../v5/Lomos.astro';
 import Portada from '../v5/Portada.astro';
 import Contacto from '../v5/fichas/Contacto.astro';
@@ -15,15 +16,17 @@ import Proyectos from '../v5/fichas/Proyectos.astro';
 import Tecnico from '../v5/fichas/Tecnico.astro';
 import { nombre } from '../v5/datos';
 
-const casos = await getCollection('casos', ({ data }) => esPublicable(data));
-const demos = await getCollection('demos', ({ data }) => demoVisible(data));
-const inventario = inventarioPublicado(casos, demos);
+const idioma = idiomaDe(Astro.currentLocale);
+const t = traductor(idioma);
+const casos = await casosDe(idioma, ({ data }) => esPublicable(data));
+const demos = await demosDe(idioma, ({ data }) => demoVisible(data));
+const inventario = inventarioPublicado(casos, demos, undefined, idioma, null);
 ---
 
 <BaseV5
 	imagenSocial="portada"
-	titulo={`${nombre.completo} · desarrollo de software y automatización con IA`}
-	descripcion={`${nombre.completo}: desarrollo de software y automatización con IA, y logística minera en San Juan.${inventario ? ` ${capitalizar(inventario)}.` : ''}`}
+	titulo={`${nombre.completo} · ${t('desarrollo de software y automatización con IA', 'software development and AI automation')}`}
+	descripcion={`${nombre.completo}: ${t('desarrollo de software y automatización con IA, y logística minera en San Juan.', 'software development and AI automation, and mining logistics in San Juan, Argentina.')}${inventario ? ` ${capitalizar(inventario)}.` : ''}`}
 >
 	<Portada />
 	<main>

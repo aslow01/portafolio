@@ -191,7 +191,7 @@ export function urlsDeSitemap(xml) {
  * Lo que tiene que cumplir una página de redirección: `meta refresh` inmediato al
  * `destino`, `noindex`, canónica a la portada, un único enlace al mismo destino y ningún script. Lista vacía = cumple.
  */
-export function problemasDeRedireccion(pagina, destino) {
+export function problemasDeRedireccion(pagina, destino, canonicaEsperada = '/') {
 	const problemas = [];
 	const { refresh, robots, canonica } = pagina.meta;
 	const url = refresh?.match(/^\s*0\s*;\s*url\s*=\s*(.+?)\s*$/i)?.[1];
@@ -204,7 +204,7 @@ export function problemasDeRedireccion(pagina, destino) {
 	} catch {
 		rutaCanonica = undefined;
 	}
-	if (rutaCanonica !== '/') problemas.push(`la canónica debe ser la portada y es ${canonica ?? '(ninguna)'}`);
+	if (rutaCanonica !== canonicaEsperada) problemas.push(`la canónica debe ser la portada (${canonicaEsperada}) y es ${canonica ?? '(ninguna)'}`);
 	if (pagina.enlaces.length !== 1) problemas.push(`debe tener un único enlace y tiene ${pagina.enlaces.length}`);
 	else if (pagina.enlaces[0].href !== destino) problemas.push(`el enlace va a ${pagina.enlaces[0].href} y debería ir a ${destino}`);
 	if (pagina.scripts > 0) problemas.push(`no debe llevar JavaScript y trae ${pagina.scripts} <script>`);

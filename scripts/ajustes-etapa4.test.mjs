@@ -12,8 +12,9 @@ const dist = hayDist ? cargarDist() : undefined;
 
 test('A8: la captura que enlaza una demo se llama como su destino («Probar la demo: <título>»), sin la descripción de la lámina', () => {
 	const demos = leer('src/v5/fichas/Demos.astro');
-	assert.match(demos, /alt=\{`Probar la demo: \$\{d\.data\.titulo\}`\}/);
-	assert.doesNotMatch(demos, /Probar la demo: \$\{d\.data\.titulo\}\./);
+	// El «Probar la demo» sale del traductor (a pares con «Try the demo» en la versión en inglés).
+	assert.match(demos, /alt=\{`\$\{t\('Probar la demo', 'Try the demo'\)\}: \$\{d\.data\.titulo\}`\}/);
+	assert.doesNotMatch(demos, /Probar la demo'\)\}: \$\{d\.data\.titulo\}\./);
 });
 
 test('A8 (dist): ninguna captura de la portada que enlaza una demo tiene un nombre de más de 60 caracteres', conDist, () => {

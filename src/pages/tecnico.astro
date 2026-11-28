@@ -8,7 +8,6 @@
 // lo que se arma a partir de ellos está en src/v5/fichas/tecnico-datos.ts. Cada página lleva su `id` (#el-caso…): con
 // ese hash la ficha abre en ella (pestanas.ts). El comportamiento propio («Atrás» con la hoja de código abierta) está en
 // src/scripts/v5/tecnico.ts.
-import { getCollection, getEntry } from 'astro:content';
 import BaseV5 from '../layouts/BaseV5.astro';
 import EnlaceArchivo from '../v5/EnlaceArchivo.astro';
 import Ficha from '../v5/Ficha.astro';
@@ -17,40 +16,62 @@ import CartaAtras from '../v5/CartaAtras.astro';
 import Pagina from '../v5/Pagina.astro';
 import '../styles/v5/cartas.css';
 import '../v5/fichas/tecnico-comun.css';
-import { circuitoLector } from '../lib/circuito.ts';
+import { circuitoDe } from '../lib/circuito.ts';
 import { esDeCamino, filasAutoria, obraPrincipal } from '../lib/contenido.ts';
-import { cv } from '../lib/datos-pendientes.ts';
+import { cvDe, cvEnEspanol } from '../lib/datos-pendientes.ts';
 import { demoVisible, esPublicable, soloPublicable } from '../lib/estados.ts';
 import { inventarioPublicado, textoEstadoDemo } from '../lib/presentacion.ts';
 import { piezasTecnico } from '../lib/proyectos.ts';
-import { comoTrabajo, enfasisComoTrabajo, estudiosActuales, mailto } from '../lib/sitio.ts';
-import { bajadaPortada } from '../v5/datos.ts';
+import { mailto, textosSitio } from '../lib/sitio.ts';
+import { casosDe, demoDe, demosDe, entradaReferida, proyectosDe } from '../i18n/colecciones';
+import { idiomaDe, rutaDe, traductor } from '../i18n/idioma';
+import { trabajosAMostrar } from '../lib/trabajo-independiente.ts';
+import { Image } from 'astro:assets';
 import { estiloDePieza, idDePieza } from '../v5/fichas/piezas-tecnico';
 import {
-	casosCentavo,
+	casosCentavoDe,
 	comprobarContraCodigo,
 	flujoDeAutoria,
 	frases,
 	jornada,
-	lecturasReloj,
-	rotulosJornada,
+	lecturasRelojDe,
+	rotulosJornadaDe,
 	leyendaTira,
 	marcasReloj,
 	nombrePaso,
 } from '../v5/fichas/tecnico-datos';
 
-const todos = (await getCollection('casos', ({ data }) => esPublicable(data))).sort((a, b) => a.data.orden - b.data.orden);
+const idioma = idiomaDe(Astro.currentLocale);
+const t = traductor(idioma);
+const cv = cvDe(idioma);
+const circuitoLector = circuitoDe(idioma);
+const { comoTrabajo, enfasisComoTrabajo, estudiosActuales, bajadaPortada } = textosSitio(idioma);
+const casosCentavo = casosCentavoDe(idioma);
+const lecturasReloj = lecturasRelojDe(idioma);
+const rotulosJornada = rotulosJornadaDe(idioma);
+const todos = (await casosDe(idioma, ({ data }) => esPublicable(data))).sort((a, b) => a.data.orden - b.data.orden);
 const obra = obraPrincipal(todos.filter((c) => esDeCamino(c.data, 'tecnico')));
-const demos = await getCollection('demos', ({ data }) => demoVisible(data));
+const demos = await demosDe(idioma, ({ data }) => demoVisible(data));
 // Las piezas propias del camino técnico (método, laboratorio): las páginas 9 y 10, una carta grande cada una.
-const piezas = piezasTecnico(await getCollection('proyectos'));
-const inventario = inventarioPublicado(todos, demos);
+const piezas = piezasTecnico(await proyectosDe(idioma), undefined, idioma);
+const inventario = inventarioPublicado(todos, demos, undefined, idioma);
+
+// Trabajo independiente (src/lib/trabajo-independiente.ts): solo los sitios con permiso del cliente; sin ninguno, la página no
+// se genera. La vista previa con datos ficticios (variable VISTA_PREVIA=independiente) existe solo en `npm run dev`: en el
+// build `import.meta.env.DEV` es falso y la variable no cuenta. En PowerShell: $env:VISTA_PREVIA = 'independiente'; npm run dev
+const { lista: independientes, vistaPrevia } = trabajosAMostrar(
+	process.env.VISTA_PREVIA === 'independiente',
+	import.meta.env.DEV,
+);
+// Las capturas: src/assets/independiente/ (y, solo para la vista previa, las de las demos, que son ficticias).
+const imagenes = import.meta.glob<{ default: ImageMetadata }>('../assets/{independiente,capturas}/*.{png,jpg,jpeg,webp}', { eager: true });
+const imagenDe = (ruta?: string) => (ruta ? imagenes[`../assets/${ruta}`]?.default : undefined);
 
 // Demo de la obra principal (la del lector de facturas): de ahí salen el botón «Probar la demo», la prueba del
 // centavo y el circuito. La de control de flota pone la prueba del cambio de día.
-const demoObra = obra?.data.demo ? soloPublicable(await getEntry(obra.data.demo)) : undefined;
-const demoFlota = soloPublicable(await getEntry('demos', 'control-flota'));
-const demoLector = soloPublicable(await getEntry('demos', 'lector-facturas'));
+const demoObra = obra?.data.demo ? soloPublicable(await entradaReferida(obra.data.demo)) : undefined;
+const demoFlota = soloPublicable(await demoDe(idioma, 'control-flota'));
+const demoLector = soloPublicable(await demoDe(idioma, 'lector-facturas'));
 const pruebaCentavo = demoObra?.data.prueba;
 const pruebaDia = demoFlota && demoVisible(demoFlota.data) ? demoFlota.data.prueba : undefined;
 // La web no puede mostrar una fila que la prueba no comprueba: si el código cambia, el build falla.
@@ -60,8 +81,8 @@ if (pruebaDia) comprobarContraCodigo(pruebaDia.codigo, lecturasReloj.flatMap((l)
 const cifras = jornada(obra?.data.resultado);
 const linea = obra?.data.lineaObra;
 const autoria = obra?.data.autoria;
-const flujo = flujoDeAutoria(autoria?.yo);
-const filas = filasAutoria(autoria);
+const flujo = flujoDeAutoria(autoria?.yo, idioma);
+const filas = filasAutoria(autoria, idioma);
 const verificacion = frases(autoria?.verificacion ?? '');
 // «Cómo se verificó»: la regla (su primera oración), tres controles y, lo que sigue, la nota del autor.
 const reglaCaso = frases(obra?.data.regla ?? '')[0];
@@ -79,28 +100,34 @@ const ticks = marcasReloj();
 ---
 
 <BaseV5
-	titulo="Técnico e IA"
+	titulo={t('Técnico e IA', 'Technical and AI')}
 	imagenSocial="tecnico"
-	descripcion={`Desarrollo de software y automatización con IA${inventario ? `: ${inventario}` : ''}.`}
-	saltar={{ href: '#t-tecnico', texto: 'Saltar al contenido' }}
+	descripcion={`${t('Desarrollo de software y automatización con IA', 'Software development and AI automation')}${inventario ? `: ${inventario}` : ''}.`}
+	saltar={{ href: '#t-tecnico', texto: t('Saltar al contenido', 'Skip to content') }}
 >
 	<main>
 		<Ficha id="tecnico" fija>
 			<!-- 1 · Tapa -->
-			<Pagina id="tapa" titulo="Tapa" tapa>
-				<h1 class="h1-t cartel" id="t-tecnico" tabindex="-1">Desarrollo <span class="resto">de software y automatización</span></h1>
+			<Pagina id="tapa" titulo={t('Tapa', 'Cover')} tapa>
+				{
+					idioma === 'en' ? (
+						<h1 class="h1-t cartel" id="t-tecnico" tabindex="-1">Software <span class="resto">development and AI automation</span></h1>
+					) : (
+						<h1 class="h1-t cartel" id="t-tecnico" tabindex="-1">Desarrollo <span class="resto">de software y automatización</span></h1>
+					)
+				}
 				<p class="pg-lead">{bajadaPortada}</p>
-				<p class="rotulo">Busco: desarrollo de software · remoto · abierto a otros países</p>
+				<p class="rotulo">{t('Busco: desarrollo de software · remoto · abierto a otros países', 'Looking for: remote software development · open to international employers')}</p>
 				<div class="acciones">
 					{
 						cv.tecnico && (
 							<a class="boton baja" href={cv.tecnico.archivo} download>
-								Descargar el CV técnico<span class="solo-lector">: {cv.tecnico.detalle}</span>
+								{t('Descargar el CV técnico', 'Download the technical CV')}{cvEnEspanol('tecnico', idioma) && ' (Spanish)'}<span class="solo-lector">: {cv.tecnico.detalle}</span>
 							</a>
 						)
 					}
 					<EnlaceArchivo total={todos.length} />
-					<a class="enlace" href={mailto()}>Escribir por correo</a>
+					<a class="enlace" href={mailto()}>{t('Escribir por correo', 'Send an email')}</a>
 				</div>
 				{
 					demoLector && (
@@ -109,7 +136,7 @@ const ticks = marcasReloj();
 							<ol aria-hidden="true">
 								{circuitoLector.map((p, i) => <li class:list={['num', { cinco: p.acercamiento, persona: p.persona }]}>{i + 1}</li>)}
 							</ol>
-							<figcaption id="cap-tira">{leyendaTira(circuitoLector)}</figcaption>
+							<figcaption id="cap-tira">{leyendaTira(circuitoLector, idioma)}</figcaption>
 						</figure>
 					)
 				}
@@ -118,8 +145,8 @@ const ticks = marcasReloj();
 			<!-- 2 · El caso -->
 			{
 				obra && (
-					<Pagina id="el-caso" titulo="El caso">
-						<p class="rotulo">Caso de estudio · anonimizado</p>
+					<Pagina id="el-caso" titulo={t('El caso', 'The case')}>
+						<p class="rotulo">{t('Caso de estudio · anonimizado', 'Case study · anonymized')}</p>
 						<h2 class="pg-sub largo">{obra.data.titulo}</h2>
 						{
 							cifras && (
@@ -135,7 +162,7 @@ const ticks = marcasReloj();
 										<span class="marcas" data-marcas={cifras.ahora.marcas} aria-hidden="true" />
 									</div>
 									<figcaption>
-										<span class="unidad">{cifras.unidad}<span class="una" aria-hidden="true"> · una marca, una factura</span></span>
+										<span class="unidad">{cifras.unidad}<span class="una" aria-hidden="true">{t(' · una marca, una factura', ' · one mark, one invoice')}</span></span>
 									</figcaption>
 								</figure>
 							)
@@ -145,40 +172,40 @@ const ticks = marcasReloj();
 							{
 								demoVivaLector && (
 									<a class="boton ext" href={demoVivaLector} rel="noopener">
-										Probar la demo<span class="solo-lector">: {demoLector?.data.titulo}</span>
+																					{t('Probar la demo', 'Try the demo')}<span class="solo-lector">: {demoLector?.data.titulo}</span>
 									</a>
 								)
 							}
-							<a class="enlace" href={`/casos/${obra.id}/`} data-salir>Leer el caso completo</a>
+							<a class="enlace" href={rutaDe(idioma, `/casos/${obra.id}/`)} data-salir>{t('Leer el caso completo', 'Read the full case')}</a>
 						</div>
 					</Pagina>
 				)
 			}
 
 			<!-- 3 · Cómo trabajo -->
-			<Pagina id="como-trabajo" titulo="Cómo trabajo">
-				<h2 class="pg-sub">Cómo trabajo</h2>
+			<Pagina id="como-trabajo" titulo={t('Cómo trabajo', 'How I work')}>
+				<h2 class="pg-sub">{t('Cómo trabajo', 'How I work')}</h2>
 				<p class="principio">{partesPrincipio.map((p) => (enfasis.includes(p) ? <em>{p}</em> : p))}</p>
 				<div class="parrafos der">
 					{resto.map((f) => <p>{f}</p>)}
 				</div>
 				<dl class="datos">
-					<div><dt class="rotulo">Estudios</dt><dd>{estudiosActuales}</dd></div>
+					<div><dt class="rotulo">{t('Estudios', 'Studies')}</dt><dd>{estudiosActuales}</dd></div>
 				</dl>
 			</Pagina>
 
 			<!-- 4 · Mi parte -->
 			{
 				obra && filas.length > 0 && (
-					<Pagina id="que-hice-yo" titulo="Mi parte">
-						<h2 class="pg-sub">Mi parte <span class="resto">y autoría</span></h2>
-						<div class="quien">
-							<p class="rotulo">Mi parte</p>
+					<Pagina id="que-hice-yo" titulo={t('Mi parte', 'My part')}>
+							<h2 class="pg-sub">{t('Mi parte', 'My part')} <span class="resto">{t('y autoría', 'and authorship')}</span></h2>
+							<div class="quien">
+								<p class="rotulo">{t('Mi parte', 'My part')}</p>
 							<p>{flujo ? flujo.antes : autoria?.yo}</p>
 						</div>
 						{
 							flujo && (
-								<ol class="escalera der" aria-label="El flujo que diseñé">
+								<ol class="escalera der" aria-label={t('El flujo que diseñé', 'The workflow I designed')}>
 									{flujo.pasos.map((p, i) => <li class:list={{ decide: i === 2 }}><span class="num">{i + 1}</span>{p}</li>)}
 								</ol>
 							)
@@ -187,7 +214,7 @@ const ticks = marcasReloj();
 						{
 							autoria?.ia && (
 								<div class="quien">
-									<p class="rotulo">Autoría</p>
+									<p class="rotulo">{t('Autoría', 'Authorship')}</p>
 									<p>{autoria.ia}</p>
 								</div>
 							)
@@ -199,8 +226,8 @@ const ticks = marcasReloj();
 			<!-- 5 · Cómo se verificó -->
 			{
 				obra && controles.length > 0 && (
-					<Pagina id="como-se-verifico" titulo="Cómo se verificó">
-						<h2 class="pg-sub">Cómo se verificó</h2>
+					<Pagina id="como-se-verifico" titulo={t('Cómo se verificó', 'How it was verified')}>
+						<h2 class="pg-sub">{t('Cómo se verificó', 'How it was verified')}</h2>
 						{reglaCaso && <p class="regla-caso">{reglaCaso}</p>}
 						<ol class="controles der">
 							{controles.map((c) => <li><p>{c}</p></li>)}
@@ -213,17 +240,17 @@ const ticks = marcasReloj();
 			<!-- 6 · Circuito: un paso por vez (pestañas) -->
 			{
 				demoLector && (
-					<Pagina id="circuito" titulo="Circuito">
-						<p class="rotulo">Demo propia · datos inventados</p>
-						<h2 class="pg-sub">Circuito de una factura</h2>
+					<Pagina id="circuito" titulo={t('Circuito', 'Flow')}>
+						<p class="rotulo">{t('Demo propia · datos inventados', 'My own demo · fictitious data · interface in Spanish')}</p>
+						<h2 class="pg-sub">{t('Circuito de una factura', 'Flow of one invoice')}</h2>
 						<div class="circuito" data-sub>
-							<div class="pasos-lista" aria-label="Pasos del circuito">
+							<div class="pasos-lista" aria-label={t('Pasos del circuito', 'Steps of the flow')}>
 								<span class="hilo" aria-hidden="true"><span class="hilo-lleno" /></span>
 								{
 									circuitoLector.map((p, i) => (
 										<button type="button" data-para={`paso-${i + 1}`} class:list={{ persona: p.persona }}>
 											<span class="num-paso" aria-hidden="true">{i + 1}</span>
-											<span class="solo-lector">{nombrePaso(i, p)}</span>
+											<span class="solo-lector">{nombrePaso(i, p, idioma)}</span>
 										</button>
 									))
 								}
@@ -231,14 +258,14 @@ const ticks = marcasReloj();
 							{
 								circuitoLector.map((p, i) => (
 									<div class="sub-vista" id={`paso-${i + 1}`}>
-										<p class="rotulo">Paso {i + 1} de {circuitoLector.length}{p.persona ? ' · paso de una persona' : ''}</p>
+										<p class="rotulo">{t('Paso', 'Step')} {i + 1} {t('de', 'of')} {circuitoLector.length}{p.persona ? t(' · paso de una persona', ' · a person’s step') : ''}</p>
 										<h3 class="sub-t">{p.titulo}</h3>
 										<p class="t">{p.texto}</p>
 										{
 											p.acercamiento && (
 												<figure class="acercamiento">
-													<p class="fila"><span class="rotulo">Factura</span><span class="monto cartel">{p.acercamiento.factura}</span></p>
-													<p class="fila"><span class="rotulo">Sistema</span><span class="monto cartel">{p.acercamiento.sistema[0]}<mark>{p.acercamiento.sistema[1]}</mark></span></p>
+													<p class="fila"><span class="rotulo">{t('Factura', 'Invoice')}</span><span class="monto cartel">{p.acercamiento.factura}</span></p>
+													<p class="fila"><span class="rotulo">{t('Sistema', 'System')}</span><span class="monto cartel">{p.acercamiento.sistema[0]}<mark>{p.acercamiento.sistema[1]}</mark></span></p>
 													<figcaption class="veredicto-a">{p.acercamiento.veredicto}</figcaption>
 												</figure>
 											)
@@ -246,7 +273,7 @@ const ticks = marcasReloj();
 									</div>
 								))
 							}
-							<div class="acciones"><button class="boton siguiente" type="button" data-siguiente hidden>Paso siguiente <span class="flecha" aria-hidden="true">→</span></button></div>
+							<div class="acciones"><button class="boton siguiente" type="button" data-siguiente hidden>{t('Paso siguiente', 'Next step')} <span class="flecha" aria-hidden="true">→</span></button></div>
 						</div>
 					</Pagina>
 				)
@@ -255,16 +282,16 @@ const ticks = marcasReloj();
 			<!-- 7 · Prueba del centavo -->
 			{
 				pruebaCentavo && demoObra && (
-					<Pagina id="prueba-centavo" titulo="Prueba: el centavo">
-						<p class="rotulo">{demoObra.data.titulo} · prueba automática</p>
-						<h2 class="pg-sub">{pruebaCentavo.titular ?? 'Prueba de la demo'}</h2>
-						<div class="casos der" role="table" aria-label="Los cuatro casos de la prueba">
-							<div class="cab rotulo" role="row"><span role="columnheader">Planilla</span><span role="columnheader"><span class="solo-lector">Comparación</span></span><span role="columnheader">Sistema</span></div>
+					<Pagina id="prueba-centavo" titulo={t('Prueba: el centavo', 'Test: the cent')}>
+							<p class="rotulo">{demoObra.data.titulo} · {t('prueba automática', 'automated test')}</p>
+							<h2 class="pg-sub">{pruebaCentavo.titular ?? t('Prueba de la demo', 'Demo test')}</h2>
+							<div class="casos der" role="table" aria-label={t('Los cuatro casos de la prueba', 'The four cases of the test')}>
+								<div class="cab rotulo" role="row"><span role="columnheader">{t('Planilla', 'Spreadsheet')}</span><span role="columnheader"><span class="solo-lector">{t('Comparación', 'Comparison')}</span></span><span role="columnheader">{t('Sistema', 'System')}</span></div>
 							{
 								casosCentavo.map((c) => (
 									<div class:list={['caso-p', { distinto: !c.igual }]} role="row">
 										<span class="imp" role="cell">{c.planilla}</span>
-										<span class="signo" role="cell" aria-label={c.igual ? 'igual' : 'distinto'}>{c.igual ? '=' : '≠'}</span>
+										<span class="signo" role="cell" aria-label={c.igual ? t('igual', 'equal') : t('distinto', 'different')}>{c.igual ? '=' : '≠'}</span>
 										<span class="imp der-c" role="cell">{c.sistema}</span>
 										<span class="res" role="cell">{c.resultado}</span>
 									</div>
@@ -273,22 +300,22 @@ const ticks = marcasReloj();
 						</div>
 						<p class="autoria-p">{pruebaCentavo.autoria}</p>
 						<div class="acciones pg-pie">
-							<button class="ver-codigo" type="button" data-hoja="hoja-centavo" hidden>Ver la prueba completa</button>
+							<button class="ver-codigo" type="button" data-hoja="hoja-centavo" hidden>{t('Ver la prueba completa', 'See the full test')}</button>
 							{
 								repoLector && (
 									<a class="enlace ext" href={demoObra.data.pruebaUrl ?? repoLector} rel="noopener">
-										Código de la demo<span class="solo-lector">: {demoObra.data.titulo}</span>
+																					{t('Código de la demo', 'Demo code')}<span class="solo-lector">: {demoObra.data.titulo}</span>
 									</a>
 								)
 							}
 						</div>
-						<div class="codigo-flujo" id="flujo-centavo" data-titulo-hoja="Prueba del importe">
-							<p class="regla-p">{pruebaCentavo.regla}</p>
+						<div class="codigo-flujo" id="flujo-centavo" data-titulo-hoja={t('Prueba del importe', 'Amount test')}>
+							<p class="regla-p">{pruebaCentavo.regla}{idioma === 'en' && ' The code below is quoted as it is in the demo’s repository, so its test names and comments are in Spanish.'}</p>
 							<div class="codigo">
 								<p class="archivo"><span>{pruebaCentavo.archivo}</span><span>{pruebaCentavo.desde}–{pruebaCentavo.hasta}</span></p>
-								<pre tabindex="0" role="region" aria-label="Código de la prueba del importe"><code>{pruebaCentavo.codigo.replace(/\s+$/, '')}</code></pre>
+								<pre tabindex="0" role="region" aria-label={t('Código de la prueba del importe', 'Code of the amount test')}><code>{pruebaCentavo.codigo.replace(/\s+$/, '')}</code></pre>
 							</div>
-							<p class="que-dice"><b>Qué dice</b>{pruebaCentavo.queDice}</p>
+							<p class="que-dice"><b>{t('Qué dice', 'What it says')}</b>{pruebaCentavo.queDice}</p>
 						</div>
 					</Pagina>
 				)
@@ -297,12 +324,12 @@ const ticks = marcasReloj();
 			<!-- 8 · Prueba del cambio de día -->
 			{
 				pruebaDia && demoFlota && (
-					<Pagina id="prueba-dia" titulo="Prueba: el día">
-						<p class="rotulo">{demoFlota.data.titulo} · prueba automática</p>
-						<h2 class="pg-sub">{pruebaDia.titular ?? 'Prueba de la demo'}</h2>
+					<Pagina id="prueba-dia" titulo={t('Prueba: el día', 'Test: the day')}>
+							<p class="rotulo">{demoFlota.data.titulo} · {t('prueba automática', 'automated test')}</p>
+							<h2 class="pg-sub">{pruebaDia.titular ?? t('Prueba de la demo', 'Demo test')}</h2>
 						<figure class="reloj der">
 							<svg viewBox="0 0 300 300" role="img" aria-labelledby="reloj-t">
-								<title id="reloj-t">Reloj de 24 horas en UTC. Entre las 00:00 y las 03:00 UTC, en Argentina todavía es el día anterior; a las 03:00 UTC empieza el día nuevo.</title>
+								<title id="reloj-t">{t('Reloj de 24 horas en UTC. Entre las 00:00 y las 03:00 UTC, en Argentina todavía es el día anterior; a las 03:00 UTC empieza el día nuevo.', '24-hour clock in UTC. Between 00:00 and 03:00 UTC it is still the previous day in Argentina; the new day starts at 03:00 UTC.')}</title>
 								<path class="sector" d="M150 150 L150 34 A116 116 0 0 1 232.02 67.98 Z" />
 								<circle class="aro" cx="150" cy="150" r="116" />
 								{ticks.map((t) => <line class:list={['tic', { mayor: t.mayor }]} x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2} />)}
@@ -314,9 +341,9 @@ const ticks = marcasReloj();
 								<text class="hora" x="16" y="155">18</text>
 								<line class="aguja" x1="150" y1="150" x2="150" y2="58" />
 								<circle class="centro" cx="150" cy="150" r="6" />
-								<text class="rot" x="150" y="186">EN ARGENTINA</text>
-								<text class="fecha f17" x="150" y="230">17/11</text>
-								<text class="fecha f18" x="150" y="230">18/11</text>
+								<text class="rot" x="150" y="186">{t('EN ARGENTINA', 'IN ARGENTINA')}</text>
+								<text class="fecha f17" x="150" y="230">{t('17/11', 'Nov 17')}</text>
+								<text class="fecha f18" x="150" y="230">{t('18/11', 'Nov 18')}</text>
 							</svg>
 							<figcaption class="lectura-reloj">
 								{lecturasReloj.map((l) => <span><b>{l.hora}</b> {l.texto}</span>)}
@@ -324,22 +351,22 @@ const ticks = marcasReloj();
 						</figure>
 						<p class="autoria-p">{pruebaDia.autoria}</p>
 						<div class="acciones pg-pie">
-							<button class="ver-codigo" type="button" data-hoja="hoja-dia" hidden>Ver la prueba completa</button>
+							<button class="ver-codigo" type="button" data-hoja="hoja-dia" hidden>{t('Ver la prueba completa', 'See the full test')}</button>
 							{
 								repoFlota && (
 									<a class="enlace ext" href={demoFlota.data.pruebaUrl ?? repoFlota} rel="noopener">
-										Código de la demo<span class="solo-lector">: {demoFlota.data.titulo}</span>
+																					{t('Código de la demo', 'Demo code')}<span class="solo-lector">: {demoFlota.data.titulo}</span>
 									</a>
 								)
 							}
 						</div>
-						<div class="codigo-flujo" id="flujo-dia" data-titulo-hoja="Prueba del cambio de día">
-							<p class="regla-p">{pruebaDia.regla}</p>
+						<div class="codigo-flujo" id="flujo-dia" data-titulo-hoja={t('Prueba del cambio de día', 'Day-change test')}>
+							<p class="regla-p">{pruebaDia.regla}{idioma === 'en' && ' The code below is quoted as it is in the demo’s repository, so its test names and comments are in Spanish.'}</p>
 							<div class="codigo">
 								<p class="archivo"><span>{pruebaDia.archivo}</span><span>{pruebaDia.desde}–{pruebaDia.hasta}</span></p>
-								<pre tabindex="0" role="region" aria-label="Código de la prueba del cambio de día"><code>{pruebaDia.codigo.replace(/\s+$/, '')}</code></pre>
+								<pre tabindex="0" role="region" aria-label={t('Código de la prueba del cambio de día', 'Code of the day-change test')}><code>{pruebaDia.codigo.replace(/\s+$/, '')}</code></pre>
 							</div>
-							<p class="que-dice"><b>Qué dice</b>{pruebaDia.queDice}</p>
+							<p class="que-dice"><b>{t('Qué dice', 'What it says')}</b>{pruebaDia.queDice}</p>
 						</div>
 					</Pagina>
 				)
@@ -352,7 +379,7 @@ const ticks = marcasReloj();
 					return (
 						<Pagina id={idDePieza(p)} titulo={p.pagina}>
 							<div class:list={['carta-grande', estilo.grande, { 'con-tras': p.filas.length > 0 }, 'der']}>
-								<p class="rotulo">Proyecto · {textoEstadoDemo(p.estado)}</p>
+								<p class="rotulo">{t('Proyecto', 'Project')} · {textoEstadoDemo(p.estado, idioma)}</p>
 								<h2 class:list={['titulo-proyecto', p.tamanoTitulo]}>{p.titulo}</h2>
 								<div class="carta-textos">
 									<p class="texto">{p.texto}</p>
@@ -364,6 +391,40 @@ const ticks = marcasReloj();
 						</Pagina>
 					);
 				})
+			}
+
+			<!-- 11 · Trabajo independiente: solo con permiso del cliente (sin ningún sitio con permiso, esta página no existe) -->
+			{
+				independientes.length > 0 && (
+					<Pagina id="independiente" titulo="Independiente">
+						<p class="rotulo">{vistaPrevia ? t('Vista previa · datos ficticios', 'Preview · fictitious data') : t('Sitios para clientes', 'Client websites')}</p>
+						<h2 class="pg-sub">Trabajo independiente</h2>
+						<p class="texto">
+							Sitios web para clientes particulares, publicados con autorización de cada cliente y sin sus datos personales.
+						</p>
+						<ul class="indep ancho">
+							{
+								independientes.map((t) => {
+									const imagen = imagenDe(t.captura);
+									return (
+										<li class="indep-carta">
+											{imagen && t.capturaAlt && <Image class="indep-img" src={imagen} alt={t.capturaAlt} widths={[360, 720]} sizes="(min-width: 1024px) 30vw, 90vw" loading="lazy" />}
+											<p class="rotulo">{t.rubro}{t.anio ? ` · ${t.anio}` : ''}</p>
+											<h3 class="indep-titulo">{t.titulo}</h3>
+											<p class="indep-texto">{t.queSeHizo}</p>
+											<p class="indep-stack">{t.stack.join(' · ')}</p>
+											{t.url && (
+												<a class="enlace ext" href={t.url} rel="noopener noreferrer">
+													Ver el sitio<span class="solo-lector">: {t.titulo}</span>
+												</a>
+											)}
+										</li>
+									);
+								})
+							}
+						</ul>
+					</Pagina>
+				)
 			}
 		</Ficha>
 	</main>
@@ -405,6 +466,9 @@ const ticks = marcasReloj();
 	/* Angosto (menos de 360 px): la bajada de la tapa baja un punto para que las tres acciones entren */
 	@media (max-width: 359px) {
 		.f-tecnico.fija .tapa .pg-lead { font-size: 17px; }
+		/* En inglés el titular y la bajada son más largos: más chicos para que la tapa entre a 320 px */
+		:lang(en) .f-tecnico.fija .tapa .pg-lead { font-size: 15.5px; line-height: 1.35; }
+		:lang(en) .f-tecnico.fija .tapa .h1-t { font-size: 0.92em; }
 	}
 
 	/* ---------- Página interior: título ---------- */
@@ -614,5 +678,16 @@ const ticks = marcasReloj();
 	   tapaba el último dígito de «1.000,01») */
 	@media (orientation: landscape) and (max-height: 520px) and (min-width: 640px) and (max-width: 899px) {
 		.f-tecnico .caso-p .imp { font-size: min(24px, 3.2vw); }
+	}
+
+	/* ---------- Trabajo independiente: una carta por sitio (solo con permiso del cliente). El CSS sí viaja aunque la página no exista: no lleva datos. ---------- */
+	.f-tecnico .indep { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 14px; align-items: start; }
+	.f-tecnico .indep-carta { display: flex; flex-direction: column; gap: 8px; padding: 16px; background: var(--oscuro); border-top: 4px solid var(--claro); }
+	.f-tecnico .indep-img { width: 100%; height: auto; aspect-ratio: 16 / 10; object-fit: cover; object-position: top; border: 1px solid var(--regla); }
+	.f-tecnico .indep-titulo { font-family: var(--f-cartel); font-stretch: 85%; font-weight: 700; font-size: 24px; line-height: 1.08; letter-spacing: -0.01em; text-wrap: balance; }
+	.f-tecnico .indep-texto { font-size: 16px; line-height: 1.42; }
+	.f-tecnico .indep-stack { font-family: var(--f-mono); font-size: 14px; color: var(--texto-2); }
+	@media (min-width: 1024px) {
+		.f-tecnico .indep { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 	}
 </style>

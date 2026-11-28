@@ -31,6 +31,17 @@ El diseño es la versión 5, «Mezcla». La portada es una pila de cinco pestañ
 
 A `/casos/` se llega desde la tapa de `/tecnico/`, desde la ficha de Logística y desde «Más casos», al pie de cada caso. La cantidad de casos que se muestra se calcula del contenido; no se escribe a mano.
 
+### Versión en inglés (`/en/`)
+
+El sitio tiene dos idiomas con la i18n nativa de Astro (`astro.config.mjs`, sin dependencias nuevas): el español es el idioma por defecto y vive en `/`; el inglés vive bajo `/en/` y repite las mismas páginas (`/en/`, `/en/tecnico/`, `/en/casos/` y `/en/casos/<caso>/`). Las redirecciones de la v4 y la 404 solo existen en español.
+
+- **Las páginas son las mismas.** `src/pages/en/*` solo importa la página en español; cada componente lee su idioma de la dirección (`Astro.currentLocale`) y escribe sus textos «a pares» (`t('Cerrar', 'Close')`, `src/i18n/idioma.ts`), el español al lado del inglés.
+- **El contenido en inglés** está en `src/content-en/` (`casos`, `demos`, `proyectos`): mismos archivos y mismos ids que `src/content/`, con las colecciones `casos-en`, `demos-en` y `proyectos-en`. `scripts/en.test.mjs` comprueba que sean el mismo contenido (estado, orden, cifras, código literal de las pruebas).
+- **Selector ES | EN** en el encabezado de cada página (`src/v5/SelectorIdioma.astro`): lleva a la misma página, y en la portada también a la misma ficha.
+- **Cabeza de cada página:** `<html lang>`, `canonical` propia, `hreflang` (`es-AR`, `en` y `x-default`) y Open Graph en el idioma de la página; el sitemap lista las dos versiones con `xhtml:link`.
+- **CV:** `/en/` enlaza el CV técnico en inglés (`public/cv/matias-ormeno-cv-technical-en.pdf`); el de logística solo existe en español y el botón lo avisa («Spanish»). Las demos están en español y la ficha de Demos lo dice.
+- **Imágenes para compartir:** el generador dibuja también las láminas en inglés (`en-<clave>-<huella>.png`).
+
 ### Método y Laboratorio
 
 Dos piezas propias del camino técnico, publicadas:
@@ -113,6 +124,8 @@ Variables opcionales: `PLAYWRIGHT_MODULO` (carpeta `node_modules` que ya tenga P
 src/content/casos/      casos de estudio (anonimizados)
 src/content/demos/      demos propias
 src/content/proyectos/  proyectos creativos y piezas propias del camino técnico
+src/content-en/         los mismos tres, en inglés (colecciones `casos-en`, `demos-en`, `proyectos-en`)
+src/i18n/               idioma de la página: `idioma.ts` (tipo, traductor, direcciones), `colecciones.ts`, `rutas.ts`
 src/lib/                reglas puras (visibilidad, textos derivados, esquemas, datos del sitio), con pruebas en scripts/; `imagenes-sociales.ts` lo escribe el generador
 src/pages/              rutas
 src/v5/                 portada, fichas, lomos, la página de caso y el índice de casos
@@ -120,7 +133,7 @@ src/scripts/v5/         comportamiento en el navegador (TypeScript, sin dependen
 src/styles/v5/          sistema de diseño: tokens, fuentes, sistema compartido, portada e interiores
 src/assets/capturas/    capturas de las demos (Astro las optimiza)
 public/fonts/           fuentes autoalojadas, cada una con su licencia OFL
-public/cv/              los dos CV descargables, uno por camino (PDF)
+public/cv/              los CV descargables, uno por camino (PDF), y el técnico en inglés
 public/_headers         política de contenido (CSP) y demás cabeceras de seguridad
 public/og/              imágenes para compartir (1200 x 630), una por página, con la huella en el nombre (las genera scripts/og/)
 scripts/                pruebas (Node) y verificaciones

@@ -8,7 +8,8 @@
 //     viene: `aria-current="page"` si el enlace es esta misma página; si no (un caso dentro de su carpeta), solo la marca
 //     visual `data-actual` y un aviso para el lector de pantalla, porque `aria-current` es solo para la página actual.
 //     En la 404 no hay ninguno.
-import { fichas, type IdFicha } from './datos';
+import { fichasDe, type IdFicha } from './datos';
+import { idiomaDe, rutaDe, traductor } from '../i18n/idioma';
 
 interface Props {
 	/** Salir a otra página en vez de cambiar de ficha (las páginas interiores). */
@@ -22,7 +23,11 @@ interface Props {
 }
 const { salida = false, actual, cortina = false, visibles = false } = Astro.props;
 
-const destino = (id: IdFicha): string => (!salida ? `#${id}` : id === 'tecnico' ? '/tecnico/' : `/#${id}`);
+const idioma = idiomaDe(Astro.currentLocale);
+const t = traductor(idioma);
+const fichas = fichasDe(idioma);
+const inicio = rutaDe(idioma, '/');
+const destino = (id: IdFicha): string => (!salida ? `#${id}` : id === 'tecnico' ? rutaDe(idioma, '/tecnico/') : rutaDe(idioma, `/#${id}`));
 const sinBarra = (ruta: string): string => ruta.replace(/\/+$/, '');
 // Con cortina, los enlaces salen con ella; el de esta misma página no sale a ningún lado, así que no la lleva.
 const conCortina = (href: string): boolean => salida && cortina && sinBarra(href) !== sinBarra(Astro.url.pathname);
@@ -30,17 +35,17 @@ const esActual = (id: IdFicha): boolean => salida && id === actual;
 const esEstaPagina = (id: IdFicha): boolean => esActual(id) && sinBarra(destino(id)) === sinBarra(Astro.url.pathname);
 ---
 
-<nav class:list={['lomos', { visible: salida && visibles }]} aria-label="Secciones del sitio">
+<nav class:list={['lomos', { visible: salida && visibles }]} aria-label={t('Secciones del sitio', 'Site sections')}>
 	<ol>
 		<li class="inicio">
 			{
 				salida ? (
-					<a href="/" data-salir={conCortina('/') ? '' : undefined}>
-						<span class="corto">Inicio</span>
+					<a href={inicio} data-salir={conCortina(inicio) ? '' : undefined}>
+						<span class="corto">{t('Inicio', 'Home')}</span>
 					</a>
 				) : (
 					<a href="#inicio" data-cerrar>
-						<span class="corto">Inicio</span>
+						<span class="corto">{t('Inicio', 'Home')}</span>
 					</a>
 				)
 			}
@@ -57,7 +62,7 @@ const esEstaPagina = (id: IdFicha): boolean => esActual(id) && sinBarra(destino(
 					>
 						<span class="num">{f.numero}</span>
 						<span class="corto">{f.corto}</span>
-						{esActual(f.id) && !esEstaPagina(f.id) && <span class="solo-lector">: carpeta de este caso</span>}
+						{esActual(f.id) && !esEstaPagina(f.id) && <span class="solo-lector">{t(': carpeta de este caso', ': folder of this case')}</span>}
 					</a>
 				</li>
 			))

@@ -657,3 +657,32 @@ dialog.hoja[open] { display: flex; flex-direction: column; }
 	.oreja, .lomos a:is([aria-current], [data-actual]), .solapitas i { forced-color-adjust: none; }
 	.ficha-cabeza { border-bottom: 2px solid CanvasText; }
 }
+
+/* ---------- Selector de idioma «ES | EN» (v5/SelectorIdioma.astro) ---------- */
+.idioma { display: inline-flex; align-items: center; font-family: var(--f-texto); font-size: 13px; font-weight: 700; letter-spacing: 0.04em; line-height: 1; }
+.idioma a, .idioma [aria-current] { display: inline-flex; align-items: center; justify-content: center; min-width: 30px; min-height: 44px; padding: 0 3px; color: inherit; }
+.idioma a { text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 5px; }
+.idioma a:hover { text-decoration-thickness: 3px; }
+.idioma [aria-current] { text-decoration: none; }
+.idioma .sep { opacity: 0.45; }
+/* En la cabeza de una ficha va junto a «Cerrar» (que está a la derecha; en las fichas 04 y 05, a la izquierda). */
+.ficha-cabeza .idioma { position: absolute; top: 0; right: 92px; color: var(--tinta); }
+.ficha.p4 .ficha-cabeza .idioma, .ficha.p5 .ficha-cabeza .idioma { right: auto; left: 92px; }
+/* La marca de la página actual en la lista del paginador, en el idioma de la página (el texto es contenido de CSS). */
+html:lang(en) .pag-lista button[aria-current]::after { content: '·  here'; }
+/* En escritorio la página actual va en la solapa oscura y no lleva marca: esta regla es más específica que la de 504 y la pisaba (texto oscuro sobre oscuro). */
+@media (min-width: 1024px) { html:lang(en) .pag-lista button[aria-current]::after { content: none; } }
+/* En un celular angosto, la cabeza de la ficha solo muestra el enlace al OTRO idioma («EN» en español, «ES» en inglés): entre la
+   solapa y «Cerrar» no entran los dos. El idioma actual sigue a la vista en <html lang> y en el nombre de la página. */
+@media (max-width: 420px) {
+	.ficha-cabeza .idioma { right: 80px; }
+	.ficha.p4 .ficha-cabeza .idioma, .ficha.p5 .ficha-cabeza .idioma { left: 80px; }
+	.ficha-cabeza .idioma [aria-current], .ficha-cabeza .idioma .sep { display: none; }
+}
+/* Celular muy angosto (320 px): la solapa baja un escalón y el selector se arrima a «Cerrar», para que no se pisen. */
+@media (max-width: 340px) {
+	.ficha-cabeza .oreja b { font-size: 15px; }
+	.ficha-cabeza .oreja { padding-right: calc(var(--corte) + 10px); gap: 7px; }
+	.ficha-cabeza .idioma { right: 70px; }
+	.ficha.p4 .ficha-cabeza .idioma, .ficha.p5 .ficha-cabeza .idioma { left: 70px; }
+}

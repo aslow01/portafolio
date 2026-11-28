@@ -12,26 +12,32 @@
 // El color de la barra del navegador (`theme-color`) repite --hueso (tokens.css): el atributo no admite variables CSS.
 import '../styles/v5/tokens.css';
 import '../styles/v5/sistema.css';
-import { descripcionSitio, imagenSocial, nombre } from '../lib/sitio';
+import { imagenSocial, nombre, textosSitio } from '../lib/sitio';
 import { ficha as fichaDe, type IdFicha } from './datos';
+import { codigoLang, codigoOg, idiomaDe, rutaDe, traductor } from '../i18n/idioma';
 
 interface Props {
 	/** La ficha de la portada a la que se va. */
 	ficha: IdFicha;
 }
-const destino = fichaDe(Astro.props.ficha);
-const hacia = `/#${destino.id}`;
-const canonica = new URL('/', Astro.site);
+// El idioma sale de la dirección (/en/… es inglés): la redirección en inglés lleva a la ficha de /en/ y está en inglés.
+const idioma = idiomaDe(Astro.currentLocale);
+const t = traductor(idioma);
+const destino = fichaDe(Astro.props.ficha, idioma);
+const hacia = rutaDe(idioma, `/#${destino.id}`);
+const canonica = new URL(rutaDe(idioma, '/'), Astro.site);
 // Logística tiene su imagen y su descripción (la de la tapa de la ficha); las otras tres, las de la portada.
 const esLogistica = destino.id === 'logistica';
-const descripcion = esLogistica ? 'Logística de flota, combustible y traslados en proyectos mineros y energéticos de San Juan.' : descripcionSitio;
+const descripcion = esLogistica
+	? t('Logística de flota, combustible y traslados en proyectos mineros y energéticos de San Juan.', 'Fleet, fuel and transport logistics for mining and energy projects in San Juan, Argentina.')
+	: textosSitio(idioma).descripcionSitio;
 const tituloCompleto = `${destino.nombre} | ${nombre.completo}`;
-const { archivo, alt } = imagenSocial(esLogistica ? 'logistica' : 'portada', import.meta.env.DEV);
+const { archivo, alt } = imagenSocial(esLogistica ? 'logistica' : 'portada', import.meta.env.DEV, idioma);
 const imagen = new URL(archivo, Astro.site);
 ---
 
 <!doctype html>
-<html lang="es-AR" class="con-fotos">
+<html lang={codigoLang[idioma]} class="con-fotos">
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -46,7 +52,7 @@ const imagen = new URL(archivo, Astro.site);
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="description" content={descripcion} />
 		<meta property="og:type" content="website" />
-		<meta property="og:locale" content="es_AR" />
+		<meta property="og:locale" content={codigoOg[idioma]} />
 		<meta property="og:site_name" content={nombre.completo} />
 		<meta property="og:title" content={tituloCompleto} />
 		<meta property="og:description" content={descripcion} />
@@ -61,8 +67,8 @@ const imagen = new URL(archivo, Astro.site);
 	</head>
 	<body>
 		<main class="redireccion c-hueso">
-			<h1 class="rotulo">Esta página cambió de lugar</h1>
-			<p><a class="boton" href={hacia}>Ir a {destino.nombre} <span class="flecha" aria-hidden="true">→</span></a></p>
+			<h1 class="rotulo">{t('Esta página cambió de lugar', 'This page has moved')}</h1>
+			<p><a class="boton" href={hacia}>{t('Ir a', 'Go to')} {destino.nombre} <span class="flecha" aria-hidden="true">→</span></a></p>
 		</main>
 	</body>
 </html>

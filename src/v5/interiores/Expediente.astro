@@ -8,6 +8,8 @@ import EnlaceArchivo from '../EnlaceArchivo.astro';
 import EnlacesDeContacto from '../EnlacesDeContacto.astro';
 import type { ModeloCaso } from './caso.ts';
 import type { DatosFicha } from '../datos';
+import SelectorIdioma from '../SelectorIdioma.astro';
+import { idiomaDe, traductor } from '../../i18n/idioma';
 
 interface Props {
 	modelo: ModeloCaso;
@@ -23,22 +25,24 @@ interface Props {
 }
 const { modelo, carpeta, volver, demo, borrador = false, nombreCaso } = Astro.props;
 const { titulo, caratula, paginas } = modelo;
+const t = traductor(idiomaDe(Astro.currentLocale));
 ---
 
 <section
 	class:list={['ficha', 'fija', `c-${carpeta.color}`, `p${carpeta.posicion}`, 'expediente']}
 	id="caso"
-	data-nombre={`Caso: ${nombreCaso}`}
+	data-nombre={`${t('Caso', 'Case')}: ${nombreCaso}`}
 	aria-labelledby="t-h1"
 >
 	<div class="ficha-cabeza">
 		<p class="oreja"><span class="num">{carpeta.numero}</span><b>{carpeta.nombre}</b></p>
-		<a class="cerrar" href={volver.href} data-salir><span>Cerrar</span><span class="solo-lector">: volver a {carpeta.nombre}</span></a>
+		<a class="cerrar" href={volver.href} data-salir><span>{t('Cerrar', 'Close')}</span><span class="solo-lector">{t(`: volver a ${carpeta.nombre}`, `: back to ${carpeta.nombre}`)}</span></a>
+		<SelectorIdioma />
 	</div>
 	<div class="hojas">
-		<article class="pagina tapa" id="tapa" data-titulo="Tapa">
+		<article class="pagina tapa" id="tapa" data-titulo={t('Tapa', 'Cover')}>
 			<div class="pg">
-				<p class="rotulo">Caso de estudio · anonimizado{borrador && import.meta.env.DEV && <Fragment> <span class="chapa">Borrador</span></Fragment>}</p>
+				<p class="rotulo">{t('Caso de estudio · anonimizado', 'Case study · anonymized')}{borrador && import.meta.env.DEV && <Fragment> <span class="chapa">{t('Borrador', 'Draft')}</span></Fragment>}</p>
 				<h1 class="h1-t cartel" id="t-h1" tabindex="-1">{titulo.primera}{titulo.resto && <Fragment>{' '}<span class="resto">{titulo.resto}</span></Fragment>}</h1>
 				<p class="pg-lead resumen">{modelo.resumen}</p>
 				{
@@ -53,7 +57,7 @@ const { titulo, caratula, paginas } = modelo;
 											<Fragment>
 												<span class="cifra-mini">
 													{f.cifra.antes.map((a) => (
-														<Fragment>{a}<span aria-hidden="true"> → </span><span class="solo-lector"> a </span></Fragment>
+														<Fragment>{a}<span aria-hidden="true"> → </span><span class="solo-lector">{t(' a ', ' to ')}</span></Fragment>
 													))}
 													{f.cifra.ahora}
 												</span>
@@ -76,7 +80,7 @@ const { titulo, caratula, paginas } = modelo;
 					<article class="pagina de-hoja" id={p.id} data-titulo={p.titulo}>
 						<div class="pg c-pliego">
 							{p.solapa.continuacion ? (
-								<p class="solapa-h"><span class="num" aria-hidden="true">{p.solapa.numero}</span>{p.solapa.texto}<span class="sigue">, continuación</span></p>
+								<p class="solapa-h"><span class="num" aria-hidden="true">{p.solapa.numero}</span>{p.solapa.texto}<span class="sigue">{t(', continuación', ', continued')}</span></p>
 							) : (
 								<h2 class="solapa-h"><span class="num" aria-hidden="true">{p.solapa.numero}</span>{p.solapa.texto}</h2>
 							)}
@@ -93,7 +97,7 @@ const { titulo, caratula, paginas } = modelo;
 							<figure class="cifra-caso">
 								<p class="cifra-c cartel">
 									{p.cifra.antes.map((a) => (
-										<Fragment><span class="antes">{a}</span><span class="flecha" aria-hidden="true">→</span><span class="solo-lector"> a </span></Fragment>
+										<Fragment><span class="antes">{a}</span><span class="flecha" aria-hidden="true">→</span><span class="solo-lector">{t(' a ', ' to ')}</span></Fragment>
 									))}
 									<span class="ahora">{p.cifra.ahora}</span>
 								</p>
@@ -106,7 +110,7 @@ const { titulo, caratula, paginas } = modelo;
 								<Bloques bloques={p.parrafos} claseParrafo="texto res-texto" />
 								{p.uso && (
 									<dl class="datos uso">
-										<div><dt class="rotulo">Uso</dt><dd>{p.uso}</dd></div>
+										<div><dt class="rotulo">{t('Uso', 'In use')}</dt><dd>{p.uso}</dd></div>
 									</dl>
 								)}
 							</div>
@@ -115,7 +119,7 @@ const { titulo, caratula, paginas } = modelo;
 				) : p.tipo === 'autoria' ? (
 					<article class="pagina" id={p.id} data-titulo={p.titulo}>
 						<div class="pg">
-							<h2 class="pg-sub">Mi parte <span class="resto">y autoría</span></h2>
+							<h2 class="pg-sub">{t('Mi parte', 'My part')} <span class="resto">{t('y autoría', 'and authorship')}</span></h2>
 							{p.filas.map((f) => (
 								<div class={`quien ${f.clave}`}>
 									<p class="rotulo">{f.rotulo}</p>
@@ -131,8 +135,8 @@ const { titulo, caratula, paginas } = modelo;
 							<div class="pliego">
 								{p.verificacion && <div class="lectura"><p>{p.verificacion}</p></div>}
 								<div class="salidas">
-									{demo && <a class="enlace ext" href={demo} rel="noopener">Ver una demo propia, escrita desde cero, sobre el mismo tipo de problema</a>}
-									<a class="enlace volver" href={volver.href} data-salir><span aria-hidden="true">←</span> Volver a {carpeta.nombre}</a>
+									{demo && <a class="enlace ext" href={demo} rel="noopener">{t('Ver una demo propia, escrita desde cero, sobre el mismo tipo de problema', 'See my own demo (interface in Spanish) on the same kind of problem')}</a>}
+									<a class="enlace volver" href={volver.href} data-salir><span aria-hidden="true">←</span> {t('Volver a', 'Back to')} {carpeta.nombre}</a>
 								</div>
 							</div>
 						</div>
@@ -145,7 +149,7 @@ const { titulo, caratula, paginas } = modelo;
 								<ul class="cartas">
 									{p.casos.map((c) => (
 										<li>
-											<p class="rotulo">{c.rotulo}{c.borrador && import.meta.env.DEV && <Fragment> <span class="chapa">Borrador</span></Fragment>}</p>
+											<p class="rotulo">{c.rotulo}{c.borrador && import.meta.env.DEV && <Fragment> <span class="chapa">{t('Borrador', 'Draft')}</span></Fragment>}</p>
 											<a class="carta-enlace" href={c.href}>{c.titulo}<span class="flecha" aria-hidden="true"> →</span></a>
 										</li>
 									))}

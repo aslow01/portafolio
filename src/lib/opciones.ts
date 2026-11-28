@@ -1,6 +1,7 @@
 // Opciones de contenido que decide Matías, cada una con su valor actual y una sola fuente (pura, sin Astro).
 // Cambiar una opción es cambiar un valor acá: la portada y la ficha Proyectos la leen de este archivo.
 import type { Autoria } from './contenido.ts';
+import type { Idioma } from '../i18n/idioma.ts';
 
 /**
  * La novela. El sitio la muestra SIN TÍTULO («Novela en desarrollo») hasta que tenga fecha (decisión de Matías del
@@ -37,3 +38,21 @@ export const novela: {
 		verificacion: 'Una sala de críticos de IA revisa cada capítulo.',
 	},
 };
+
+/** La novela en inglés: los mismos textos fijos (misma decisión de contenido), traducidos. */
+export const novelaEn: typeof novela = {
+	tipo: 'novela',
+	estado: 'en-desarrollo',
+	orden: 1,
+	titulo: 'Novel in development',
+	pagina: 'Novel',
+	texto: 'A horror novel about contagion, in two books.',
+	aparte: 'I have been working on this story since around 2018; it gained momentum in 2026.',
+	autoria: {
+		yo: 'I write some of the chapters; I decide the story.',
+		ia: 'AI writes the rest of the chapters.',
+		verificacion: 'A panel of AI critics reviews each chapter.',
+	},
+};
+
+export const novelaDe = (idioma: Idioma): typeof novela => (idioma === 'en' ? novelaEn : novela);

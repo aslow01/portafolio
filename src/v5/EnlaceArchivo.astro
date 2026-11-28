@@ -5,18 +5,20 @@
 // El estilo está en src/styles/v5/archivo.css.
 import '../styles/v5/archivo.css';
 import { puertaAlArchivo } from '../lib/contenido.ts';
+import { idiomaDe, rutaDe, traductor } from '../i18n/idioma';
 
 interface Props {
 	/** Casos publicables en total, de los dos caminos. */
 	total: number;
 	texto?: string;
 }
-const { total, texto = 'Casos de estudio' } = Astro.props;
+const idioma = idiomaDe(Astro.currentLocale);
+const { total, texto = traductor(idioma)('Casos de estudio', 'Case studies') } = Astro.props;
 ---
 
 {
 	puertaAlArchivo(total) && (
-		<a class="enlace a-archivo" href="/casos/" data-salir data-color="var(--hueso)" data-n={total}>
+		<a class="enlace a-archivo" href={rutaDe(idioma, '/casos/')} data-salir data-color="var(--hueso)" data-n={total}>
 			{texto}<span class="solo-lector"> ({total})</span><span class="flecha" aria-hidden="true">→</span>
 		</a>
 	)

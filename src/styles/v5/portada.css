@@ -358,3 +358,13 @@
 	.cara { padding-top: 2px; }
 	.asoma { width: 30%; }
 }
+
+/* Selector de idioma de la portada («ES | EN», v5/SelectorIdioma.astro): en una columna va arriba, a la izquierda del lugar, y no
+   empuja nada; con dos columnas (y en celular apaisado) es un elemento más de la cabeza. */
+.portada .idioma { position: absolute; top: 4px; right: calc(var(--margen) + 7.6em); z-index: 1; }
+@media (min-width: 1024px), (min-width: 800px) and (orientation: landscape) and (min-height: 521px) {
+	.portada .idioma { position: static; }
+}
+@media (orientation: landscape) and (max-height: 520px) and (max-width: 1023px) {
+	.portada .idioma { position: static; margin-left: 12px; }
+}

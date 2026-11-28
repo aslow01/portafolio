@@ -1,5 +1,6 @@
 // Genera las imágenes para compartir (public/og/<clave>-<huella>.png, 1200 × 630) y src/lib/imagenes-sociales.ts:
 //   node scripts/og/generar.mjs
+// Dibuja las láminas en español (`portada`, `tecnico`…) y en inglés (`en/portada`…, archivos `en-portada-<huella>.png`).
 // Es una herramienta de mano: no forma parte de `npm test` ni del build (ni corre en Cloudflare) y no agrega dependencias.
 // Playwright no está en package.json; se usa igual que en scripts/verificar-paginas.mjs (`npm install --no-save playwright`,
 // o PLAYWRIGHT_MODULO=<carpeta node_modules con Playwright>; CHROMIUM_RUTA=<ejecutable de Chromium> si no está el de Playwright).
@@ -13,7 +14,7 @@ import { createRequire } from 'node:module';
 import { mkdirSync, readdirSync, readFileSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { huella, laminas } from './laminas.mjs';
+import { huella, laminas, nombreDeArchivo } from './laminas.mjs';
 
 const aqui = resolve(fileURLToPath(new URL('.', import.meta.url)));
 const raiz = resolve(aqui, '..', '..');
@@ -61,7 +62,7 @@ function dibujar(l) {
 			li.append(o, nodo('span', 'w', banda.corto));
 			if (banda.asoma) {
 				const asoma = nodo('span', 'asoma');
-				asoma.append(nodo('span', 'cifra', '0,0'), nodo('b', '', '1'));
+				asoma.append(nodo('span', 'cifra', banda.decimal ?? '0,0'), nodo('b', '', '1'));
 				li.append(asoma);
 			}
 			pila.append(li);
@@ -131,6 +132,9 @@ function dibujar(l) {
 	const cuerpo = f.querySelector('.cuerpo');
 
 	if (l.composicion === 'B') {
+		// «0,0» + «1» en español, «0.0» + «1» en inglés (lo que asoma de Técnico, decorativo).
+		const decimal = f.querySelector('.pieza-tec .cifra');
+		if (decimal) decimal.textContent = l.decimal ?? '0,0';
 		titulo.style.setProperty('--t', `${l.tamano}px`);
 		titulo.style.removeProperty('--wdth');
 		titulo.style.removeProperty('--ancho');
@@ -204,7 +208,7 @@ try {
 	for (const lamina of lista) {
 		const resultado = await pagina.evaluate(dibujar, lamina);
 		if (resultado.error) throw new Error(`${lamina.clave}: ${resultado.error}`);
-		const archivo = `${lamina.clave}-${huella(lamina, plantilla, css)}.png`;
+		const archivo = `${nombreDeArchivo(lamina.clave)}-${huella(lamina, plantilla, css)}.png`;
 		const ruta = join(carpeta, archivo);
 		await pagina.screenshot({ path: ruta, clip: { x: 0, y: 0, width: 1200, height: 630 } });
 		const peso = statSync(ruta).size;

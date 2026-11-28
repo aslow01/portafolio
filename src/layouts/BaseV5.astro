@@ -12,7 +12,8 @@ import '../styles/v5/fuentes.css';
 import '../styles/v5/tokens.css';
 import '../styles/v5/sistema.css';
 import { tituloConNombre } from '../lib/paginas';
-import { descripcionSitio, imagenSocial, nombre } from '../lib/sitio';
+import { imagenSocial, nombre, textosSitio } from '../lib/sitio';
+import { alternas, codigoLang, codigoOg, idiomaDe, traductor } from '../i18n/idioma';
 
 interface Props {
 	titulo: string;
@@ -30,23 +31,31 @@ interface Props {
 }
 const {
 	titulo,
-	descripcion = descripcionSitio,
+	descripcion,
 	noindex: sinIndexar = false,
 	imagenSocial: queImagen = 'portada',
 	tipoOg = 'website',
-	saltar = { href: '#secciones', texto: 'Ir a las secciones' },
+	saltar: saltarPedido,
 	clasesHtml = 'con-fotos',
 } = Astro.props;
+// El idioma sale de la dirección (`Astro.currentLocale`, i18n nativa de Astro): /en/… es inglés; el resto, español.
+const idioma = idiomaDe(Astro.currentLocale);
+const t = traductor(idioma);
+const textos = textosSitio(idioma);
+const saltar = saltarPedido ?? { href: '#secciones', texto: t('Ir a las secciones', 'Skip to sections') };
+const descripcionFinal = descripcion ?? textos.descripcionSitio;
 const noindex = sinIndexar;
 const tituloCompleto = tituloConNombre(titulo, nombre.completo);
 const canonica = new URL(Astro.url.pathname, Astro.site);
 // La imagen y su texto alternativo salen del archivo que escribe scripts/og/generar.mjs (lib/imagenes-sociales.ts).
-const { archivo, alt: altImagen } = imagenSocial(queImagen, import.meta.env.DEV);
+const { archivo, alt: altImagen } = imagenSocial(queImagen, import.meta.env.DEV, idioma);
 const imagen = new URL(archivo, Astro.site);
+// La misma página en cada idioma, para `hreflang` (y `x-default`, que es el español).
+const versiones = alternas(Astro.url.pathname, Astro.site!);
 ---
 
 <!doctype html>
-<html lang="es-AR" class={`sin-js ${clasesHtml}`.trim()}>
+<html lang={codigoLang[idioma]} class={`sin-js ${clasesHtml}`.trim()}>
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -56,17 +65,21 @@ const imagen = new URL(archivo, Astro.site);
 		<link rel="preload" href="/fonts/schibsted-grotesk-latin-v1.woff2" as="font" type="font/woff2" crossorigin />
 		<meta name="generator" content={Astro.generator} />
 		<title>{tituloCompleto}</title>
-		<meta name="description" content={descripcion} />
+		<meta name="description" content={descripcionFinal} />
 		{noindex && <meta name="robots" content="noindex" />}
 		{!noindex && <link rel="canonical" href={canonica} />}
+		{!noindex && <link rel="alternate" hreflang="es-AR" href={versiones.es} />}
+		{!noindex && <link rel="alternate" hreflang="en" href={versiones.en} />}
+		{!noindex && <link rel="alternate" hreflang="x-default" href={versiones.es} />}
 		<link rel="icon" href="/favicon.ico" sizes="32x32" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<link rel="sitemap" href="/sitemap-index.xml" />
 		<meta property="og:type" content={tipoOg} />
-		<meta property="og:locale" content="es_AR" />
+		<meta property="og:locale" content={codigoOg[idioma]} />
+		{!noindex && <meta property="og:locale:alternate" content={codigoOg[idioma === 'en' ? 'es' : 'en']} />}
 		<meta property="og:site_name" content={nombre.completo} />
 		<meta property="og:title" content={tituloCompleto} />
-		<meta property="og:description" content={descripcion} />
+		<meta property="og:description" content={descripcionFinal} />
 		{!noindex && <meta property="og:url" content={canonica} />}
 		<meta property="og:image" content={imagen} />
 		<meta property="og:image:type" content="image/png" />

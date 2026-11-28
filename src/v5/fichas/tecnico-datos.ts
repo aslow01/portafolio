@@ -4,6 +4,7 @@
 import { cifraVisible, type Resultado } from '../../lib/contenido.ts';
 import type { Paso } from '../../lib/circuito.ts';
 import { minuscula } from '../../lib/presentacion.ts';
+import type { Idioma } from '../../i18n/idioma.ts';
 
 /** Parte un párrafo en oraciones (corta en «. », «? » o «! » seguido de mayúscula o comilla). */
 export function frases(texto: string): string[] {
@@ -26,6 +27,10 @@ export interface Jornada {
 
 /** Rótulo visible de cada grupo de marcas: qué cuenta cada cifra («40» a mano, «300+» con el cargador). */
 export const rotulosJornada = { antes: 'A mano', ahora: 'Con el cargador' } as const;
+const rotulosJornadaEn = { antes: 'By hand', ahora: 'With the tool' } as const;
+/** Los rótulos de la jornada en el idioma pedido. */
+export const rotulosJornadaDe = (idioma: Idioma): { readonly antes: string; readonly ahora: string } =>
+	idioma === 'en' ? rotulosJornadaEn : rotulosJornada;
 
 /**
  * «40 → 300+» partido en sus dos cifras, con la cantidad de marcas de cada una (una por factura). Devuelve
@@ -56,30 +61,40 @@ export interface FlujoDeAutoria {
  * pasa a «…diseñé el flujo:», la escalera a / b / c y «Definí…». No cambia palabras: solo la puntuación del corte
  * y la mayúscula inicial. Si el texto no tiene esa forma, devuelve `undefined` y la página muestra el párrafo entero.
  */
-export function flujoDeAutoria(yo: string | undefined): FlujoDeAutoria | undefined {
+export function flujoDeAutoria(yo: string | undefined, idioma: Idioma = 'es'): FlujoDeAutoria | undefined {
 	if (!yo) return undefined;
 	const m = /^(.+?)\s*\(([^)]+)\)\s*(.*)$/s.exec(yo.trim());
 	if (!m) return undefined;
+	// Los pasos se separan por coma o por la conjunción («y» / «and»); la que abre el resto se quita.
+	const [separador, conjuncionInicial] = idioma === 'en' ? [/\s*,\s*|\s+and\s+/, /^and\s+/] : [/\s*,\s*|\s+y\s+/, /^y\s+/];
 	const pasos = m[2]
-		.split(/\s*,\s*|\s+y\s+/)
+		.split(separador)
 		.map((p) => mayuscula(p.trim()))
 		.filter((p) => p !== '');
-	const despues = mayuscula(m[3].replace(/^y\s+/, '').trim());
+	const despues = mayuscula(m[3].replace(conjuncionInicial, '').trim());
 	if (pasos.length < 2 || despues === '') return undefined;
 	return { antes: `${m[1].replace(/[,;:]\s*$/, '')}:`, pasos, despues };
 }
 
 /** «Paso 5: compara el importe al centavo»: el nombre accesible de cada número del circuito. */
-export function nombrePaso(i: number, paso: Paso): string {
-	return `Paso ${i + 1}: ${minuscula(paso.titulo)}`;
+export function nombrePaso(i: number, paso: Paso, idioma: Idioma = 'es'): string {
+	return `${idioma === 'en' ? 'Step' : 'Paso'} ${i + 1}: ${minuscula(paso.titulo)}`;
 }
 
 const cardinales = ['cero', 'un', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve', 'diez'];
+const cardinalesEn = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'];
 const ordinales = ['', 'primero', 'segundo', 'tercero', 'cuarto', 'quinto', 'sexto', 'séptimo', 'octavo', 'noveno', 'décimo'];
 
 /** La leyenda de la tira de la tapa: los pasos salen de `circuitoLector`, nunca de un número escrito a mano. */
-export function leyendaTira(pasos: Paso[]): string {
+export function leyendaTira(pasos: Paso[], idioma: Idioma = 'es'): string {
 	const n = pasos.length;
+	if (idioma === 'en') {
+		const base = `One invoice’s path through the demo: ${cardinalesEn[n] ?? n} steps`;
+		const compara = pasos.findIndex((p) => p.acercamiento);
+		const decide = pasos[n - 1]?.persona === true;
+		if (compara < 0 || !decide) return `${base}.`;
+		return `${base}. Step ${compara + 1} compares the amount to the cent; the last step is decided by a person.`;
+	}
 	const base = `El circuito de una factura en la demo: ${cardinales[n] ?? n} pasos`;
 	const compara = pasos.findIndex((p) => p.acercamiento);
 	const decide = pasos[n - 1]?.persona === true;
@@ -115,11 +130,27 @@ export const casosCentavo = [
 	{ planilla: '118.470,50', igual: true, sistema: '118.470,50', resultado: 'Ya cargada', fuente: '118470.5' },
 ] as const;
 
+/** Los mismos cuatro casos con los importes y los resultados en inglés (`fuente` es el código literal: no cambia). */
+export const casosCentavoEn = [
+	{ planilla: '1,000.00', igual: false, sistema: '1,000.01', resultado: 'Different amount', fuente: '1000.01' },
+	{ planilla: '1,000.00', igual: false, sistema: '999.99', resultado: 'Different amount', fuente: '999.99' },
+	{ planilla: '0.1 + 0.2', igual: true, sistema: '0.3', resultado: 'Already entered: compared in whole cents', fuente: '0.1 + 0.2' },
+	{ planilla: '118,470.50', igual: true, sistema: '118,470.50', resultado: 'Already entered', fuente: '118470.5' },
+] as const;
+export const casosCentavoDe = (idioma: Idioma): typeof casosCentavo | typeof casosCentavoEn => (idioma === 'en' ? casosCentavoEn : casosCentavo);
+
 /** Las dos lecturas del reloj: la hora literal de la prueba y lo que dice. */
 export const lecturasReloj = [
 	{ hora: '02:59:59.999Z', texto: 'todavía es el 17/11.', fuente: ['02:59:59.999Z', '2026-11-17'] },
 	{ hora: '03:00:00.000Z', texto: 'ya es el 18/11.', fuente: ['03:00:00.000Z', '2026-11-18'] },
 ] as const;
+
+/** Las lecturas del reloj en inglés: la fecha va como «Nov 17». */
+export const lecturasRelojEn = [
+	{ hora: '02:59:59.999Z', texto: 'is still Nov 17.', fuente: ['02:59:59.999Z', '2026-11-17'] },
+	{ hora: '03:00:00.000Z', texto: 'is already Nov 18.', fuente: ['03:00:00.000Z', '2026-11-18'] },
+] as const;
+export const lecturasRelojDe = (idioma: Idioma): typeof lecturasReloj | typeof lecturasRelojEn => (idioma === 'en' ? lecturasRelojEn : lecturasReloj);
 
 /** Falla el build si las filas escritas arriba ya no salen del código publicado de la prueba (la web no puede mostrar lo que la prueba no comprueba). */
 export function comprobarContraCodigo(codigo: string, fuentes: readonly string[], donde: string): void {

@@ -119,3 +119,11 @@ test('un caso y una demo: singular en los dos', () => {
 test('sin nada publicado, texto vacío (la página omite la frase)', () => {
 	assert.equal(inventarioPublicado([caso('borrador')], [demo('en-preparacion')], false), '');
 });
+
+// La portada cuenta los casos de los dos caminos (camino = null); el camino técnico, solo los suyos.
+test('inventarioPublicado: la portada (camino null) cuenta todos los casos publicados', () => {
+	const c = (caminos) => ({ data: { estado: 'publicado', caminos } });
+	const casos = [c(['logistica']), c(['tecnico']), c(['logistica', 'tecnico'])];
+	assert.equal(inventarioPublicado(casos, [], false, 'es', null), 'tres casos reales anonimizados');
+	assert.equal(inventarioPublicado(casos, [], false), 'dos casos reales anonimizados');
+});

@@ -7,7 +7,7 @@
 //     `documentElement.scrollHeight / innerHeight`, con los mismos topes;
 //   · que la página no desborde en horizontal;
 //   · que no haya errores de consola ni imágenes rotas;
-//   · que cada captura que enlaza una demo tenga un `alt` que empiece con «Probar la demo».
+//   · que cada captura que enlaza una demo tenga un `alt` que empiece con «Probar la demo» (en /en/: «Try the demo»).
 // Era la verificación de las láminas de la v4 (un enlace «Ver la captura en tamaño completo» por lámina, claro y oscuro):
 // la v5 no tiene ese enlace ni tema oscuro, y la comprobación equivalente es esta.
 // Es una prueba de navegador: NO forma parte de `npm test` (que corre sin navegador) ni agrega dependencias.
@@ -24,7 +24,7 @@ import { readdirSync, existsSync, statSync } from 'node:fs';
 import { readFile, mkdir } from 'node:fs/promises';
 import { extname, join, normalize, resolve, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { TAMANOS, TAMANOS_CASOS, esPaginaSinFicha, paginasAMedir, problemaDeRazon, razonDeDocumento, rutasDeCasos } from './criterios-pantalla.mjs';
+import { TAMANOS, TAMANOS_CASOS, esPaginaSinFicha, paginasAMedir, paginasAMedirEn, problemaDeRazon, razonDeDocumento, rutasDeCasos } from './criterios-pantalla.mjs';
 
 const raiz = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const dist = join(raiz, 'dist');
@@ -65,10 +65,12 @@ const origen = `http://127.0.0.1:${servidor.address().port}`;
 
 // Los casos que haya en dist/ se suman solos: solo las carpetas de dist/casos/ (`index.html` es el índice, no un caso).
 const casos = existsSync(join(dist, 'casos')) ? rutasDeCasos(readdirSync(join(dist, 'casos'), { withFileTypes: true })) : [];
-const paginas = process.env.PAGINAS ? process.env.PAGINAS.split(',') : paginasAMedir(casos);
+// La versión en inglés (dist/en/) se mide igual, con los mismos topes.
+const casosEn = existsSync(join(dist, 'en', 'casos')) ? rutasDeCasos(readdirSync(join(dist, 'en', 'casos'), { withFileTypes: true }), '/en') : [];
+const paginas = process.env.PAGINAS ? process.env.PAGINAS.split(',') : [...paginasAMedir(casos), ...(existsSync(join(dist, 'en')) ? paginasAMedirEn(casosEn) : [])];
 const tamanos = process.env.TAMANOS ? TAMANOS.filter((t) => process.env.TAMANOS.split(',').includes(t.nombre)) : TAMANOS;
 // Los tamaños extra de `/casos/` (TAMANOS_CASOS) se miden solo con la lista y los tamaños por defecto.
-const pasadas = [...tamanos.map((t) => [t, paginas]), ...(process.env.PAGINAS || process.env.TAMANOS ? [] : TAMANOS_CASOS.map((t) => [t, ['/casos/']]))];
+const pasadas = [...tamanos.map((t) => [t, paginas]), ...(process.env.PAGINAS || process.env.TAMANOS ? [] : TAMANOS_CASOS.map((t) => [t, ['/casos/', ...(existsSync(join(dist, 'en')) ? ['/en/casos/'] : [])]]))];
 const carpetaCapturas = process.env.CAPTURAS;
 if (carpetaCapturas) await mkdir(carpetaCapturas, { recursive: true });
 
@@ -114,7 +116,7 @@ try {
 			}
 			if (informe.desborde > 0) fallos.push(`${donde}: la página desborda ${informe.desborde} px en horizontal.`);
 			for (const c of informe.capturas) {
-				if (!/^Probar la demo/.test(c.alt)) fallos.push(`${donde}: una captura que enlaza una demo tiene alt "${c.alt}" (debe empezar con «Probar la demo»).`);
+				if (!/^(Probar la demo|Try the demo)/.test(c.alt)) fallos.push(`${donde}: una captura que enlaza una demo tiene alt "${c.alt}" (debe empezar con «Probar la demo» o, en /en/, «Try the demo»).`);
 			}
 			for (const r of informe.rotas) fallos.push(`${donde}: imagen que no carga: ${r}`);
 			for (const c of consola) fallos.push(`${donde}: error de consola: ${c}`);

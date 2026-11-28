@@ -1,0 +1,30 @@
+---
+// Selector de idioma «ES | EN»: va en el encabezado de todas las páginas (la portada y la cabeza de cada ficha). Lleva a la
+// MISMA página en el otro idioma (`rutaAlterna`); el idioma actual no es un enlace y se marca con `aria-current`.
+// Cada enlace dice su idioma en ese idioma (`lang`) y por su nombre completo, no por la sigla. En la portada, el script de
+// las fichas le suma el hash a la dirección, para que el cambio caiga en la misma ficha (pestanas.ts).
+import { idiomaDe, rutaAlterna, traductor } from '../i18n/idioma';
+
+const actual = idiomaDe(Astro.currentLocale);
+const t = traductor(actual);
+const aqui = Astro.url.pathname;
+const opciones = [
+	{ idioma: 'es', sigla: 'ES', nombre: 'Español', lang: 'es-AR' },
+	{ idioma: 'en', sigla: 'EN', nombre: 'English', lang: 'en' },
+] as const;
+---
+
+<nav class="idioma" aria-label="Idioma / Language">
+	{
+		opciones.map((o, i) => (
+			<Fragment>
+				{i > 0 && <span class="sep" aria-hidden="true">|</span>}
+				{o.idioma === actual ? (
+					<span lang={o.lang} aria-current="true">{o.sigla}<span class="solo-lector">{t(' (idioma actual)', ' (current language)')}</span></span>
+				) : (
+					<a lang={o.lang} hreflang={o.lang} href={rutaAlterna(aqui, o.idioma)} aria-label={o.nombre} title={o.nombre}>{o.sigla}</a>
+				)}
+			</Fragment>
+		))
+	}
+</nav>

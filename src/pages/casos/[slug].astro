@@ -3,7 +3,6 @@
 // con tapa-carátula, hojas claras de lectura, la cifra, la autoría y el cierre. El texto sale del caso
 // (src/content/casos/<slug>.md): campos del encabezado y secciones del cuerpo. Los borradores no se generan
 // (esPublicable); en `npm run dev` se ven con su chapa. El molde no depende del texto de un caso: ver v5/interiores/caso.ts.
-import { getCollection, getEntry } from 'astro:content';
 import BaseV5 from '../../layouts/BaseV5.astro';
 import Expediente from '../../v5/interiores/Expediente.astro';
 import Lomos from '../../v5/Lomos.astro';
@@ -12,32 +11,38 @@ import { ficha } from '../../v5/datos';
 import { esPublicable, soloPublicable } from '../../lib/estados';
 import { esDeCamino, obraPrincipal } from '../../lib/contenido';
 import { rotuloCaso } from '../../lib/presentacion';
+import { casosDe, entradaReferida } from '../../i18n/colecciones';
+import { rutasDeCasos } from '../../i18n/rutas';
+import { idiomaDe, rutaDe, traductor } from '../../i18n/idioma';
 import '../../styles/v5/interiores.css';
 
 export async function getStaticPaths() {
-	const casos = await getCollection('casos', ({ data }) => esPublicable(data));
-	return casos.map((caso) => ({ params: { slug: caso.id }, props: { caso } }));
+	return rutasDeCasos('es');
 }
 
+const idioma = idiomaDe(Astro.currentLocale);
+const t = traductor(idioma);
 const { caso } = Astro.props;
 const d = caso.data;
 // La carpeta es el primer camino declarado del caso (`caminos` en su frontmatter): Logística o Técnico e IA.
 const camino = carpetaDe(d.caminos);
-const carpeta = ficha(camino);
+const carpeta = ficha(camino, idioma);
 // «El caso» de /tecnico/ muestra la obra principal: solo ese caso vuelve a esa página; los demás, a la tapa de la ficha.
-const principal = obraPrincipal(await getCollection('casos', ({ data }) => esPublicable(data) && esDeCamino(data, 'tecnico')));
-const volver = { href: camino === 'tecnico' ? (principal?.id === caso.id ? '/tecnico/#el-caso' : '/tecnico/') : `/#${camino}` };
+const principal = obraPrincipal(await casosDe(idioma, ({ data }) => esPublicable(data) && esDeCamino(data, 'tecnico')));
+const volver = {
+	href: rutaDe(idioma, camino === 'tecnico' ? (principal?.id === caso.id ? '/tecnico/#el-caso' : '/tecnico/') : `/#${camino}`),
+};
 
 // El enlace a la demo propia va solo con la demo en vivo, y al subdominio.
-const demo = d.demo ? soloPublicable(await getEntry(d.demo)) : undefined;
+const demo = d.demo ? soloPublicable(await entradaReferida(d.demo)) : undefined;
 const demoEnVivo = demo?.data.estado === 'en-vivo' ? demo.data.demo : undefined;
 
-const publicados = await getCollection('casos', ({ data }) => esPublicable(data));
+const publicados = await casosDe(idioma, ({ data }) => esPublicable(data));
 const otros = publicados
 	.filter((c) => c.id !== caso.id && esDeCamino(c.data, camino))
 	.sort((a, b) => a.data.orden - b.data.orden)
 	.slice(0, 3)
-	.map((c) => ({ rotulo: rotuloCaso(c.data.caminos), titulo: c.data.titulo, href: `/casos/${c.id}/`, borrador: c.data.estado === 'borrador' }));
+	.map((c) => ({ rotulo: rotuloCaso(c.data.caminos, idioma), titulo: c.data.titulo, href: rutaDe(idioma, `/casos/${c.id}/`), borrador: c.data.estado === 'borrador' }));
 
 const modelo = armarCaso(
 	{
@@ -52,7 +57,7 @@ const modelo = armarCaso(
 	},
 	caso.body ?? '',
 	// `totalCasos`: «Más casos» cierra con la fila «Todos los casos de estudio» hacia /casos/.
-	{ mas: otros, totalCasos: publicados.length },
+	{ mas: otros, totalCasos: publicados.length, idioma },
 );
 ---
 
@@ -61,7 +66,7 @@ const modelo = armarCaso(
 	descripcion={d.resumen}
 	imagenSocial={`caso-${caso.id}`}
 	tipoOg="article"
-	saltar={{ href: '#t-h1', texto: 'Saltar al contenido' }}
+	saltar={{ href: '#t-h1', texto: t('Saltar al contenido', 'Skip to content') }}
 >
 	<main>
 		<Expediente modelo={modelo} carpeta={carpeta} volver={volver} demo={demoEnVivo} borrador={d.estado === 'borrador'} nombreCaso={d.titulo} />

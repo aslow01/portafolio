@@ -4,6 +4,8 @@
 // paginador debajo. Las páginas van en el <slot>, una <Pagina> por página; la primera lleva el <TituloFicha>.
 // Sin JavaScript, la ficha queda en el flujo, debajo de la portada, con todas sus páginas a la vista.
 import { ficha, type IdFicha } from './datos';
+import SelectorIdioma from './SelectorIdioma.astro';
+import { idiomaDe, rutaDe, traductor } from '../i18n/idioma';
 
 interface Props {
 	id: IdFicha;
@@ -16,8 +18,10 @@ interface Props {
 	salida?: string;
 }
 const { id, fija = false, salida } = Astro.props;
-const f = ficha(id);
-const destinoSalida = salida ?? `/#${f.id}`;
+const idioma = idiomaDe(Astro.currentLocale);
+const t = traductor(idioma);
+const f = ficha(id, idioma);
+const destinoSalida = salida ?? rutaDe(idioma, `/#${f.id}`);
 ---
 
 <section
@@ -30,11 +34,12 @@ const destinoSalida = salida ?? `/#${f.id}`;
 		<p class="oreja"><span class="num">{f.numero}</span><b>{f.nombre}</b></p>
 		{
 			fija ? (
-				<a class="cerrar" href={destinoSalida} data-salir><span>Cerrar</span><span class="solo-lector">: volver a {f.nombre} en la portada</span></a>
+				<a class="cerrar" href={destinoSalida} data-salir><span>{t('Cerrar', 'Close')}</span><span class="solo-lector">{t(`: volver a ${f.nombre} en la portada`, `: back to ${f.nombre} on the home page`)}</span></a>
 			) : (
-				<a class="cerrar" href="#inicio" data-cerrar><span>Cerrar</span><span class="solo-lector"> la sección</span></a>
+				<a class="cerrar" href="#inicio" data-cerrar><span>{t('Cerrar', 'Close')}</span><span class="solo-lector">{t(' la sección', ' the section')}</span></a>
 			)
 		}
+		<SelectorIdioma />
 	</div>
 	<div class="hojas">
 		<slot />

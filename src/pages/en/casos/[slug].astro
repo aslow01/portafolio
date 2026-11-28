@@ -1,0 +1,14 @@
+---
+// /en/casos/<id>/: un caso de estudio en inglés. Misma página que ../../casos/[slug].astro; los casos salen de la colección
+// `casos-en` (src/content-en/casos/) y comparten el id de archivo con los de español.
+import Caso from '../../casos/[slug].astro';
+import { rutasDeCasos } from '../../../i18n/rutas';
+
+export async function getStaticPaths() {
+	return rutasDeCasos('en');
+}
+
+const { caso } = Astro.props;
+---
+
+<Caso caso={caso} />

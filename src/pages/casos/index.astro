@@ -4,7 +4,6 @@
 // sin `Ficha`, como la portada y la 404. La lista, el orden, los tonos y las notas salen de v5/interiores/archivo.ts (ningún
 // número ni color se escribe acá). Los casos en borrador solo se ven con `npm run dev`.
 // El estilo está en src/styles/v5/archivo.css; los textos son los finales.
-import { getCollection, getEntry } from 'astro:content';
 import BaseV5 from '../../layouts/BaseV5.astro';
 import '../../styles/v5/archivo.css';
 import EnlacesDeContacto from '../../v5/EnlacesDeContacto.astro';
@@ -12,26 +11,35 @@ import Lomos from '../../v5/Lomos.astro';
 import { esDeCamino, obraPrincipal } from '../../lib/contenido';
 import { esPublicable, soloPublicable } from '../../lib/estados';
 import { claseDeTono, colorDeCarpeta, expedientes, hayMuchos } from '../../v5/interiores/archivo.ts';
+import SelectorIdioma from '../../v5/SelectorIdioma.astro';
+import { casosDe, entradaReferida } from '../../i18n/colecciones';
+import { idiomaDe, traductor } from '../../i18n/idioma';
 
-const casos = await getCollection('casos', ({ data }) => esPublicable(data));
+const idioma = idiomaDe(Astro.currentLocale);
+const t = traductor(idioma);
+const casos = await casosDe(idioma, ({ data }) => esPublicable(data));
 // Solo la obra principal de Técnico lleva la banda clara y, si su demo está en vivo, la nota «Con demo en vivo».
 const principal = obraPrincipal(casos.filter((c) => esDeCamino(c.data, 'tecnico')));
-const demo = principal?.data.demo ? soloPublicable(await getEntry(principal.data.demo)) : undefined;
+const demo = principal?.data.demo ? soloPublicable(await entradaReferida(principal.data.demo)) : undefined;
 const demoEnVivo = demo?.data.estado === 'en-vivo';
-const lista = expedientes(casos, principal?.id, demoEnVivo);
+const lista = expedientes(casos, principal?.id, demoEnVivo, undefined, idioma);
 ---
 
 <BaseV5
-	titulo="Casos de estudio"
-	descripcion="Casos anonimizados de una empresa de seguridad privada de San Juan: problema, solución, resultado, mi parte y cómo lo verifiqué."
+	titulo={t('Casos de estudio', 'Case studies')}
+	descripcion={t(
+		'Casos anonimizados de una empresa de seguridad privada de San Juan: problema, solución, resultado, mi parte y cómo lo verifiqué.',
+		'Anonymized cases from a private security company in San Juan, Argentina: problem, solution, result, my part and how I verified it.',
+	)}
 	imagenSocial="casos"
-	saltar={{ href: '#t-casos', texto: 'Saltar al contenido' }}
+	saltar={{ href: '#t-casos', texto: t('Saltar al contenido', 'Skip to content') }}
 >
 	<main class="cajon-archivo c-hueso">
 		<div class="archivo-cab">
-			<p class="rotulo">Archivo · casos anonimizados</p>
-			<h1 class="cartel" id="t-casos" tabindex="-1">Casos <span class="resto">de estudio</span></h1>
-			<p class="bajada">Problema, qué se construyó y resultado de cada caso, en una empresa de seguridad privada de San Juan.</p>
+			<SelectorIdioma />
+			<p class="rotulo">{t('Archivo · casos anonimizados', 'Archive · anonymized cases')}</p>
+			<h1 class="cartel" id="t-casos" tabindex="-1">{t('Casos', 'Case')} <span class="resto">{t('de estudio', 'studies')}</span></h1>
+			<p class="bajada">{t('Problema, qué se construyó y resultado de cada caso, en una empresa de seguridad privada de San Juan.', 'Problem, what was built and result of each case, at a private security company in San Juan, Argentina.')}</p>
 			<div class="acciones contacto-archivo">
 				<EnlacesDeContacto camino="ambos" />
 			</div>

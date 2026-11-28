@@ -4,15 +4,16 @@
 // Los textos son los de src/lib y los de la v4 (src/pages/logistica.astro e index.astro); donde el prototipo difería,
 // mandan estos. Lo que no tiene fuente en lib se escribe acá, en un solo lugar.
 import { Image } from 'astro:assets';
-import { getCollection, getEntry } from 'astro:content';
 import fotoNieve from '../../assets/fotos/foto-nieve.jpg';
 import fotoRipio from '../../assets/fotos/foto-ripio.jpg';
-import { cv, telefono } from '../../lib/datos-pendientes';
+import { cvDe, cvEnEspanol, telefono } from '../../lib/datos-pendientes';
 import { experiencia, partesDeMes, textoPeriodo } from '../../lib/experiencia';
 import { puertaAlArchivo } from '../../lib/contenido';
 import { esPublicable, soloPublicable } from '../../lib/estados';
 import { listaConY, minuscula } from '../../lib/presentacion';
 import { duracionAltaMontana, minas } from '../datos';
+import { casosDe, demoDe } from '../../i18n/colecciones';
+import { idiomaDe, rutaDe, traductor } from '../../i18n/idioma';
 import { colorDeCarpeta } from '../interiores/archivo';
 import { carpetaDe } from '../interiores/caso';
 import EnlaceArchivo from '../EnlaceArchivo.astro';
@@ -20,10 +21,15 @@ import Ficha from '../Ficha.astro';
 import Pagina from '../Pagina.astro';
 import TituloFicha from '../TituloFicha.astro';
 
+const idioma = idiomaDe(Astro.currentLocale);
+const t = traductor(idioma);
+const cv = cvDe(idioma);
+
 // ---- Tapa ----
 // «Un año … (2025–2026)»: la duración y los años salen del puesto de logística en proyectos mineros de experiencia.ts.
 const altaMontana = experiencia.find((p) => p.altaMontana);
-const duracion = duracionAltaMontana() === '1 año' ? 'Un año' : duracionAltaMontana();
+const dur = duracionAltaMontana(idioma);
+const duracion = dur === '1 año' ? 'Un año' : dur === '1 year' ? 'One year' : dur;
 const periodoAltaMontana = altaMontana
 	? `${partesDeMes(altaMontana.desde).anio}–${partesDeMes(altaMontana.hasta === 'hoy' ? altaMontana.desde : altaMontana.hasta).anio}`
 	: '';
@@ -31,30 +37,36 @@ const periodoAltaMontana = altaMontana
 // Las postas de la cornisa: tareas del año en proyectos mineros (condensan los puntos de experiencia.ts y el hito «flota,
 // combustible y traslados»). Posición en el dibujo (viewBox 0 195 400 315): cuadrito y texto.
 const postas = [
-	{ clase: 'pf1', cuadro: [26.5, 446.5], texto: [40, 474], rotulo: 'Documentación de ingreso' },
-	{ clase: 'pf2', cuadro: [139, 421.5], texto: [48, 405], rotulo: 'Flota y vencimientos' },
-	{ clase: 'pf3', cuadro: [144, 361.5], texto: [156, 357], rotulo: 'Traslados en 4x4' },
-	{ clase: 'pf4', cuadro: [136.5, 284], texto: [14, 268], rotulo: 'Combustible en campo' },
+	{ clase: 'pf1', cuadro: [26.5, 446.5], texto: [40, 474], rotulo: t('Documentación de ingreso', 'Entry paperwork') },
+	{ clase: 'pf2', cuadro: [139, 421.5], texto: [48, 405], rotulo: t('Flota y vencimientos', 'Fleet and renewals') },
+	{ clase: 'pf3', cuadro: [144, 361.5], texto: [156, 357], rotulo: t('Traslados en 4x4', '4x4 transport') },
+	{ clase: 'pf4', cuadro: [136.5, 284], texto: [14, 268], rotulo: t('Combustible en campo', 'Fuel in the field') },
 ];
-const postaFinal = 'Proyecto';
-const tituloCornisa = `Dibujo esquemático, sin escala: un camino de cornisa sube la cordillera hasta el proyecto minero; sobre el camino, las tareas del año: ${listaConY(postas.map((p) => minuscula(p.rotulo)))}.`;
+const postaFinal = t('Proyecto', 'Project');
+const tituloCornisa = t(
+	`Dibujo esquemático, sin escala: un camino de cornisa sube la cordillera hasta el proyecto minero; sobre el camino, las tareas del año: ${listaConY(postas.map((p) => minuscula(p.rotulo)))}.`,
+	`Schematic drawing, not to scale: a mountain road climbs the range to the mine project; along the road, the year’s tasks: ${listaConY(postas.map((p) => minuscula(p.rotulo)), 'en')}.`,
+);
 
 // ---- Conducción (la ficha del perfil de la v4: pages/logistica.astro) ----
 const chapas = [
-	{ valor: 'B2', sub: 'auto y camioneta' },
-	{ valor: '4x4', sub: 'alta y baja, en montaña y ripio' },
-	{ valor: '350 cc', sub: 'moto y cuatriciclo' },
+	{ valor: 'B2', sub: t('auto y camioneta', 'car and pickup truck') },
+	{ valor: '4x4', sub: t('alta y baja, en montaña y ripio', 'high and low range, on mountain and gravel roads') },
+	{ valor: '350 cc', sub: t('moto y cuatriciclo', 'motorcycle and quad bike') },
 ];
 
 // ---- En el terreno ----
-const notaTerreno = 'Pachón: Hombre Nuevo. Foto propia, camino de montaña.';
+const notaTerreno = t('Pachón: Hombre Nuevo. Foto propia, camino de montaña.', 'Pachón: Hombre Nuevo. My own photo, mountain road.');
 
 // ---- De dónde vengo (pages/index.astro de la v4, con sus fechas del 25/11) ----
 const hitos = [
-	{ anio: '2021–2024', texto: 'Mantenimiento, administración y logística en empresas de San Juan, y formación en programación e IA.' },
+	{
+		anio: '2021–2024',
+		texto: t('Mantenimiento, administración y logística en empresas de San Juan, y formación en programación e IA.', 'Maintenance, administration and logistics at companies in San Juan, and training in programming and AI.'),
+	},
 	{
 		anio: periodoAltaMontana,
-		texto: `${duracion} de logística en proyectos mineros y energéticos: flota, combustible y traslados.`,
+		texto: t(`${duracion} de logística en proyectos mineros y energéticos: flota, combustible y traslados.`, `${duracion} of logistics on mining and energy projects: fleet, fuel and transport.`),
 	},
 	{
 		anio: '2026',
@@ -62,12 +74,15 @@ const hitos = [
 		// (cargador-bajas) y facturas desde julio, en uso diario desde agosto (automatizacion-facturas). Como solo las bajas
 		// no tienen fecha más precisa que «antes de julio», no se dice «desde comienzos de año» de las dos. El largo del texto
 		// está medido: con más no entra a 360 × 740 ni a 320 × 640.
-		texto: 'Paso a administración a pedido de la gerencia. En logística ya automatizaba (partes diarios y bajas); en julio empiezo el cargador de facturas, en uso diario desde agosto.',
+		texto: t(
+			'Paso a administración a pedido de la gerencia. En logística ya automatizaba (partes diarios y bajas); en julio empiezo el cargador de facturas, en uso diario desde agosto.',
+			'I moved to administration at management’s request. In logistics I had automated daily reports and write-offs; I started the invoice loader in July, in use since August.',
+		),
 	},
 ];
 
 // Los casos publicados, de los dos caminos: se llega a todos por una sola entrada, «Casos de estudio» (/casos/).
-const casosPublicados = await getCollection('casos', ({ data }) => esPublicable(data));
+const casosPublicados = await casosDe(idioma, ({ data }) => esPublicable(data));
 const totalCasos = casosPublicados.length;
 // Página «Casos y demo»: los dos casos de logística que cuenta «De dónde vengo» (el cargador de bajas y el sistema de partes
 // diarios) y la demo de control de flota, con su título y su resumen reales. Solo los publicados; si falta alguno, no se dibuja.
@@ -85,8 +100,8 @@ interface EnlaceDeCasos {
 const enlacesDeCasos: EnlaceDeCasos[] = ['cargador-bajas', 'sistema-gestion-operativa']
 	.map((id) => casosPublicados.find((c) => c.id === id))
 	.filter((c) => c !== undefined)
-	.map((c) => ({ rotulo: 'Caso', href: `/casos/${c.id}/`, titulo: c.data.titulo, resumen: c.data.resumen, color: colorDeCarpeta(carpetaDe(c.data.caminos)) }));
-const demoFlota = soloPublicable(await getEntry('demos', 'control-flota'));
+	.map((c) => ({ rotulo: 'Caso', href: rutaDe(idioma, `/casos/${c.id}/`), titulo: c.data.titulo, resumen: c.data.resumen, color: colorDeCarpeta(carpetaDe(c.data.caminos)) }));
+const demoFlota = soloPublicable(await demoDe(idioma, 'control-flota'));
 if (demoFlota?.data.estado === 'en-vivo' && demoFlota.data.demo) {
 	enlacesDeCasos.push({ rotulo: 'Demo', href: demoFlota.data.demo, titulo: demoFlota.data.titulo, resumen: demoFlota.data.resumen });
 }
@@ -104,17 +119,22 @@ for (let i = 0; i < puestos.length; i += PUESTOS_POR_PAGINA) paginasExperiencia.
 ---
 
 <Ficha id="logistica">
-	<Pagina titulo="Tapa" tapa clase="log">
-		<TituloFicha id="logistica" palabra="Logística" resto="y minería" />
+	<Pagina titulo={t('Tapa', 'Cover')} tapa clase="log">
+		<TituloFicha id="logistica" palabra={t('Logística', 'Logistics')} resto={t('y minería', 'and mining')} />
 		<p class="lead-tapa">
-			<b>{duracion}</b> de logística de flota, combustible y traslados en proyectos mineros y energéticos de San Juan ({periodoAltaMontana}), para una empresa
-			contratista de seguridad.
+			<b>{duracion}</b>{' '}
+			{
+				t(
+					`de logística de flota, combustible y traslados en proyectos mineros y energéticos de San Juan (${periodoAltaMontana}), para una empresa contratista de seguridad.`,
+					`of fleet, fuel and transport logistics on mining and energy projects in San Juan, Argentina (${periodoAltaMontana}), for a security contractor.`,
+				)
+			}
 		</p>
 		{
 			cvLogistica && (
 				<div class="acciones">
 					<a class="boton baja" href={cvLogistica.archivo} download>
-						Descargar el CV de logística<span class="solo-lector"> ({cvLogistica.detalle})</span>
+						{t('Descargar el CV de logística', 'Download the logistics CV')}{cvEnEspanol('logistica', idioma) && ' (Spanish)'}<span class="solo-lector"> ({cvLogistica.detalle})</span>
 					</a>
 				</div>
 			)
@@ -156,13 +176,13 @@ for (let i = 0; i < puestos.length; i += PUESTOS_POR_PAGINA) paginasExperiencia.
 					</g>
 				</g>
 			</svg>
-			<figcaption>Esquema, sin escala.</figcaption>
+			<figcaption>{t('Esquema, sin escala.', 'Diagram, not to scale.')}</figcaption>
 		</figure>
 	</Pagina>
 
-	<Pagina titulo="Conducción">
-		<p class="rotulo">Logística y minería · habilitaciones</p>
-		<h3 class="pg-sub">Conducción</h3>
+	<Pagina titulo={t('Conducción', 'Driving')}>
+		<p class="rotulo">{t('Logística y minería · habilitaciones', 'Logistics and mining · licenses')}</p>
+		<h3 class="pg-sub">{t('Conducción', 'Driving')}</h3>
 		<figure class="foto foto-ripio der">
 			<Image src={fotoRipio} width={767} height={653} alt="" loading="lazy" decoding="async" />
 			<svg class="dibujo" viewBox="0 0 120 100" preserveAspectRatio="xMidYMax slice" aria-hidden="true" focusable="false">
@@ -175,14 +195,14 @@ for (let i = 0; i < puestos.length; i += PUESTOS_POR_PAGINA) paginasExperiencia.
 			</div>
 		</figure>
 		<dl class="datos dos">
-			<div><dt class="rotulo">Manejo defensivo</dt><dd>Teórico y práctico</dd></div>
-			<div><dt class="rotulo">Aptitud médica</dt><dd>Apto médico para trabajo en altura geográfica, 2026</dd></div>
+			<div><dt class="rotulo">{t('Manejo defensivo', 'Defensive driving')}</dt><dd>{t('Teórico y práctico', 'Theory and practice')}</dd></div>
+			<div><dt class="rotulo">{t('Aptitud médica', 'Medical fitness')}</dt><dd>{t('Apto médico para trabajo en altura geográfica, 2026', 'Medically fit for high-altitude work, 2026')}</dd></div>
 		</dl>
 	</Pagina>
 
-	<Pagina titulo="En el terreno">
-		<p class="rotulo">Logística y minería · inducciones</p>
-		<h3 class="pg-sub">En el terreno</h3>
+	<Pagina titulo={t('En el terreno', 'On site')}>
+		<p class="rotulo">{t('Logística y minería · inducciones', 'Logistics and mining · site inductions')}</p>
+		<h3 class="pg-sub">{t('En el terreno', 'On site')}</h3>
 		<figure class="foto foto-nieve der">
 			<Image src={fotoNieve} width={1000} height={563} alt="" loading="lazy" decoding="async" />
 			<svg class="dibujo" viewBox="0 0 120 100" preserveAspectRatio="xMidYMax slice" aria-hidden="true" focusable="false">
@@ -194,12 +214,12 @@ for (let i = 0; i < puestos.length; i += PUESTOS_POR_PAGINA) paginasExperiencia.
 		</figure>
 		<p class="nota">{notaTerreno}</p>
 		<dl class="datos">
-			<div><dt class="rotulo">Disponibilidad</dt><dd>Turnos rotativos y campamento</dd></div>
+			<div><dt class="rotulo">{t('Disponibilidad', 'Availability')}</dt><dd>{t('Turnos rotativos y campamento', 'Rotating shifts and on-site camps')}</dd></div>
 		</dl>
 	</Pagina>
 
-	<Pagina titulo="De dónde vengo">
-		<h3 class="pg-sub">De dónde vengo</h3>
+	<Pagina titulo={t('De dónde vengo', 'Where I come from')}>
+		<h3 class="pg-sub">{t('De dónde vengo', 'Where I come from')}</h3>
 		<ol class="hitos ancho">
 			{
 				hitos.map((h) => (
@@ -215,12 +235,12 @@ for (let i = 0; i < puestos.length; i += PUESTOS_POR_PAGINA) paginasExperiencia.
 				<div class="acciones pg-pie ancho">
 					{cvLogistica && (
 						<a class="boton baja" href={cvLogistica.archivo} download>
-							Descargar el CV<span class="solo-lector"> de logística ({cvLogistica.detalle})</span>
+							{t('Descargar el CV', 'Download the logistics CV')}{cvEnEspanol('logistica', idioma) && ' (Spanish)'}<span class="solo-lector">{t(' de logística', '')} ({cvLogistica.detalle})</span>
 						</a>
 					)}
 					{telefono?.whatsapp && (
 						<a class="enlace ext" href={telefono.whatsapp} rel="noopener">
-							Escribir por WhatsApp
+							{t('Escribir por WhatsApp', 'Message on WhatsApp')}
 						</a>
 					)}
 					<EnlaceArchivo total={totalCasos} />
@@ -231,19 +251,19 @@ for (let i = 0; i < puestos.length; i += PUESTOS_POR_PAGINA) paginasExperiencia.
 
 	{
 		enlacesDeCasos.length > 0 && (
-			<Pagina titulo="Casos y demo">
-				<p class="rotulo">Logística y minería · casos y demo</p>
-				<h3 class="pg-sub">Casos y demo</h3>
+			<Pagina titulo={t('Casos y demo', 'Cases and demo')}>
+				<p class="rotulo">{t('Logística y minería · casos y demo', 'Logistics and mining · cases and demo')}</p>
+				<h3 class="pg-sub">{t('Casos y demo', 'Cases and demo')}</h3>
 				<ul class="ver-casos ancho">
 					{enlacesDeCasos.map((e) => (
 						<li>
 							{e.rotulo === 'Caso' ? (
 								<a class="enlace" href={e.href} data-salir data-color={e.color}>
-									{e.rotulo}: {e.titulo}<span class="flecha" aria-hidden="true">→</span>
+									{t('Caso', 'Case')}: {e.titulo}<span class="flecha" aria-hidden="true">→</span>
 								</a>
 							) : (
 								<a class="enlace ext" href={e.href} rel="noopener">
-									{e.rotulo}: {e.titulo}
+									{t('Demo', 'Demo')}: {e.titulo}
 								</a>
 							)}
 							<p>{e.resumen}</p>

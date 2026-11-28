@@ -4,6 +4,7 @@ import { experiencia, mesesEntre } from '../lib/experiencia.ts';
 import { descripcionProyectos } from '../lib/presentacion.ts';
 import { bajadaPortada, correo, linkedin, minas, nombre, titular, ubicacion } from '../lib/sitio.ts';
 import { telefono } from '../lib/datos-pendientes.ts';
+import type { Idioma } from '../i18n/idioma.ts';
 
 export { bajadaPortada, correo, linkedin, minas, nombre, telefono, titular, ubicacion };
 
@@ -32,18 +33,36 @@ export const fichas: readonly DatosFicha[] = [
 	{ id: 'contacto', numero: '05', nombre: 'Contacto', corto: 'Contacto', color: 'grafito', posicion: 5 },
 ];
 
+/** Los nombres de las fichas en inglés (mismo orden, mismo color y posición que en español). */
+const nombresEn: Record<IdFicha, { nombre: string; corto: string }> = {
+	logistica: { nombre: 'Logistics and mining', corto: 'Logistics' },
+	tecnico: { nombre: 'Technical and AI', corto: 'Technical' },
+	demos: { nombre: 'Demos', corto: 'Demos' },
+	proyectos: { nombre: 'Projects', corto: 'Projects' },
+	contacto: { nombre: 'Contact', corto: 'Contact' },
+};
+
+/** Las cinco fichas en un idioma. El `id` (y por lo tanto el hash `#tecnico`) es el mismo en los dos. */
+export function fichasDe(idioma: Idioma): readonly DatosFicha[] {
+	return idioma === 'en' ? fichas.map((f) => ({ ...f, ...nombresEn[f.id] })) : fichas;
+}
+
 /** Una ficha por su id (falla si no existe: es un error de quien lo escribe). */
-export function ficha(id: IdFicha): DatosFicha {
-	const f = fichas.find((x) => x.id === id);
+export function ficha(id: IdFicha, idioma: Idioma = 'es'): DatosFicha {
+	const f = fichasDe(idioma).find((x) => x.id === id);
 	if (!f) throw new Error(`Ficha desconocida: ${id}`);
 	return f;
 }
 
-/** Duración del puesto de logística en alta montaña, desde `experiencia`: «1 año» o «N meses». */
-export function duracionAltaMontana(): string {
+/** Duración del puesto de logística en alta montaña, desde `experiencia`: «1 año» o «N meses» («1 year», «N months»). */
+export function duracionAltaMontana(idioma: Idioma = 'es'): string {
 	const p = experiencia.find((x) => x.altaMontana);
 	if (!p) return '';
 	const meses = mesesEntre(p.desde, p.finBarra ?? (p.hasta === 'hoy' ? p.desde : p.hasta));
+	if (idioma === 'en') {
+		if (meses % 12 === 0) return meses === 12 ? '1 year' : `${meses / 12} years`;
+		return `${meses} months`;
+	}
 	if (meses % 12 === 0) return meses === 12 ? '1 año' : `${meses / 12} años`;
 	return `${meses} meses`;
 }
@@ -54,6 +73,6 @@ export function cuentaDemos(estados: string[]): { vivas: number; desarrollo: num
 }
 
 /** El texto de las pestañas de Proyectos: «una novela y un juego» (solo lo publicado) y si comparten mundo. */
-export function textoProyectos(tipos: ('novela' | 'juego' | 'otro')[]): { lista: string; comparten: boolean } {
-	return { lista: descripcionProyectos(tipos), comparten: tipos.includes('novela') && tipos.includes('juego') };
+export function textoProyectos(tipos: ('novela' | 'juego' | 'otro')[], idioma: Idioma = 'es'): { lista: string; comparten: boolean } {
+	return { lista: descripcionProyectos(tipos, idioma), comparten: tipos.includes('novela') && tipos.includes('juego') };
 }

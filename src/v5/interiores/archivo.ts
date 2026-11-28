@@ -4,6 +4,7 @@
 import type { Camino } from '../../lib/contenido.ts';
 import { esPublicable } from '../../lib/estados.ts';
 import { ficha } from '../datos.ts';
+import { rutaDe, type Idioma } from '../../i18n/idioma.ts';
 import { carpetaDe } from './caso.ts';
 
 export type Carpeta = 'tecnico' | 'logistica';
@@ -20,7 +21,7 @@ export interface Expediente {
 	caminos: string;
 	carpeta: Carpeta;
 	tono: Tono;
-	nota?: 'Con demo en vivo' | 'Borrador';
+	nota?: 'Con demo en vivo' | 'Borrador' | 'With live demo' | 'Draft';
 	/** Una línea de resultado, tomada del propio caso (`resultadoCorto`). Sin dato, el expediente no la lleva. */
 	resultado?: string;
 }
@@ -60,11 +61,11 @@ export function claseDeTono(tono: Tono): string {
 export const colorDeCarpeta = (carpeta: Carpeta): string => (carpeta === 'tecnico' ? 'var(--azurita)' : 'var(--cobre)');
 
 /** «Técnico · Logística»: la carpeta primero (la misma regla que la página del caso), después el otro camino. */
-function textoDeCaminos(caminos: Camino[]): string {
+function textoDeCaminos(caminos: Camino[], idioma: Idioma): string {
 	const carpeta = carpetaDe(caminos);
 	return [carpeta, ...caminos.filter((c) => c !== carpeta)]
 		.filter((c, i, todos) => todos.indexOf(c) === i)
-		.map((c) => ficha(c).corto)
+		.map((c) => ficha(c, idioma).corto)
 		.join(' · ');
 }
 
@@ -74,7 +75,7 @@ function textoDeCaminos(caminos: Camino[]): string {
  * - `demoEnVivo`: si la demo de ese caso es publicable y está en vivo (solo así lleva la nota «Con demo en vivo»).
  * - `dev`: solo existe para probar; en el sitio se deja `esPublicable` decidir (los borradores salen solo en `npm run dev`).
  */
-export function expedientes(casos: CasoDelCajon[], principalId: string | undefined, demoEnVivo: boolean, dev?: boolean): Expediente[] {
+export function expedientes(casos: CasoDelCajon[], principalId: string | undefined, demoEnVivo: boolean, dev?: boolean, idioma: Idioma = 'es'): Expediente[] {
 	const lista = casos.filter((c) => esPublicable(c.data, dev)).sort((a, b) => a.data.orden - b.data.orden);
 	if (lista.length === 0) throw new Error('No hay casos publicables: no existe un cajón vacío');
 	if (lista.length > MAX_EXPEDIENTES) throw new Error(`El cajón admite hasta ocho casos: hay ${lista.length}; rediseñar /casos/`);
@@ -86,12 +87,13 @@ export function expedientes(casos: CasoDelCajon[], principalId: string | undefin
 		const tono: Tono = c.id === principalId ? 'claro' : carpeta === 'logistica' ? 'cobre' : anterior === 'azurita' ? 'honda' : 'azurita';
 		anterior = tono;
 		const enBorrador = !esPublicable(c.data, false);
-		const nota = enBorrador ? 'Borrador' : c.id === principalId && demoEnVivo ? 'Con demo en vivo' : undefined;
+		const en = idioma === 'en';
+		const nota = enBorrador ? (en ? 'Draft' : 'Borrador') : c.id === principalId && demoEnVivo ? (en ? 'With live demo' : 'Con demo en vivo') : undefined;
 		return {
-			href: `/casos/${c.id}/`,
+			href: rutaDe(idioma, `/casos/${c.id}/`),
 			numero: String(i + 1).padStart(2, '0'),
 			titulo: c.data.titulo,
-			caminos: textoDeCaminos(c.data.caminos),
+			caminos: textoDeCaminos(c.data.caminos, idioma),
 			carpeta,
 			tono,
 			...(nota ? { nota } : {}),

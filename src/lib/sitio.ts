@@ -2,6 +2,7 @@
 // que dos páginas dicen igual: se escriben acá una sola vez (scripts/sitio.test.mjs lo comprueba).
 
 import { imagenesSociales } from './imagenes-sociales.ts';
+import type { Idioma } from '../i18n/idioma.ts';
 
 export const correo = 'contacto@matiasormeno.com.ar';
 export const linkedin = 'https://www.linkedin.com/in/mat%C3%ADas-orme%C3%B1o-98208a3b3';
@@ -26,10 +27,12 @@ export const descripcionSitio = `Portafolio de ${nombre.completo}: logística y 
  * src/lib/imagenes-sociales.ts, que escribe scripts/og/generar.mjs. En `npm run dev` una clave sin generar (un caso en
  * borrador) usa la de la portada; en el build falla: un caso publicado sin su imagen no sale.
  */
-export function imagenSocial(clave: string, dev: boolean): { archivo: string; alt: string } {
+export function imagenSocial(clave: string, dev: boolean, idioma: Idioma = 'es'): { archivo: string; alt: string } {
 	const imagenes: Record<string, { archivo: string; alt: string } | undefined> = imagenesSociales;
-	const imagen = imagenes[clave] ?? (dev ? imagenes.portada : undefined);
-	if (!imagen) throw new Error(`Falta la imagen para compartir «${clave}»: correr node scripts/og/generar.mjs`);
+	// Las del inglés llevan el prefijo `en/` en la clave (scripts/og/generar.mjs).
+	const prefijo = idioma === 'en' ? 'en/' : '';
+	const imagen = imagenes[`${prefijo}${clave}`] ?? (dev ? imagenes[`${prefijo}portada`] : undefined);
+	if (!imagen) throw new Error(`Falta la imagen para compartir «${prefijo}${clave}»: correr node scripts/og/generar.mjs`);
 	return imagen;
 }
 
@@ -60,4 +63,42 @@ export const estudiosActuales = 'Tecnicatura Universitaria en Programación a Di
 /** Número de teléfono con espacios duros (U+00A0): no se parte en dos renglones. */
 export function telefonoVisible(visible: string): string {
 	return visible.replace(/ /g, '\u00A0');
+}
+
+/**
+ * Lo que dice el sitio en inglés, una sola vez cada cosa (la versión en español son las constantes de arriba). Las dos
+ * oraciones de `comoTrabajo` y las dos frases resaltadas guardan el mismo orden y número que en español:
+ * `frases()` (v5/fichas/tecnico-datos.ts) parte por oraciones y la página resalta `enfasisComoTrabajo`.
+ */
+const enIngles = {
+	titular: 'Software development and AI automation',
+	bajadaPortada: 'I design automations for the administration team, develop them with AI under my direction, and verify them with automated tests.',
+	descripcionSitio: `Portfolio of ${nombre.completo}: software development and AI automation, plus mining logistics.`,
+	comprobantesPorMes: 'more than 2,000 documents per month',
+	comoTrabajo:
+		'I understand the problem, define the rules and check that it works, with automated tests. ' +
+		'I design the systems and develop them with AI, with tests and security review. ' +
+		'The ideas and designs are mine; the AI writes the code under my direction, and each project details my part.',
+	enfasisComoTrabajo: ['define the rules', 'check that it works'] as readonly string[],
+	estudiosActuales: 'Associate degree in Programming, distance learning (National Technological University, UTN, Argentina), in progress',
+	ubicacion: 'San Juan, Argentina',
+	idiomas: 'Spanish: native · English: A2 (I write with translation tools)',
+};
+
+const enEspanol = {
+	titular,
+	bajadaPortada,
+	descripcionSitio,
+	comprobantesPorMes,
+	comoTrabajo,
+	enfasisComoTrabajo: enfasisComoTrabajo as readonly string[],
+	estudiosActuales,
+	ubicacion,
+	/** Solo la versión en inglés declara los idiomas (pedido de Matías, 27/11/2026): en español no hay nada que decir. */
+	idiomas: '',
+};
+
+/** Los textos fijos del sitio en un idioma. */
+export function textosSitio(idioma: Idioma): typeof enEspanol {
+	return idioma === 'en' ? enIngles : enEspanol;
 }

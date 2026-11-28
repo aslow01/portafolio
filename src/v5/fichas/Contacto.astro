@@ -1,15 +1,24 @@
 ---
 // Ficha 05 · Contacto.
 // Páginas: Escribir (el fichero de canales) y «CV y este sitio» (sin PDF publicado: «Este sitio»). Correo, teléfono, LinkedIn, CV y estudios salen de src/lib: no hay datos de contacto escritos acá.
-import { cv, telefono } from '../../lib/datos-pendientes';
-import { correo, estudiosActuales, linkedin, telefonoVisible, ubicacion } from '../../lib/sitio';
+import { cvDe, cvEnEspanol, telefono } from '../../lib/datos-pendientes';
+import { correo, linkedin, telefonoVisible, textosSitio } from '../../lib/sitio';
+import { idiomaDe, traductor } from '../../i18n/idioma';
 import { nombre } from '../datos';
 import Ficha from '../Ficha.astro';
 import Pagina from '../Pagina.astro';
 import TituloFicha from '../TituloFicha.astro';
 
+const idioma = idiomaDe(Astro.currentLocale);
+const t = traductor(idioma);
+const cv = cvDe(idioma);
+const { estudiosActuales, ubicacion, idiomas } = textosSitio(idioma);
+
 // Bajada de la página de contacto de la v4 (pages/contacto.astro).
-const bajada = 'Para una propuesta de trabajo, una consulta sobre los casos o para conversar sobre automatización, escriba por correo.';
+const bajada = t(
+	'Para una propuesta de trabajo, una consulta sobre los casos o para conversar sobre automatización, escriba por correo.',
+	'To discuss a job opportunity, ask about the case studies or talk about automation, please write by email.',
+);
 
 // El correo se parte después de la @ para que en pantallas angostas cada mitad quede en su renglón.
 const [usuarioCorreo, dominioCorreo] = correo.split('@');
@@ -23,23 +32,23 @@ interface Canal {
 }
 // Sin teléfono público no hay filas de WhatsApp ni de Teléfono (datos-pendientes.ts).
 const canales: Canal[] = [
-	{ via: 'Correo', href: `mailto:${correo}`, externo: false, partes: [`${usuarioCorreo}@`, dominioCorreo] },
+	{ via: t('Correo', 'Email'), href: `mailto:${correo}`, externo: false, partes: [`${usuarioCorreo}@`, dominioCorreo] },
 	...(telefono?.whatsapp ? [{ via: 'WhatsApp', href: telefono.whatsapp, externo: true, partes: [numero] }] : []),
-	...(telefono ? [{ via: 'Teléfono', href: `tel:${telefono.tel}`, externo: false, partes: [numero] }] : []),
+	...(telefono ? [{ via: t('Teléfono', 'Phone'), href: `tel:${telefono.tel}`, externo: false, partes: [numero] }] : []),
 	{ via: 'LinkedIn', href: linkedin, externo: true, partes: [`${nombre.primero} ${nombre.apellido}`] },
 ];
 
 // Los CV: solo los que tienen PDF. Sin ninguno, la página se llama «Este sitio» y la lista no se dibuja.
 const cvs = [
-	{ titulo: 'CV de logística y minería', pdf: cv.logistica },
-	{ titulo: 'CV técnico e IA', pdf: cv.tecnico },
-].flatMap((c) => (c.pdf ? [{ titulo: c.titulo, pdf: c.pdf }] : []));
-const tituloPagina2 = cvs.length > 0 ? 'CV y este sitio' : 'Este sitio';
+	{ titulo: t('CV de logística y minería', 'Logistics and mining CV'), pdf: cv.logistica, camino: 'logistica' as const },
+	{ titulo: t('CV técnico e IA', 'Technical and AI CV'), pdf: cv.tecnico, camino: 'tecnico' as const },
+].flatMap((c) => (c.pdf ? [{ titulo: c.titulo, pdf: c.pdf, camino: c.camino }] : []));
+const tituloPagina2 = cvs.length > 0 ? t('CV y este sitio', 'CV and this site') : t('Este sitio', 'This site');
 ---
 
 <Ficha id="contacto">
-	<Pagina titulo="Escribir" tapa>
-		<TituloFicha id="contacto" palabra="Contacto" />
+	<Pagina titulo={t('Escribir', 'Get in touch')} tapa>
+		<TituloFicha id="contacto" palabra={t('Contacto', 'Contact')} />
 		<p class="texto">{bajada}</p>
 		<ul class="canales der">
 			{
@@ -64,7 +73,7 @@ const tituloPagina2 = cvs.length > 0 ? 'CV y este sitio' : 'Este sitio';
 					{cvs.map((c) => (
 						<li>
 							<a href={c.pdf.archivo} download>
-								<span>{c.titulo}</span>
+								<span>{c.titulo}{cvEnEspanol(c.camino, idioma) && ' (Spanish)'}</span>
 								<b class="baja" aria-hidden="true">PDF</b>
 								<span class="solo-lector"> ({c.pdf.detalle})</span>
 							</a>
@@ -75,10 +84,11 @@ const tituloPagina2 = cvs.length > 0 ? 'CV y este sitio' : 'Este sitio';
 		}
 		<div class="sitio der">
 			<dl class="datos">
-				<div><dt class="rotulo">Base</dt><dd>{ubicacion}</dd></div>
-				<div><dt class="rotulo">Estudios</dt><dd>{estudiosActuales}</dd></div>
+				<div><dt class="rotulo">{t('Base', 'Based in')}</dt><dd>{ubicacion}{idioma === 'en' && ' (UTC-3)'}</dd></div>
+				<div><dt class="rotulo">{t('Estudios', 'Studies')}</dt><dd>{estudiosActuales}</dd></div>
+				{idiomas && <div><dt class="rotulo">{t('Idiomas', 'Languages')}</dt><dd>{idiomas}</dd></div>}
 			</dl>
-			<p class="legal pg-pie">Sitio diseñado y dirigido por mí; desarrollado con IA. © {new Date().getFullYear()} {nombre.completo}. Código con licencia MIT; textos e imágenes, todos los derechos reservados. Las visitas se miden con Cloudflare Web Analytics, sin cookies.</p>
+			<p class="legal pg-pie">{t('Sitio diseñado y dirigido por mí; desarrollado con IA.', 'Site designed by me and developed with AI under my direction.')} © {new Date().getFullYear()} {nombre.completo}. {t('Código con licencia MIT; textos e imágenes, todos los derechos reservados.', 'Code under the MIT license; text and images, all rights reserved.')} {t('Las visitas se miden con Cloudflare Web Analytics, sin cookies.', 'Visits are counted with Cloudflare Web Analytics (no cookies).')}</p>
 		</div>
 	</Pagina>
 </Ficha>
@@ -115,6 +125,8 @@ const tituloPagina2 = cvs.length > 0 ? 'CV y este sitio' : 'Este sitio';
 
 	/* --- Página 2: CV y este sitio --- */
 	.f-contacto .legal { font-size: 14px; color: var(--texto-2); max-width: 46ch; }
+	@media (max-width: 400px) { .f-contacto .legal { font-size: 13px; line-height: 1.4; } }
+	@media (max-width: 340px) { .f-contacto .legal { font-size: 12.5px; line-height: 1.35; } }
 	.f-contacto .cvs { display: grid; gap: 0; border-top: 1px solid var(--regla); }
 	.f-contacto .cvs li { border-bottom: 1px solid var(--regla); }
 	.f-contacto .cvs a { display: flex; justify-content: space-between; align-items: center; min-height: 52px; font-family: var(--f-cartel); font-stretch: 85%; font-weight: 700; font-size: 21px; text-decoration: none; }

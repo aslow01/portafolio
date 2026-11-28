@@ -22,8 +22,11 @@
 
 import { cierraPorFondo, fueEmpujada, imagenRota, paginaDelHash, paginaGuardada, tituloConNombre } from '../../lib/paginas.ts';
 import { nombre as autor } from '../../lib/sitio.ts';
+import { idiomaDe, traductor } from '../../i18n/idioma.ts';
 
 const d = document;
+// El idioma de la página es el de <html lang> (lo pone BaseV5 según la dirección): los textos propios del script van a pares.
+const tr = traductor(idiomaDe(d.documentElement.lang));
 const raiz = d.documentElement;
 raiz.classList.remove('sin-js');
 raiz.classList.add('js');
@@ -122,7 +125,7 @@ const armar = (p: HTMLElement): void => {
 				{ transform: 'translateY(0.06em)', opacity: 1, offset: 0.7 },
 				{ transform: 'none', opacity: 1 },
 			],
-			{ duration: 620, delay: 650 + i * 75, easing: 'cubic-bezier(0.55, 0, 0.85, 0.45)', fill: 'backwards' },
+			{ duration: 520, delay: 300 + i * 45, easing: 'cubic-bezier(0.55, 0, 0.85, 0.45)', fill: 'backwards' },
 		),
 	);
 };
@@ -169,24 +172,24 @@ orden.forEach((f, n) => {
 	const total = pags.length;
 	const nombre = f.dataset.nombre ?? '';
 	hojas.setAttribute('role', 'region');
-	hojas.setAttribute('aria-roledescription', 'carrusel');
-	hojas.setAttribute('aria-label', `${nombre}, ${total} ${total === 1 ? 'página' : 'páginas'}`);
+	hojas.setAttribute('aria-roledescription', tr('carrusel', 'carousel'));
+	hojas.setAttribute('aria-label', `${nombre}, ${total} ${total === 1 ? tr('página', 'page') : tr('páginas', 'pages')}`);
 	pags.forEach((p, i) => {
 		p.setAttribute('role', 'group');
-		p.setAttribute('aria-roledescription', 'página');
-		p.setAttribute('aria-label', `${i + 1} de ${total}: ${tituloDe(p)}`);
+		p.setAttribute('aria-roledescription', tr('página', 'page'));
+		p.setAttribute('aria-label', `${i + 1} ${tr('de', 'of')} ${total}: ${tituloDe(p)}`);
 		p.tabIndex = -1;
 		if (conAnim()) p.style.setProperty('--p', '0');
 	});
 
 	const nav = crear('nav', 'paginador');
-	nav.setAttribute('aria-label', `Páginas de ${nombre}`);
+	nav.setAttribute('aria-label', tr(`Páginas de ${nombre}`, `Pages of ${nombre}`));
 	const ant = crear('button', 'pag-ant');
 	ant.type = 'button';
-	ant.setAttribute('aria-label', 'Página anterior');
+	ant.setAttribute('aria-label', tr('Página anterior', 'Previous page'));
 	const flechaAnt = crear('span', '', '←');
 	flechaAnt.setAttribute('aria-hidden', 'true');
-	ant.append(flechaAnt, crear('span', 'pag-txt', 'Anterior'));
+	ant.append(flechaAnt, crear('span', 'pag-txt', tr('Anterior', 'Previous')));
 	const sig = crear('button', 'pag-sig');
 	sig.type = 'button';
 	const ind = crear('button', 'pag-indice');
@@ -212,7 +215,7 @@ orden.forEach((f, n) => {
 		const b = crear('button');
 		b.type = 'button';
 		b.dataset.pagina = String(i);
-		b.setAttribute('aria-label', `Página ${i + 1}: ${tituloDe(p)}`);
+		b.setAttribute('aria-label', `${tr('Página', 'Page')} ${i + 1}: ${tituloDe(p)}`);
 		b.append(crear('span', 'num', String(i + 1)), crear('span', 'pag-titulo', tituloDe(p)));
 		li.append(b);
 		lista.append(li);
@@ -321,7 +324,7 @@ function actualizar(o: FichaViva, anunciar = false): void {
 	const i = o.idx;
 	o.pos.textContent = `${i + 1} / ${o.total}`;
 	o.nom.textContent = tituloDe(o.pags[i]);
-	o.ind.setAttribute('aria-label', `${o.pos.textContent} ${o.nom.textContent}, elegir página`);
+	o.ind.setAttribute('aria-label', `${o.pos.textContent} ${o.nom.textContent}, ${tr('elegir página', 'choose a page')}`);
 	[...o.sol.children].forEach((s, j) => s.classList.toggle('ahora', j === i));
 	o.lista.querySelectorAll('button').forEach((b, j) => {
 		if (j === i) b.setAttribute('aria-current', 'page');
@@ -339,13 +342,13 @@ function actualizar(o: FichaViva, anunciar = false): void {
 		const flecha = crear('span', '', `${n?.textContent ?? ''}→`);
 		flecha.setAttribute('aria-hidden', 'true');
 		o.sig.append(crear('span', 'pag-txt', destino ? destino.nombre : ''), flecha);
-		o.sig.setAttribute('aria-label', `Siguiente sección: ${destino ? destino.nombre : ''}`);
+		o.sig.setAttribute('aria-label', `${tr('Siguiente sección', 'Next section')}: ${destino ? destino.nombre : ''}`);
 		o.sig.disabled = false;
 	} else {
 		const flecha = crear('span', '', '→');
 		flecha.setAttribute('aria-hidden', 'true');
-		o.sig.append(crear('span', 'pag-txt', 'Siguiente'), flecha);
-		o.sig.setAttribute('aria-label', 'Página siguiente');
+		o.sig.append(crear('span', 'pag-txt', tr('Siguiente', 'Next')), flecha);
+		o.sig.setAttribute('aria-label', tr('Página siguiente', 'Next page'));
 		o.sig.disabled = ultima;
 	}
 	if (conFoco === o.ant && o.ant.disabled && !o.sig.disabled) o.sig.focus();
@@ -355,7 +358,7 @@ function actualizar(o: FichaViva, anunciar = false): void {
 		armar(o.pags[i]);
 	}
 	// Al cambiar de página con la ficha abierta, el cambio se anuncia (el foco se queda en el botón).
-	if (anunciar && o.f.classList.contains('abierta')) o.anuncio.textContent = `Página ${i + 1} de ${o.total}: ${tituloDe(o.pags[i])}`;
+	if (anunciar && o.f.classList.contains('abierta')) o.anuncio.textContent = `${tr('Página', 'Page')} ${i + 1} ${tr('de', 'of')} ${o.total}: ${tituloDe(o.pags[i])}`;
 	pasoPorTeclado(o);
 	ajustarSolapas(o);
 }
@@ -686,6 +689,17 @@ d.addEventListener(
 	true,
 );
 
+// El selector de idioma (SelectorIdioma.astro) lleva a la misma página en el otro idioma: al ir le suma el hash de la dirección,
+// así el cambio cae en la misma ficha y la misma página (`/en/#tecnico`, `/en/tecnico/#el-caso`).
+d.addEventListener(
+	'click',
+	(e) => {
+		const a = e.target instanceof Element ? e.target.closest<HTMLAnchorElement>('.idioma a') : null;
+		if (a && location.hash) a.hash = location.hash;
+	},
+	true,
+);
+
 // Espacio abre la pestaña igual que Enter (un enlace nativo solo responde a Enter; pedido de la revisión de teclado).
 d.addEventListener('keydown', (e) => {
 	if (e.key !== ' ' || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || e.repeat) return;
@@ -868,13 +882,13 @@ d.querySelectorAll<HTMLElement>('[data-sub]').forEach((sub) => {
 	let actual = 0;
 	const elegir = (i: number, foco = false, anunciar = false): void => {
 		actual = i;
-		if (anunciar) anuncio.textContent = `Paso ${i + 1} de ${botones.length}: ${vistas[i].querySelector('.sub-t')?.textContent ?? ''}`;
+		if (anunciar) anuncio.textContent = `${tr('Paso', 'Step')} ${i + 1} ${tr('de', 'of')} ${botones.length}: ${vistas[i].querySelector('.sub-t')?.textContent ?? ''}`;
 		botones.forEach((b, j) => {
 			b.setAttribute('aria-selected', String(i === j));
 			b.tabIndex = i === j ? 0 : -1;
 			vistas[j].hidden = i !== j;
 		});
-		if (sig?.firstChild) sig.firstChild.textContent = i === botones.length - 1 ? 'Volver al paso 1 ' : 'Paso siguiente ';
+		if (sig?.firstChild) sig.firstChild.textContent = i === botones.length - 1 ? tr('Volver al paso 1 ', 'Back to step 1 ') : tr('Paso siguiente ', 'Next step ');
 		if (conAnim()) vistas[i].animate([{ transform: 'translateX(24px)', opacity: 0.2 }, { transform: 'none', opacity: 1 }], { duration: 360, easing: 'cubic-bezier(0.2, 0.8, 0.25, 1)' });
 		if (foco) botones[i].focus();
 	};
@@ -908,14 +922,14 @@ d.querySelectorAll<HTMLElement>('.ver-codigo[data-hoja]').forEach((b) => {
 	const or = crear('div', 'hoja-oreja');
 	or.setAttribute('aria-hidden', 'true');
 	const o2 = crear('span', 'oreja');
-	o2.append(crear('span', 'num', '02'), crear('span', '', 'Código'));
+	o2.append(crear('span', 'num', '02'), crear('span', '', tr('Código', 'Code')));
 	or.append(o2);
 	const cuerpo = crear('div', 'hoja-cuerpo');
 	const cab = crear('div', 'hoja-cabeza');
-	const h = crear('h2', '', flujo.dataset.tituloHoja || 'Prueba');
+	const h = crear('h2', '', flujo.dataset.tituloHoja || tr('Prueba', 'Test'));
 	h.id = `${dlg.id}-t`;
 	h.tabIndex = -1;
-	const x = crear('button', 'cerrar-hoja', 'Cerrar');
+	const x = crear('button', 'cerrar-hoja', tr('Cerrar', 'Close'));
 	x.type = 'button';
 	cab.append(h, x);
 	cuerpo.append(cab, flujo);

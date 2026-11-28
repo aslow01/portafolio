@@ -3,7 +3,8 @@
 // caso en particular: las secciones son las que traiga el Markdown, y toda fila sin dato no se dibuja.
 // Sin Astro: se prueba con `npm test` (scripts/caso-cuerpo.test.mjs).
 import { cifraVisible, filasAutoria, puertaAlArchivo, type Autoria, type Camino, type Resultado } from '../../lib/contenido.ts';
-import { largoBloque, leerCuerpo, paginasDeSeccion, type Bloque } from './cuerpo.ts';
+import { PRESUPUESTO, largoBloque, leerCuerpo, paginasDeSeccion, type Bloque } from './cuerpo.ts';
+import type { Idioma } from '../../i18n/idioma.ts';
 
 export interface Cifra {
 	/** Los valores anteriores («40» en «40 → 300+»), en orden. Puede estar vacío. */
@@ -93,9 +94,20 @@ export interface OpcionesCaso {
 	mas?: { rotulo: string; titulo: string; href: string; borrador: boolean }[];
 	/** Cuántos casos publicables hay en total (todos los caminos): con dos o más, «Más casos» cierra con la fila hacia `/casos/`. */
 	totalCasos?: number;
+	/** El idioma de los rótulos fijos de la página (los títulos de las secciones salen del Markdown del caso). Por defecto, español. */
+	idioma?: Idioma;
 }
 
-const TEXTO_TODOS = 'Todos los casos de estudio';
+/**
+ * Cuánto texto entra en una página de lectura. El inglés ocupa más renglones con los mismos caracteres (palabras más largas y
+ * sin tantos cortes), así que su página admite menos: medido a 390 × 844 y 360 × 740 con scripts/verificar-paginas.mjs.
+ */
+export const PRESUPUESTO_POR_IDIOMA: Record<Idioma, number> = { es: PRESUPUESTO, en: 840 };
+
+const TEXTOS = {
+	es: { todos: 'Todos los casos de estudio', donde: 'Dónde', rol: 'Mi rol', resultado: 'Resultado', miParte: 'Mi parte', verifique: 'Cómo lo verifiqué', seguir: 'Para seguir', mas: 'Más casos' },
+	en: { todos: 'All case studies', donde: 'Context', rol: 'My role', resultado: 'Result', miParte: 'My part', verifique: 'How I verified it', seguir: 'Keep exploring', mas: 'More cases' },
+} as const;
 
 /** Arma el modelo del caso. `cuerpo` es el Markdown sin el encabezado. */
 export function armarCaso(datos: DatosCaso, cuerpo: string, opciones: OpcionesCaso = {}): ModeloCaso {
@@ -104,10 +116,12 @@ export function armarCaso(datos: DatosCaso, cuerpo: string, opciones: OpcionesCa
 	// (la carátula de la tapa quedaba más alta que su pantalla; el texto ya está en el cuerpo del caso).
 	const cifraModelo = cifra?.cifra && cifra.medicion && /\d/.test(cifra.cifra) ? partirCifra(cifra.cifra, cifra.unidad, cifra.medicion) : undefined;
 
+	const idioma = opciones.idioma ?? 'es';
+	const tx = TEXTOS[idioma];
 	const caratula: FilaCaratula[] = [];
-	if (datos.contexto) caratula.push({ clave: 'donde', rotulo: 'Dónde', texto: datos.contexto });
-	if (datos.rol) caratula.push({ clave: 'rol', rotulo: 'Mi rol', texto: datos.rol });
-	if (cifraModelo) caratula.push({ clave: 'resultado', rotulo: 'Resultado', cifra: cifraModelo });
+	if (datos.contexto) caratula.push({ clave: 'donde', rotulo: tx.donde, texto: datos.contexto });
+	if (datos.rol) caratula.push({ clave: 'rol', rotulo: tx.rol, texto: datos.rol });
+	if (cifraModelo) caratula.push({ clave: 'resultado', rotulo: tx.resultado, cifra: cifraModelo });
 
 	const usados = new Set<string>(['caso', 'tapa', 'autoria', 'verificacion', 'mas-casos', 't-h1']);
 	const idUnico = (base: string): string => {
@@ -121,8 +135,9 @@ export function armarCaso(datos: DatosCaso, cuerpo: string, opciones: OpcionesCa
 	let numero = 0;
 	for (const s of leerCuerpo(cuerpo)) {
 		const base = ancla(s.titulo);
-		const partes = paginasDeSeccion(s);
-		const esResultado = sinTildes(s.titulo) === 'resultado';
+		const partes = paginasDeSeccion(s, PRESUPUESTO_POR_IDIOMA[idioma]);
+		// La sección «Resultado» («Result» en inglés) se reconoce por su título.
+		const esResultado = ['resultado', 'result'].includes(sinTildes(s.titulo));
 		const soloParrafos = partes.length === 1 && partes[0].every((b) => b.t === 'p');
 		if (esResultado && cifraModelo && soloParrafos && partes[0].reduce((n, b) => n + largoBloque(b), 0) <= MAX_TEXTO_CIFRA) {
 			paginas.push({ tipo: 'cifra', id: idUnico(base), titulo: s.titulo, encabezado: s.titulo, cifra: cifraModelo, parrafos: partes[0], uso: datos.uso });
@@ -141,24 +156,24 @@ export function armarCaso(datos: DatosCaso, cuerpo: string, opciones: OpcionesCa
 		});
 	}
 
-	const filas = filasAutoria(datos.autoria);
+	const filas = filasAutoria(datos.autoria, idioma);
 	const quien = filas.filter((f): f is { clave: 'yo' | 'ia'; rotulo: string; texto: string } => f.clave === 'yo' || f.clave === 'ia');
-	if (quien.length > 0) paginas.push({ tipo: 'autoria', id: 'autoria', titulo: 'Mi parte', filas: quien });
+	if (quien.length > 0) paginas.push({ tipo: 'autoria', id: 'autoria', titulo: tx.miParte, filas: quien });
 
 	const verificacion = filas.find((f) => f.clave === 'verif')?.texto;
 	paginas.push({
 		tipo: 'cierre',
 		id: 'verificacion',
-		titulo: verificacion ? 'Cómo lo verifiqué' : 'Para seguir',
-		solapa: { texto: verificacion ? 'Cómo lo verifiqué' : 'Para seguir', nivel: 'h3', continuacion: false },
+		titulo: verificacion ? tx.verifique : tx.seguir,
+		solapa: { texto: verificacion ? tx.verifique : tx.seguir, nivel: 'h3', continuacion: false },
 		verificacion,
 	});
 
 	const mas = (opciones.mas ?? []).slice(0, 3);
 	const total = opciones.totalCasos ?? 0;
-	const todos = puertaAlArchivo(total) ? { texto: TEXTO_TODOS, total } : undefined;
+	const todos = puertaAlArchivo(total) ? { texto: tx.todos, total } : undefined;
 	if (mas.length > 0 || todos) {
-		paginas.push({ tipo: 'mas', id: 'mas-casos', titulo: 'Más casos', solapa: { texto: 'Más casos', nivel: 'h2', continuacion: false }, casos: mas, ...(todos ? { todos } : {}) });
+		paginas.push({ tipo: 'mas', id: 'mas-casos', titulo: tx.mas, solapa: { texto: tx.mas, nivel: 'h2', continuacion: false }, casos: mas, ...(todos ? { todos } : {}) });
 	}
 
 	return { titulo: partirTitulo(datos.titulo, datos.corte), resumen: datos.resumen, caratula, paginas };

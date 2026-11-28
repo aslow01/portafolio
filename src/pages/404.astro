@@ -4,21 +4,25 @@
 // ahí se sigue a cualquier sección, sin script. Sin índice: `noindex`.
 import BaseV5 from '../layouts/BaseV5.astro';
 import Lomos from '../v5/Lomos.astro';
+import { idiomaDe, rutaDe, traductor } from '../i18n/idioma';
+
+const idioma = idiomaDe(Astro.currentLocale);
+const t = traductor(idioma);
 ---
 
 <BaseV5
-	titulo="Página no encontrada"
-	descripcion="La página solicitada no existe."
+	titulo={t('Página no encontrada', 'Page not found')}
+	descripcion={t('La página solicitada no existe.', 'The requested page does not exist.')}
 	noindex
 	imagenSocial="portada"
-	saltar={{ href: '#t-404', texto: 'Saltar al contenido' }}
+	saltar={{ href: '#t-404', texto: t('Saltar al contenido', 'Skip to content') }}
 >
 	<main class="no-encontrada c-hueso">
 		<div class="aviso-404">
 			<p class="rotulo">Error 404</p>
-			<h1 class="cartel" id="t-404" tabindex="-1">No se encontró la página</h1>
-			<p class="texto">La dirección puede estar mal escrita o la página ya no existe.</p>
-			<p><a class="boton" href="/">Ir a la portada <span class="flecha" aria-hidden="true">→</span></a></p>
+			<h1 class="cartel" id="t-404" tabindex="-1">{t('No se encontró la página', 'Page not found')}</h1>
+			<p class="texto">{t('La dirección puede estar mal escrita o la página ya no existe.', 'The address may be mistyped or the page no longer exists.')}</p>
+			<p><a class="boton" href={rutaDe(idioma, '/')}>{t('Ir a la portada', 'Go to the home page')} <span class="flecha" aria-hidden="true">→</span></a></p>
 		</div>
 		<div class="pestana-vacia" aria-hidden="true">
 			<svg class="solapa" viewBox="0 0 140 100" preserveAspectRatio="none" focusable="false">
