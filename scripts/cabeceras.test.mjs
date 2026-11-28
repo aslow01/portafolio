@@ -18,12 +18,15 @@ test('la política parte de default-src self y no permite estilos ni scripts en 
 	assert.deepEqual(directivas['style-src'], ["'self'"]);
 });
 
-test('sin analítica: script-src y connect-src quedan en self, sin orígenes de terceros', () => {
-	assert.deepEqual(directivas['script-src'], ["'self'"]);
-	assert.deepEqual(directivas['connect-src'], ["'self'"]);
-	assert.doesNotMatch(csp, /cloudflareinsights/);
+test('con Cloudflare Web Analytics: solo script-src y connect-src admiten un origen externo, y es el suyo', () => {
+	// Motivo: la web mide visitas con Cloudflare Web Analytics (sin cookies). El beacon sale de static.cloudflareinsights.com
+	// y envía la medición a cloudflareinsights.com; nada más se abre.
+	assert.deepEqual(directivas['script-src'], ["'self'", 'https://static.cloudflareinsights.com']);
+	assert.deepEqual(directivas['connect-src'], ["'self'", 'https://cloudflareinsights.com']);
+	const permitidos = { 'script-src': ['https://static.cloudflareinsights.com'], 'connect-src': ['https://cloudflareinsights.com'] };
 	for (const [nombre, valores] of Object.entries(directivas)) {
-		assert.ok(valores.every((v) => v.startsWith("'") || !v.includes('//')), `${nombre} no admite orígenes externos`);
+		const externos = valores.filter((v) => !v.startsWith("'"));
+		assert.deepEqual(externos, permitidos[nombre] ?? [], `${nombre}: orígenes externos no previstos`);
 	}
 	assert.deepEqual(directivas['frame-ancestors'], ["'none'"]);
 	assert.deepEqual(directivas['object-src'], ["'none'"]);

@@ -11,6 +11,7 @@ import { CASOS_PUBLICADOS, cargarContenido, cargarDist, conDist, exigirDist, hay
 import { enlacesRotos, fichasDe, idsRepetidos, lomosDe, paginaDe, problemasDeReferencias, textoVisible } from './sitio-html.mjs';
 
 const ORIGEN = 'https://matiasormeno.com.ar';
+const BEACON = 'https://static.cloudflareinsights.com/beacon.min.js'; // analítica: único script de otro origen
 // La imagen para compartir de las páginas que no son un caso (la de un caso es `caso-<id>`).
 const IMAGEN_DE_PAGINA = { '/': 'portada', '/tecnico/': 'tecnico', '/casos/': 'casos' };
 // Las ocho del caso, y al final las dos piezas propias: Método y Laboratorio.
@@ -290,17 +291,25 @@ test('la 404: noindex, fuera del sitemap, con la salida a la portada y los lomos
 	assert.ok(p.enlaces.some((e) => e.href === '/'), 'sin enlace a la portada');
 	const nav = p.etiquetas.find((e) => e.nombre === 'nav' && e.attrs.class?.split(/\s+/).includes('lomos'));
 	assert.ok(nav?.attrs.class.split(/\s+/).includes('visible'), 'los lomos de la 404 deben ser visibles sin esperar al script');
-	// «Fondo hueso, sin JS»: la página no carga ningún script (los de las pestañas los pide cada página que los usa).
+	// «Fondo hueso, sin JS»: la página no carga ningún script propio (los de las pestañas los pide cada página que los usa).
+	// Único script: el beacon de Cloudflare Web Analytics, que va en el layout común (BaseV5).
 	const scripts = p.etiquetas.filter((e) => e.nombre === 'script').map((e) => e.attrs.src);
-	assert.deepEqual(scripts, [], 'la 404 no debe cargar scripts');
+	assert.deepEqual(scripts, [BEACON], 'la 404 no debe cargar más script que el de la analítica');
 });
 
-test('las redirecciones y la 404 no cargan ningún script; la portada, /tecnico/ y los casos sí', conDist, () => {
+test('las redirecciones y la 404 no cargan ningún script propio; la portada, /tecnico/ y los casos sí, y con el beacon una sola vez', conDist, () => {
+	const propios = (html) => [...html.matchAll(/<script[^>]+src="([^"]+)"/gi)].map((m) => m[1]).filter((s) => s !== BEACON);
 	for (const ruta of ['/404.html', '/logistica/', '/demos/', '/contacto/', '/proyectos/']) {
+		assert.deepEqual(propios(dist.paginas.get(ruta).html), [], `${ruta} carga un script propio`);
+	}
+	// Las redirecciones (Redireccion.astro) no llevan la analítica: la página se va al instante y la portada a la que llevan sí la mide.
+	for (const ruta of ['/logistica/', '/demos/', '/contacto/', '/proyectos/']) {
 		assert.ok(!/<script/i.test(dist.paginas.get(ruta).html), `${ruta} carga un script`);
 	}
 	for (const ruta of ['/', '/tecnico/', '/casos/', ...rutasDeCasos()]) {
-		assert.ok(/<script[^>]+src="\/_astro\//i.test(dist.paginas.get(ruta).html), `${ruta} no carga su script`);
+		const html = dist.paginas.get(ruta).html;
+		assert.ok(/<script[^>]+src="\/_astro\//i.test(html), `${ruta} no carga su script`);
+		assert.equal(html.split(BEACON).length - 1, 1, `${ruta}: el beacon de analítica debe estar una sola vez`);
 	}
 });
 

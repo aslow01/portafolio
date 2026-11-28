@@ -1,7 +1,8 @@
 ---
 // Disposición base de la web v5 «Mezcla»: metadatos, SEO, imagen social, fuentes y estilos del sistema v5 y enlace de
-// salto. No carga ningún script: la 404 es «sin JS». El de las pestañas lo piden las páginas que lo usan
-// (index.astro, y tecnico.ts y caso.ts, que lo importan).
+// salto. Solo carga un script propio: el de las pestañas lo piden las páginas que lo usan (index.astro, y tecnico.ts y caso.ts,
+// que lo importan). Y el de Cloudflare Web Analytics (al final del <head>): mide visitas sin cookies; el token es público y va en el HTML;
+// la directiva de Astro que lo deja tal cual evita que lo empaquete; scripts/higiene.mjs lo admite solo con ese src exacto y public/_headers solo ese origen.
 // Sin estilos ni scripts en línea (la política de contenido de public/_headers no los permite): los scripts son
 // módulos propios que Astro empaqueta en /_astro/ y se sirven desde el mismo origen.
 // Se precargan solo las fuentes de la primera pantalla de la portada: Bricolage Grotesque (el nombre) y Schibsted Grotesk
@@ -75,6 +76,7 @@ const imagen = new URL(archivo, Astro.site);
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:image" content={imagen} />
 		<meta name="twitter:image:alt" content={altImagen} />
+		<script is:inline defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "40d169325dab43f0a702d3a7352bc826"}'></script>
 	</head>
 	<body>
 		<a class="saltar" href={saltar.href}>{saltar.texto}</a>

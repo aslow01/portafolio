@@ -159,6 +159,17 @@ test('src: las reglas de seguridad de la especificación: HTML con datos, eval, 
 	}
 });
 
+test('el beacon de Cloudflare Web Analytics es la única excepción a «sin scripts de otro origen»', () => {
+	const beacon = '<script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon="{&quot;token&quot;: &quot;40d169325dab43f0a702d3a7352bc826&quot;}"></script>';
+	assert.deepEqual(problemasDeDist('index.html', `<head>${beacon}</head>`), []);
+	assert.deepEqual(problemasDeSrc('x.astro', '<script is:inline defer src="https://static.cloudflareinsights.com/beacon.min.js"></script>'), []);
+	// Otro origen, otro archivo del mismo origen o contenido en línea siguen prohibidos.
+	assert.ok(problemasDeDist('index.html', '<script defer src="https://static.cloudflareinsights.com/otro.js"></script>').length > 0);
+	assert.ok(problemasDeDist('index.html', '<script src="https://example.com/beacon.min.js"></script>').length > 0);
+	assert.ok(problemasDeDist('index.html', '<script defer src="https://static.cloudflareinsights.com/beacon.min.js">alert(1)</script>').length > 0);
+	assert.equal(problemasDeSrc('x.astro', '<script is:inline>').length, 1);
+});
+
 test('src: solo quedan las reglas de la CSP; las visuales de la v4 ya no se comprueban', () => {
 	assert.deepEqual(problemasDeSrc('x.css', 'a { border-radius: 12px; letter-spacing: 0.08em; }'), []);
 	assert.equal(problemasDeSrc('x.astro', '<p style="x">').length, 1);

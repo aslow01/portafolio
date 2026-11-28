@@ -73,6 +73,7 @@ export function datosPrivados(texto, opciones = {}) {
 export function problemasDeDist(ruta, texto) {
 	const hallazgos = [];
 	const esHtml = ruta.endsWith('.html');
+	texto = texto.replace(BEACON, '');
 	if (esHtml) {
 		if (/\sstyle\s*=/i.test(texto)) hallazgos.push('atributo style=');
 		if (/<style[\s>]/i.test(texto)) hallazgos.push('etiqueta <style');
@@ -96,7 +97,11 @@ export function problemasDeDist(ruta, texto) {
 const SCRIPT = /<script(?=[\s>])((?:[^>"']|"[^"]*"|'[^']*')*)>([\s\S]*?)(?:<\/script\s*>|$)/gi;
 const SRC = /(?:^|\s)src\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>"']+))/i;
 
-/** Un `<script>` vale solo si es externo, del mismo origen (ruta relativa o absoluta del sitio) y sin contenido. */
+// La única excepción: el beacon de Cloudflare Web Analytics (visitas sin cookies), con ese src exacto y sin contenido en línea.
+// public/_headers admite solo ese origen en script-src, y scripts/cabeceras.test.mjs lo prueba.
+const BEACON = /<script\b(?:\s+(?:is:inline|defer))*\s+src="https:\/\/static\.cloudflareinsights\.com\/beacon\.min\.js"(?:\s+data-cf-beacon=(?:'\{"token": "[0-9a-f]{32}"\}'|"\{&quot;token&quot;: &quot;[0-9a-f]{32}&quot;\}"))?\s*><\/script>/g;
+
+/** Un `<script>` vale solo si es externo, del mismo origen (ruta relativa o absoluta del sitio) y sin contenido. Salvo el beacon. */
 function problemasDeScripts(html) {
 	const hallazgos = [];
 	for (const m of html.matchAll(SCRIPT)) {
@@ -121,7 +126,7 @@ export function problemasDeSrc(_ruta, texto) {
 		if (re.test(texto)) hallazgos.push(descripcion);
 	};
 	ver('style= (estilo en línea)', /\bstyle\s*=/);
-	ver('is:inline', /is:inline/);
+	ver('is:inline (salvo el beacon de Cloudflare Web Analytics)', /is:inline(?![^>]*src="https:\/\/static\.cloudflareinsights\.com\/beacon\.min\.js")/);
 	ver('define:vars', /define:vars/);
 	ver('fuentes de Google', /fonts\.googleapis|fonts\.gstatic/);
 	ver('HTML armado con datos (innerHTML, outerHTML o insertAdjacentHTML)', /\b(?:innerHTML|outerHTML|insertAdjacentHTML)\b/);

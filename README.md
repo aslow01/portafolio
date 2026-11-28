@@ -180,7 +180,7 @@ Los términos prohibidos no están escritos en el repositorio (es público), ni 
 ## Seguridad
 
 - `public/_headers` define la política de contenido (CSP) y otras cabeceras para Cloudflare Pages. Todo el CSS sale en archivos aparte (`inlineStylesheets: 'never'`) y los scripts también (`assetsInlineLimit: 0`), así que la política no usa `'unsafe-inline'`.
-- Sin analítica: la política solo admite el propio origen. Lleva también `Cross-Origin-Opener-Policy: same-origin`. `Strict-Transport-Security` (HSTS) se activa en la zona de Cloudflare al publicar, no en `_headers`.
+- Analítica: la web usa **Cloudflare Web Analytics**, que mide visitas **sin cookies** ni huella del visitante. El script (el «beacon») va una sola vez en `src/layouts/BaseV5.astro` (con `is:inline`; el token es público) y la política admite solo dos orígenes externos: `https://static.cloudflareinsights.com` en `script-src` y `https://cloudflareinsights.com` en `connect-src`. Las demás directivas solo admiten el propio origen (`scripts/cabeceras.test.mjs` lo prueba). Lleva también `Cross-Origin-Opener-Policy: same-origin`. `Strict-Transport-Security` (HSTS) se activa en la zona de Cloudflare al publicar, no en `_headers`.
 - Las pruebas de `npm test` incluyen esa política.
 
 ## Publicación
