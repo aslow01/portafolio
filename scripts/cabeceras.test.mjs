@@ -37,6 +37,7 @@ test('aísla la ventana: Cross-Origin-Opener-Policy same-origin', () => {
 });
 
 test('lleva las demás cabeceras de seguridad', () => {
+	assert.match(texto, /^\s*Strict-Transport-Security:\s*max-age=15552000; includeSubDomains$/m);
 	assert.match(texto, /^\s*X-Content-Type-Options:\s*nosniff$/m);
 	assert.match(texto, /^\s*Referrer-Policy:\s*\S+/m);
 	assert.match(texto, /^\s*Permissions-Policy:\s*\S+/m);

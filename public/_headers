@@ -1,9 +1,10 @@
 # Cabeceras de seguridad (Cloudflare Pages). Se prueban en scripts/cabeceras.test.mjs.
 # Analítica: Cloudflare Web Analytics (sin cookies). Es lo único externo: script-src admite static.cloudflareinsights.com
 # (el beacon) y connect-src cloudflareinsights.com (donde envía la medición). Todo lo demás queda en el propio origen.
-# HSTS (Strict-Transport-Security) NO va acá: se activa en la zona de Cloudflare (SSL/TLS > Edge Certificates) al publicar.
+# HSTS: 180 días, con subdominios (facturas., flota., tablero. y www. responden por HTTPS), sin preload.
 /*
   Content-Security-Policy: default-src 'self'; script-src 'self' https://static.cloudflareinsights.com; connect-src 'self' https://cloudflareinsights.com; style-src 'self'; img-src 'self'; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+  Strict-Transport-Security: max-age=15552000; includeSubDomains
   X-Content-Type-Options: nosniff
   Cross-Origin-Opener-Policy: same-origin
   Referrer-Policy: strict-origin-when-cross-origin
