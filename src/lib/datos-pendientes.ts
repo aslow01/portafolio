@@ -24,7 +24,7 @@ export interface Telefono {
  *  Si se cambia un PDF, el detalle se actualiza con sus páginas y su peso (scripts/cv.test.mjs lo comprueba). */
 export const cv: Record<'logistica' | 'tecnico', CvPdf | null> = {
 	logistica: { archivo: '/cv/matias-ormeno-cv-logistica.pdf', detalle: 'PDF · 2 páginas · 88 KB' },
-	tecnico: { archivo: '/cv/matias-ormeno-cv-tecnico.pdf', detalle: 'PDF · 1 página · 71 KB' },
+	tecnico: { archivo: '/cv/matias-ormeno-cv-tecnico.pdf', detalle: 'PDF · 1 página · 70 KB' },
 };
 
 /** Teléfono. Con `null` no se muestra la fila de contacto ni los botones "Llamar" y "WhatsApp". */
