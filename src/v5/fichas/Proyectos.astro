@@ -97,6 +97,15 @@ const vistas = proyectos.map(vistaDe);
 	/* El texto no pasa por debajo del canto negro de la carta del juego */
 	.f-proyectos .carta-grande.g > p, .f-proyectos .carta-grande.g .carta-textos p { margin-right: min(13%, 56px); }
 
+	/* En pantallas angostas los escalones del canto quedan de 4 a 6 px y el negro casi no se distingue del grafito: se leen como un
+	   defecto de la carta, no como silueta. Ahí el canto es un lomo recto y fino (mismo polígono de 10 vértices: la animación sigue
+	   interpolando). */
+	@media (max-width: 767px) {
+		.f-proyectos .carta-p.a::after,
+		.f-proyectos .carta-grande.g::after { width: 10px; clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 0 76%, 0 76%, 0 52%, 0 52%, 0 28%, 0 28%); }
+		.f-proyectos .carta-grande.g > p, .f-proyectos .carta-grande.g .carta-textos p { margin-right: 14px; }
+	}
+
 	@media (prefers-reduced-motion: no-preference) {
 		.f-proyectos .viva .carta-p.a::after { animation: proy-toma-canto 600ms steps(4, end) backwards 1100ms; }
 		.f-proyectos .viva .carta-grande.g::after { animation: proy-toma-canto 700ms steps(4, end) backwards 1400ms; }

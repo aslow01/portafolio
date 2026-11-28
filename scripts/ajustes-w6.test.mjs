@@ -21,11 +21,13 @@ test('A1 (accesibilidad): lo que recibe el foco no queda bajo el riel de lomos f
 	assert.match(leer('src/styles/v5/sistema.css'), /html\s*\{\s*scroll-padding-bottom:\s*calc\(var\(--lomos\)\s*\+\s*env\(safe-area-inset-bottom,\s*0px\)\);\s*\}/);
 });
 
-test('LICENSE: la MIT cubre el código; los textos y las imágenes quedan con todos los derechos reservados', () => {
+test('LICENSE es la MIT sin agregados; NOTICE.md aclara que cubre el código y que textos e imágenes quedan con todos los derechos reservados', () => {
 	const licencia = leer('LICENSE');
-	assert.match(licencia, /MIT License/);
-	assert.match(licencia, /cubre solo el código/);
-	assert.match(licencia, /todos los derechos reservados/);
+	assert.match(licencia, /^MIT License/);
+	assert.doesNotMatch(licencia, /derechos reservados/);
+	const aviso = leer('NOTICE.md');
+	assert.match(aviso, /cubre solo el código/);
+	assert.match(aviso, /todos los derechos reservados/);
 });
 
 test('sitio.ts no exporta tipos que nadie usa (ClaveImagen)', () => {

@@ -5,8 +5,8 @@ resumen: "Survival game against the infected, planned for Unreal Engine. It is c
 estado: en-desarrollo
 orden: 2
 autoria:
-  yo: "I designed the game with help from AI."
-  ia: "AI helps with the game’s design."
+  yo: "I make it alone: the story, the sounds and the animations."
+  ia: "I use AI as help with the game’s design."
   verificacion: "There is nothing playable to test yet."
 borrador: false
 ---

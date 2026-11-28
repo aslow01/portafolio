@@ -36,7 +36,7 @@ export const fichas: readonly DatosFicha[] = [
 /** Los nombres de las fichas en inglés (mismo orden, mismo color y posición que en español). */
 const nombresEn: Record<IdFicha, { nombre: string; corto: string }> = {
 	logistica: { nombre: 'Logistics and mining', corto: 'Logistics' },
-	tecnico: { nombre: 'Technical and AI', corto: 'Technical' },
+	tecnico: { nombre: 'Software and AI', corto: 'Software' },
 	demos: { nombre: 'Demos', corto: 'Demos' },
 	proyectos: { nombre: 'Projects', corto: 'Projects' },
 	contacto: { nombre: 'Contact', corto: 'Contact' },

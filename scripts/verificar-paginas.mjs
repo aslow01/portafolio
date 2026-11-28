@@ -74,6 +74,12 @@ const pasadas = [...tamanos.map((t) => [t, paginas]), ...(process.env.PAGINAS ||
 const carpetaCapturas = process.env.CAPTURAS;
 if (carpetaCapturas) await mkdir(carpetaCapturas, { recursive: true });
 
+// En local la baliza de analítica de Cloudflare (static.cloudflareinsights.com y su envío a cloudflareinsights.com/cdn-cgi/rum) no
+// puede cargarse ni informar: el navegador lo cuenta como error de consola (CORS o «Failed to load resource») en cada página.
+// No es un fallo del sitio. Se descarta solo lo que viene de ese dominio; cualquier otro error sigue fallando.
+// Los errores de CORS llegan sin ubicación: se reconocen por la dirección de la baliza entre comillas simples, no por una mención suelta.
+const esRuidoDeLaBaliza = (mensaje) => /(^|\.)cloudflareinsights\.com$/.test(new URL(mensaje.location().url || 'about:blank').hostname) || /'https:\/\/(static\.)?cloudflareinsights\.com\//.test(mensaje.text());
+
 const fallos = [];
 let paginasMedidas = 0;
 const maxima = new Map(); // tamaño → la razón más alta vista (para ver que la medición no es siempre 1,00)
@@ -84,7 +90,7 @@ try {
 		for (const pagina of paginas) {
 			const p = await contexto.newPage();
 			const consola = [];
-			p.on('console', (m) => m.type() === 'error' && consola.push(m.text()));
+			p.on('console', (m) => m.type() === 'error' && !esRuidoDeLaBaliza(m) && consola.push(m.text()));
 			p.on('pageerror', (e) => consola.push(String(e)));
 			const donde = `${pagina} · ${tamano.nombre}`;
 			await p.goto(origen + pagina, { waitUntil: 'networkidle' });

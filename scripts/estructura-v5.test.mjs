@@ -1,4 +1,4 @@
-// La estructura del sitio v5 en dist/ (el build): fichas y páginas de la portada, las diez páginas de /tecnico/, el
+// La estructura del sitio v5 en dist/ (el build): fichas y páginas de la portada, las páginas de /tecnico/, el
 // molde de los casos, la 404, enlaces y hashes que llevan a algo que existe, ids únicos, borradores, sitemap y noindex.
 // Mira el HTML generado, sin navegador. Se saltea si no hay dist/ (`npm run build`); `npm run prepublicar` lo exige.
 // Las redirecciones, las bajas de la v5 y el conjunto exacto de páginas: scripts/redirecciones-v5.test.mjs.
@@ -14,8 +14,8 @@ const ORIGEN = 'https://matiasormeno.com.ar';
 const BEACON = 'https://static.cloudflareinsights.com/beacon.min.js'; // analítica: único script de otro origen
 // La imagen para compartir de las páginas que no son un caso (la de un caso es `caso-<id>`).
 const IMAGEN_DE_PAGINA = { '/': 'portada', '/tecnico/': 'tecnico', '/casos/': 'casos' };
-// Las ocho del caso, y al final las dos piezas propias: Método y Laboratorio.
-const PAGINAS_TECNICO = ['tapa', 'el-caso', 'como-trabajo', 'que-hice-yo', 'como-se-verifico', 'circuito', 'prueba-centavo', 'prueba-dia', 'metodo', 'laboratorio'];
+// Las ocho del caso, y al final las piezas propias: Método y Laboratorio, y la tarjeta de trabajo independiente (el Traductor está oculto, en borrador, hasta que funcione).
+const PAGINAS_TECNICO = ['tapa', 'el-caso', 'como-trabajo', 'que-hice-yo', 'como-se-verifico', 'circuito', 'prueba-centavo', 'prueba-dia', 'metodo', 'laboratorio', 'independiente'];
 const HREFS_LOMOS_DE_SALIDA = ['/', '/#logistica', '/tecnico/', '/#demos', '/#proyectos', '/#contacto'];
 
 const dist = hayDist ? cargarDist() : undefined;
@@ -55,7 +55,7 @@ test('la portada tiene las cinco fichas, en orden, y cada una abre con su tapa y
 	}
 });
 
-test('/tecnico/ es la ficha 02 abierta, con sus diez páginas, cada una con su id y en este orden', conDist, () => {
+test('/tecnico/ es la ficha 02 abierta, con sus once páginas (la última, «independiente», son las referencias de sitios para clientes), cada una con su id y en este orden', conDist, () => {
 	const html = dist.paginas.get('/tecnico/').html;
 	const delSitio = fichasDe(html);
 	assert.deepEqual(delSitio.map((f) => f.id), ['tecnico']);
@@ -185,7 +185,8 @@ test('«La carta de atrás»: cada carta grande de proyecto (Proyectos y /tecnic
 		assert.ok(clasesDe(grande).includes('con-tras'), `${donde}: la carta suma la clase con-tras`);
 	};
 	const portada = dist.paginas.get('/').html;
-	for (const titulo of ['Afterfall', 'Novela']) conTras(`/ ${titulo}`, paginaDe(portada, { titulo }));
+	conTras('/ Afterfall', paginaDe(portada, { titulo: 'Afterfall' }));
+	conTras('/ Novela', paginaDe(portada, { titulo: 'Novela' }), 1); // la novela no lleva fila de autoría con IA ni de verificación (decisión del 28/11)
 	for (const id of ['metodo', 'laboratorio']) conTras(`/tecnico/#${id}`, paginaDe(dist.paginas.get('/tecnico/').html, { id }));
 	const html = dist.paginas.get('/tecnico/').html;
 	assert.equal((html.match(/Quién hizo qué<span class="solo-lector">: /g) ?? []).length, 2, 'la solapa dice «Quién hizo qué: {nombre}»');
@@ -208,7 +209,7 @@ test('todo enlace interno (página, archivo o #hash, también a otra página) ll
 	assert.deepEqual(rotos, []);
 });
 
-test('las páginas de /tecnico/ que se abren con hash existen: cada enlace a /tecnico/#algo del sitio apunta a una de las diez', conDist, () => {
+test('las páginas de /tecnico/ que se abren con hash existen: cada enlace a /tecnico/#algo del sitio apunta a una de las páginas', conDist, () => {
 	const aTecnico = [];
 	for (const [ruta, p] of dist.paginas) {
 		for (const { href } of p.enlaces) {
@@ -407,4 +408,11 @@ test('CV: con el PDF cargado, todo enlace es absoluto y con `download`; sin PDF,
 		if (datos) assert.ok(dist.archivos.has(datos.archivo), `el CV ${camino} dice ${datos.archivo} y el archivo no está en dist/`);
 	}
 	assert.deepEqual(problemas, []);
+});
+
+test('el traductor está oculto (borrador): ninguna página ni texto suyo en dist, en español ni en inglés', conDist, () => {
+	for (const [ruta, { html }] of dist.paginas) {
+		assert.doesNotMatch(html, /traductor|interview translator|Traductor para entrevistas/i, ruta);
+	}
+	assert.ok(![...dist.paginas.keys()].some((r) => /traductor/i.test(r)), 'ninguna ruta del traductor');
 });

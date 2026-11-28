@@ -3,8 +3,12 @@
 // falla en vez de saltearlo), la revisión de tipos, el build, la comprobación de borradores en dist/, las pruebas que miran
 // dist/ (se repiten con el build hecho y dist/ obligatorio) y la higiene de dist/ (sin datos privados, estilos ni scripts en línea, y páginas noindex fuera del sitemap; EXIGIR_DIST=1).
 // Se detiene en el primer paso que falla. Ver el README ("Antes de publicar").
+// Al final, si hay PUBLIC_ASISTENTE_URL, compara la huella del contexto del asistente con la del Worker desplegado (/v1/salud):
+// si difieren avisa que falta redesplegar el Worker, pero NO bloquea.
 // No corre `npm audit` ni `verificar:paginas`: se ejecutan aparte (ver el README).
 import { spawnSync } from 'node:child_process';
+import { construirIndice } from './asistente/generar-indice.mjs';
+import { compararConDesplegado } from './asistente/huella-salud.mjs';
 
 const PASOS = [
 	['Pruebas (con el extracto obligatorio)', 'test'],
@@ -25,5 +29,14 @@ for (const [titulo, comando, extra] of PASOS) {
 		console.error(`\nFALLO en "${titulo}". No publique hasta que pase.`);
 		process.exit(r.status ?? 1);
 	}
+}
+
+// Aviso, no paso: el Worker se despliega aparte y puede no estar publicado todavía.
+console.log('\n== Huella del asistente: local contra el Worker desplegado (solo avisa)');
+try {
+	const r = await compararConDesplegado({ url: process.env.PUBLIC_ASISTENTE_URL ?? '', huellaLocal: construirIndice().huella });
+	console.log(r.mensaje);
+} catch {
+	console.log('AVISO: no se pudo calcular la huella local del contexto del asistente; no se comparó.');
 }
 console.log('\nprepublicar: todo en verde.');

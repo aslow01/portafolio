@@ -18,16 +18,22 @@ test('la política parte de default-src self y no permite estilos ni scripts en 
 	assert.deepEqual(directivas['style-src'], ["'self'"]);
 });
 
-test('con Cloudflare Web Analytics: solo script-src y connect-src admiten un origen externo, y es el suyo', () => {
-	// Motivo: la web mide visitas con Cloudflare Web Analytics (sin cookies). El beacon sale de static.cloudflareinsights.com
-	// y envía la medición a cloudflareinsights.com; nada más se abre.
-	assert.deepEqual(directivas['script-src'], ["'self'", 'https://static.cloudflareinsights.com']);
-	assert.deepEqual(directivas['connect-src'], ["'self'", 'https://cloudflareinsights.com']);
-	const permitidos = { 'script-src': ['https://static.cloudflareinsights.com'], 'connect-src': ['https://cloudflareinsights.com'] };
-	for (const [nombre, valores] of Object.entries(directivas)) {
-		const externos = valores.filter((v) => !v.startsWith("'"));
-		assert.deepEqual(externos, permitidos[nombre] ?? [], `${nombre}: orígenes externos no previstos`);
-	}
+// Los únicos orígenes de terceros que admite la política: el Worker del asistente, Turnstile (docs-asistente/activar-csp.md)
+// y Cloudflare Web Analytics (sin cookies: el beacon sale de static.cloudflareinsights.com y envía la medición a cloudflareinsights.com).
+const WORKER = 'https://asistente.matiasormeno.com.ar';
+const TURNSTILE = 'https://challenges.cloudflare.com';
+const BEACON = 'https://static.cloudflareinsights.com';
+const MEDICION = 'https://cloudflareinsights.com';
+
+test('solo el Worker del asistente, Turnstile y Cloudflare Web Analytics salen de self, y solo en las directivas que lo necesitan', () => {
+	assert.deepEqual(directivas['script-src'], ["'self'", BEACON, TURNSTILE]);
+	assert.deepEqual(directivas['connect-src'], ["'self'", MEDICION, WORKER, TURNSTILE]);
+	assert.deepEqual(directivas['frame-src'], [TURNSTILE]);
+	const externas = Object.entries(directivas).flatMap(([nombre, valores]) => valores.filter((v) => v.includes('//')).map((v) => `${nombre} ${v}`));
+	assert.deepEqual(
+		externas.sort(),
+		[`connect-src ${MEDICION}`, `connect-src ${TURNSTILE}`, `connect-src ${WORKER}`, `frame-src ${TURNSTILE}`, `script-src ${BEACON}`, `script-src ${TURNSTILE}`].sort(),
+	);
 	assert.deepEqual(directivas['frame-ancestors'], ["'none'"]);
 	assert.deepEqual(directivas['object-src'], ["'none'"]);
 });

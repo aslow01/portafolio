@@ -2,7 +2,8 @@
  * Web v5: las cartas de proyecto y «La carta de atrás». Es lo que antes vivía en
  * v5/fichas/Proyectos.astro, sin el prefijo de ficha, para que lo usen también la página 3 de la ficha Técnico y las
  * páginas «Método» y «Laboratorio» de /tecnico/:
- *   · .cruce y .carta-p: dos cartas que se cruzan (la tapa de Proyectos y la p. 3 de Técnico).
+ *   · .cruce y .carta-p: dos cartas que se cruzan (la tapa de Proyectos y la p. 3 de Técnico). Con tres (`.cruce.tres`, la p. 3 de
+ *     Técnico con el traductor) van en columna, una por fila y alternadas; en escritorio, en escalera.
  *   · .carta-grande, .titulo-proyecto y .carta-textos: un proyecto a toda la página.
  *   · .tras: la segunda carta que asoma por arriba con su solapa «+ Quién hizo qué» (un <details>, sin JavaScript).
  * El color de cada carta sale de su clase `.c-*` (--fondo / --texto), nunca de `.a` o `.b`. Colores, sombras y curvas: solo
@@ -51,6 +52,17 @@
 .carta-p.b::before { left: auto; right: 0; clip-path: polygon(14px 0, 100% 0, 100% 100%, 0 100%); }
 .carta-p:hover { transform: rotate(0deg) translateY(-6px); }
 .carta-p:focus-visible { outline: 3px solid var(--anillo); outline-offset: 3px; box-shadow: 0 0 0 6px var(--halo); }
+
+/* Tres cartas (`.cruce.tres`): en columna por defecto (celular), una por fila, alternadas a izquierda y derecha y apenas torcidas */
+.cruce.tres { display: grid; gap: 24px; min-height: 0; padding-top: 16px; align-content: start; }
+.cruce.tres .carta-p { position: relative; inset: auto; width: 88%; height: auto; min-height: 88px; padding: 12px 16px; justify-content: flex-start; }
+.cruce.tres .carta-p b { font-size: min(clamp(34px, 10vw, 70px), 21cqi); }
+.cruce.tres .carta-p.a { transform: rotate(-1.5deg); }
+.cruce.tres .carta-p.b { justify-self: end; transform: rotate(1.5deg); }
+.cruce.tres .carta-p.c { transform: rotate(-1deg); }
+.cruce.tres .carta-p.b::before { left: auto; right: 0; clip-path: polygon(14px 0, 100% 0, 100% 100%, 0 100%); }
+.cruce.tres .carta-p .ir { margin-top: auto; }
+.cruce.tres .carta-p:hover { transform: rotate(0deg) translateY(-6px); }
 
 /* ---------- Un proyecto, a toda la página ---------- */
 .carta-grande {
@@ -189,6 +201,12 @@
 /* ---------- Escritorio y apaisado ancho ---------- */
 @media (min-width: 1024px), (orientation: landscape) and (max-height: 520px) and (min-width: 640px) {
 	.cruce { min-height: 0; height: 62svh; }
+	/* Tres cartas, en escalera: la primera arriba a la izquierda, la segunda al medio a la derecha, la tercera abajo a la izquierda */
+	.cruce.tres { display: block; padding-top: 0; }
+	.cruce.tres .carta-p { position: absolute; width: 62%; height: 32%; min-height: 0; }
+	.cruce.tres .carta-p.a { left: 0; top: 5%; right: auto; bottom: auto; }
+	.cruce.tres .carta-p.b { right: 0; top: 34%; left: auto; bottom: auto; }
+	.cruce.tres .carta-p.c { left: 6%; bottom: 1%; top: auto; right: auto; z-index: 3; }
 	/* `.pagina` sube la especificidad: la carta ya no usa la columna 8–13 de `.der` */
 	.pagina .pg > .carta-grande { grid-column: 3 / 11; grid-row: auto; height: 64svh; margin-top: 30px; }
 	.pagina .pg > .carta-grande.con-tras { margin-top: 48px; }
@@ -216,6 +234,14 @@
 	.cruce { min-height: 0; height: calc(100svh - var(--cabeza) - var(--pag) - 40px); }
 	.carta-p { padding: 12px 14px; }
 	.carta-p b { font-size: min(32px, 21cqi); }
+	/* Tres cartas en filas bajas (rótulo, título y «Ver resumen» en una línea), para que entren en la altura del celular apaisado */
+	.cruce.tres { display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; padding-top: 24px; align-content: center; }
+	.cruce.tres .carta-p { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: 2px 10px; width: 100%; height: auto; min-height: 0; padding: 8px 14px; }
+	.cruce.tres .carta-p .rotulo { grid-column: 1; grid-row: 1; }
+	.cruce.tres .carta-p .ir { grid-column: 2; grid-row: 1; margin: 0; }
+	.cruce.tres .carta-p b { grid-column: 1 / -1; grid-row: 2; font-size: 28px; }
+	.cruce.tres .carta-p.a, .cruce.tres .carta-p.b, .cruce.tres .carta-p.c { inset: auto; z-index: auto; }
+	.cruce.tres .carta-p.b { justify-self: stretch; }
 	.pagina .pg > .carta-grande { height: calc(100svh - var(--cabeza) - var(--pag) - 60px); margin-top: 26px; }
 	.titulo-proyecto, .titulo-proyecto.largo, .titulo-proyecto.mas-largo { font-size: min(9vw, 17svh); }
 	/* Con carta de atrás: la carta pasa a grilla (el título a la izquierda, los textos a la derecha) para que entre */

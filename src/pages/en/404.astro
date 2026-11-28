@@ -1,0 +1,19 @@
+---
+// 404 en inglés, en /en/404.html: Cloudflare Pages sirve el 404.html más cercano, así que `/en/…` no cae en la de español. Sin índice: `noindex`.
+import BaseV5 from '../../layouts/BaseV5.astro';
+import NoEncontrada from '../../v5/NoEncontrada.astro';
+import { idiomaDe, traductor } from '../../i18n/idioma';
+
+const t = traductor(idiomaDe(Astro.currentLocale));
+---
+
+<BaseV5
+	titulo={t('Página no encontrada', 'Page not found')}
+	descripcion={t('La página solicitada no existe.', 'The requested page does not exist.')}
+	noindex
+	consulta={false}
+	imagenSocial="portada"
+	saltar={{ href: '#t-404', texto: t('Saltar al contenido', 'Skip to content') }}
+>
+	<NoEncontrada />
+</BaseV5>

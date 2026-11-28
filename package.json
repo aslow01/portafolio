@@ -18,7 +18,11 @@
     "higiene": "node --test scripts/higiene.test.mjs",
     "prepublicar": "node scripts/prepublicar.mjs",
     "verificar:paginas": "node scripts/verificar-paginas.mjs",
-    "verificar:interacciones": "node scripts/verificar-interacciones.mjs"
+    "verificar:interacciones": "node scripts/verificar-interacciones.mjs",
+    "verificar:asistente": "node scripts/verificar-asistente.mjs",
+    "asistente:indice": "node scripts/asistente/generar-indice.mjs",
+    "asistente:local": "node scripts/asistente/servidor-local.mjs",
+    "asistente:tipos": "npm run asistente:indice && tsc -p worker/tsconfig.json"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.4",

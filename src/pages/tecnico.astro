@@ -1,8 +1,8 @@
 ---
 // Camino técnico e IA, web v5.
-// Es la ficha 02 abierta y suelta («fija»): diez páginas en horizontal, cada una a una pantalla.
+// Es la ficha 02 abierta y suelta («fija»): once páginas en horizontal, cada una a una pantalla.
 // 1 Tapa · 2 El caso · 3 Cómo trabajo · 4 Mi parte · 5 Cómo se verificó · 6 Circuito · 7 Prueba: el centavo ·
-// 8 Prueba: el día · 9 Método · 10 Laboratorio (las dos piezas propias, al final: las páginas 2 a 8 cuentan el caso en orden).
+// 8 Prueba: el día · 9 Método · 10 Laboratorio · 11 Traductor (las piezas propias, al final: las páginas 2 a 8 cuentan el caso en orden).
 // Los demás casos de estudio se alcanzan por una sola entrada, «Casos de estudio» (/casos/).
 // Los textos y las cifras salen de src/content y src/lib (nada se escribe acá si ya está allá);
 // lo que se arma a partir de ellos está en src/v5/fichas/tecnico-datos.ts. Cada página lleva su `id` (#el-caso…): con
@@ -25,7 +25,7 @@ import { piezasTecnico } from '../lib/proyectos.ts';
 import { mailto, textosSitio } from '../lib/sitio.ts';
 import { casosDe, demoDe, demosDe, entradaReferida, proyectosDe } from '../i18n/colecciones';
 import { idiomaDe, rutaDe, traductor } from '../i18n/idioma';
-import { trabajosAMostrar } from '../lib/trabajo-independiente.ts';
+import { esReferencia, introIndependiente, resumenReferencias, trabajosAMostrar, vistaDe } from '../lib/trabajo-independiente.ts';
 import { Image } from 'astro:assets';
 import { estiloDePieza, idDePieza } from '../v5/fichas/piezas-tecnico';
 import {
@@ -52,17 +52,19 @@ const rotulosJornada = rotulosJornadaDe(idioma);
 const todos = (await casosDe(idioma, ({ data }) => esPublicable(data))).sort((a, b) => a.data.orden - b.data.orden);
 const obra = obraPrincipal(todos.filter((c) => esDeCamino(c.data, 'tecnico')));
 const demos = await demosDe(idioma, ({ data }) => demoVisible(data));
-// Las piezas propias del camino técnico (método, laboratorio): las páginas 9 y 10, una carta grande cada una.
+// Las piezas propias del camino técnico (método, laboratorio, traductor): las páginas 9 a 11, una carta grande cada una.
 const piezas = piezasTecnico(await proyectosDe(idioma), undefined, idioma);
 const inventario = inventarioPublicado(todos, demos, undefined, idioma);
 
-// Trabajo independiente (src/lib/trabajo-independiente.ts): solo los sitios con permiso del cliente; sin ninguno, la página no
-// se genera. La vista previa con datos ficticios (variable VISTA_PREVIA=independiente) existe solo en `npm run dev`: en el
+// Trabajo independiente (src/lib/trabajo-independiente.ts): las referencias anónimas y los sitios con permiso del cliente; sin
+// ninguno, la página no se genera. La vista previa con datos ficticios (variable VISTA_PREVIA=independiente) existe solo en `npm run dev`: en el
 // build `import.meta.env.DEV` es falso y la variable no cuenta. En PowerShell: $env:VISTA_PREVIA = 'independiente'; npm run dev
 const { lista: independientes, vistaPrevia } = trabajosAMostrar(
 	process.env.VISTA_PREVIA === 'independiente',
 	import.meta.env.DEV,
 );
+// Las referencias se juntan en una sola tarjeta (conteos y rubros); solo los sitios completos, con permiso, llevan tarjeta propia.
+const resumen = independientes.some(esReferencia) ? resumenReferencias(independientes, idioma) : undefined;
 // Las capturas: src/assets/independiente/ (y, solo para la vista previa, las de las demos, que son ficticias).
 const imagenes = import.meta.glob<{ default: ImageMetadata }>('../assets/{independiente,capturas}/*.{png,jpg,jpeg,webp}', { eager: true });
 const imagenDe = (ruta?: string) => (ruta ? imagenes[`../assets/${ruta}`]?.default : undefined);
@@ -100,7 +102,7 @@ const ticks = marcasReloj();
 ---
 
 <BaseV5
-	titulo={t('Técnico e IA', 'Technical and AI')}
+	titulo={t('Técnico e IA', 'Software and AI')}
 	imagenSocial="tecnico"
 	descripcion={`${t('Desarrollo de software y automatización con IA', 'Software development and AI automation')}${inventario ? `: ${inventario}` : ''}.`}
 	saltar={{ href: '#t-tecnico', texto: t('Saltar al contenido', 'Skip to content') }}
@@ -117,12 +119,12 @@ const ticks = marcasReloj();
 					)
 				}
 				<p class="pg-lead">{bajadaPortada}</p>
-				<p class="rotulo">{t('Busco: desarrollo de software · remoto · abierto a otros países', 'Looking for: remote software development · open to international employers')}</p>
+				<p class="rotulo" data-consulta-invita>{t('Busco: desarrollo de software · remoto · abierto a otros países', 'Looking for: remote software development · open to international employers')}</p>
 				<div class="acciones">
 					{
 						cv.tecnico && (
 							<a class="boton baja" href={cv.tecnico.archivo} download>
-								{t('Descargar el CV técnico', 'Download the technical CV')}{cvEnEspanol('tecnico', idioma) && ' (Spanish)'}<span class="solo-lector">: {cv.tecnico.detalle}</span>
+								{t('Descargar el CV técnico', 'Download the software CV')}{cvEnEspanol('tecnico', idioma) && ' (Spanish)'}<span class="solo-lector">: {cv.tecnico.detalle}</span>
 							</a>
 						)
 					}
@@ -372,7 +374,7 @@ const ticks = marcasReloj();
 				)
 			}
 
-			<!-- 9 y 10 · Las piezas propias: Método y Laboratorio, una carta grande cada una, con su carta de atrás -->
+			<!-- 9 a 11 · Las piezas propias: Método, Laboratorio y Traductor, una carta grande cada una, con su carta de atrás -->
 			{
 				piezas.map((p, i) => {
 					const estilo = estiloDePieza(i);
@@ -393,29 +395,36 @@ const ticks = marcasReloj();
 				})
 			}
 
-			<!-- 11 · Trabajo independiente: solo con permiso del cliente (sin ningún sitio con permiso, esta página no existe) -->
+			<!-- 11 · Trabajo independiente: referencias anónimas (sin dirección ni captura) y, con permiso del cliente, sitios completos (sin ninguno visible, esta página no existe) -->
 			{
 				independientes.length > 0 && (
-					<Pagina id="independiente" titulo="Independiente">
+					<Pagina id="independiente" titulo={t('Independiente', 'Independent')}>
 						<p class="rotulo">{vistaPrevia ? t('Vista previa · datos ficticios', 'Preview · fictitious data') : t('Sitios para clientes', 'Client websites')}</p>
-						<h2 class="pg-sub">Trabajo independiente</h2>
-						<p class="texto">
-							Sitios web para clientes particulares, publicados con autorización de cada cliente y sin sus datos personales.
-						</p>
+						<h2 class="pg-sub">{t('Trabajo independiente', 'Independent work')}</h2>
+						<p class="texto indep-nota">{introIndependiente(independientes, idioma)}</p>
 						<ul class="indep ancho">
 							{
-								independientes.map((t) => {
-									const imagen = imagenDe(t.captura);
+								resumen && (
+									<li class="indep-carta indep-resumen">
+										<h3 class="indep-titulo">{resumen.principal}</h3>
+										{resumen.rubros.length > 0 && <p class="indep-rubros">{resumen.rubros.join(' · ')}</p>}
+									</li>
+								)
+							}
+							{
+								independientes.filter((e) => !esReferencia(e)).map((e) => {
+									const v = vistaDe(e, idioma);
+									const imagen = imagenDe(v.captura);
 									return (
 										<li class="indep-carta">
-											{imagen && t.capturaAlt && <Image class="indep-img" src={imagen} alt={t.capturaAlt} widths={[360, 720]} sizes="(min-width: 1024px) 30vw, 90vw" loading="lazy" />}
-											<p class="rotulo">{t.rubro}{t.anio ? ` · ${t.anio}` : ''}</p>
-											<h3 class="indep-titulo">{t.titulo}</h3>
-											<p class="indep-texto">{t.queSeHizo}</p>
-											<p class="indep-stack">{t.stack.join(' · ')}</p>
-											{t.url && (
-												<a class="enlace ext" href={t.url} rel="noopener noreferrer">
-													Ver el sitio<span class="solo-lector">: {t.titulo}</span>
+											{imagen && v.capturaAlt && <Image class="indep-img" src={imagen} alt={v.capturaAlt} widths={[360, 720]} sizes="(min-width: 1024px) 30vw, 90vw" loading="lazy" />}
+											<p class="rotulo">{[v.rubro, v.anio].filter(Boolean).join(' · ')}</p>
+											<h3 class="indep-titulo">{v.titulo}</h3>
+											<p class="indep-texto">{v.queSeHizo}</p>
+											{v.stack.length > 0 && <p class="indep-stack">{v.stack.join(' · ')}</p>}
+											{v.url && (
+												<a class="enlace ext" href={v.url} rel="noopener noreferrer">
+													{t('Ver el sitio', 'Visit the site')}<span class="solo-lector">: {v.titulo}</span>
 												</a>
 											)}
 										</li>
@@ -680,13 +689,17 @@ const ticks = marcasReloj();
 		.f-tecnico .caso-p .imp { font-size: min(24px, 3.2vw); }
 	}
 
-	/* ---------- Trabajo independiente: una carta por sitio (solo con permiso del cliente). El CSS sí viaja aunque la página no exista: no lleva datos. ---------- */
+	/* ---------- Trabajo independiente: una carta por sitio con permiso del cliente y una sola para todas las referencias anónimas. El CSS sí viaja aunque la página no exista: no lleva datos. ---------- */
 	.f-tecnico .indep { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 14px; align-items: start; }
 	.f-tecnico .indep-carta { display: flex; flex-direction: column; gap: 8px; padding: 16px; background: var(--oscuro); border-top: 4px solid var(--claro); }
 	.f-tecnico .indep-img { width: 100%; height: auto; aspect-ratio: 16 / 10; object-fit: cover; object-position: top; border: 1px solid var(--regla); }
 	.f-tecnico .indep-titulo { font-family: var(--f-cartel); font-stretch: 85%; font-weight: 700; font-size: 24px; line-height: 1.08; letter-spacing: -0.01em; text-wrap: balance; }
 	.f-tecnico .indep-texto { font-size: 16px; line-height: 1.42; }
 	.f-tecnico .indep-stack { font-family: var(--f-mono); font-size: 14px; color: var(--texto-2); }
+	/* Las referencias van en una sola tarjeta que ocupa todo el ancho: conteos arriba, rubros abajo */
+	.f-tecnico .indep-resumen { grid-column: 1 / -1; }
+	.f-tecnico .indep-resumen .indep-titulo { font-size: 28px; }
+	.f-tecnico .indep-rubros { font-family: var(--f-mono); font-size: 16px; line-height: 1.4; color: var(--texto-2); }
 	@media (min-width: 1024px) {
 		.f-tecnico .indep { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 	}

@@ -1,8 +1,9 @@
 ---
 // Disposición base de la web v5 «Mezcla»: metadatos, SEO, imagen social, fuentes y estilos del sistema v5 y enlace de
-// salto. Solo carga un script propio: el de las pestañas lo piden las páginas que lo usan (index.astro, y tecnico.ts y caso.ts,
-// que lo importan). Y el de Cloudflare Web Analytics (al final del <head>): mide visitas sin cookies; el token es público y va en el HTML;
+// salto. Solo carga un script propio en las páginas que lo piden: el de las pestañas (index.astro, y tecnico.ts y caso.ts, que lo importan).
+// Y el de Cloudflare Web Analytics (al final del <head>): mide visitas sin cookies; el token es público y va en el HTML;
 // la directiva de Astro que lo deja tal cual evita que lo empaquete; scripts/higiene.mjs lo admite solo con ese src exacto y public/_headers solo ese origen.
+// El asistente (v5/Consulta.astro) trae el suyo solo cuando la bandera de v5/consulta/config.ts está prendida y la página no lo apaga (404 y /casos/).
 // Sin estilos ni scripts en línea (la política de contenido de public/_headers no los permite): los scripts son
 // módulos propios que Astro empaqueta en /_astro/ y se sirven desde el mismo origen.
 // Se precargan solo las fuentes de la primera pantalla de la portada: Bricolage Grotesque (el nombre) y Schibsted Grotesk
@@ -14,6 +15,7 @@ import '../styles/v5/sistema.css';
 import { tituloConNombre } from '../lib/paginas';
 import { imagenSocial, nombre, textosSitio } from '../lib/sitio';
 import { alternas, codigoLang, codigoOg, idiomaDe, traductor } from '../i18n/idioma';
+import { configuracionConsulta } from '../v5/consulta/config';
 
 interface Props {
 	titulo: string;
@@ -28,6 +30,12 @@ interface Props {
 	saltar?: { href: string; texto: string };
 	/** Clases extra de <html> (p. ej. `con-fotos`). `sin-js` siempre va: el script la reemplaza por `js`. */
 	clasesHtml?: string;
+	/**
+	 * El asistente (v5/Consulta.astro). Por defecto va en toda página con paginador y lomos; la 404 y /casos/ lo apagan con
+	 * `false` (no tienen paginador). Además lo prende la bandera de v5/consulta/config.ts: en producción, sin
+	 * `PUBLIC_ASISTENTE_URL`, no se dibuja en ninguna página.
+	 */
+	consulta?: boolean;
 }
 const {
 	titulo,
@@ -37,6 +45,7 @@ const {
 	tipoOg = 'website',
 	saltar: saltarPedido,
 	clasesHtml = 'con-fotos',
+	consulta: conConsulta = true,
 } = Astro.props;
 // El idioma sale de la dirección (`Astro.currentLocale`, i18n nativa de Astro): /en/… es inglés; el resto, español.
 const idioma = idiomaDe(Astro.currentLocale);
@@ -44,6 +53,17 @@ const t = traductor(idioma);
 const textos = textosSitio(idioma);
 const saltar = saltarPedido ?? { href: '#secciones', texto: t('Ir a las secciones', 'Skip to sections') };
 const descripcionFinal = descripcion ?? textos.descripcionSitio;
+const asistente = conConsulta
+	? configuracionConsulta({
+			dev: import.meta.env.DEV,
+			url: import.meta.env.PUBLIC_ASISTENTE_URL,
+			sitekey: import.meta.env.PUBLIC_TURNSTILE_SITEKEY,
+		})
+	: null;
+// Dinámico: sin asistente (el estado por defecto en producción) la página no carga ni su hoja de estilos ni su script.
+// La condición es una constante del build (DEV y la variable pública se reemplazan por su valor), no el valor calculado arriba: así Vite
+// descarta el `import()` y el componente, su script y su hoja no entran en ninguna página.
+const Consulta = asistente && (import.meta.env.DEV || import.meta.env.PUBLIC_ASISTENTE_URL) ? (await import('../v5/Consulta.astro')).default : null;
 const noindex = sinIndexar;
 const tituloCompleto = tituloConNombre(titulo, nombre.completo);
 const canonica = new URL(Astro.url.pathname, Astro.site);
@@ -55,7 +75,7 @@ const versiones = alternas(Astro.url.pathname, Astro.site!);
 ---
 
 <!doctype html>
-<html lang={codigoLang[idioma]} class={`sin-js ${clasesHtml}`.trim()}>
+<html lang={codigoLang[idioma]} class={`sin-js ${clasesHtml}${asistente ? ' con-consulta' : ''}`.trim()}>
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -94,5 +114,6 @@ const versiones = alternas(Astro.url.pathname, Astro.site!);
 	<body>
 		<a class="saltar" href={saltar.href}>{saltar.texto}</a>
 		<slot />
+		{asistente && Consulta && <Consulta config={asistente} />}
 	</body>
 </html>

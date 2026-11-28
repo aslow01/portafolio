@@ -1,9 +1,11 @@
 # Cabeceras de seguridad (Cloudflare Pages). Se prueban en scripts/cabeceras.test.mjs.
-# Analítica: Cloudflare Web Analytics (sin cookies). Es lo único externo: script-src admite static.cloudflareinsights.com
-# (el beacon) y connect-src cloudflareinsights.com (donde envía la medición). Todo lo demás queda en el propio origen.
+# Fuera del propio origen se admiten tres cosas: el Worker del asistente (asistente.matiasormeno.com.ar, en connect-src), Turnstile de
+# Cloudflare (challenges.cloudflare.com, en script-src, frame-src y connect-src) y Cloudflare Web Analytics (sin cookies: el beacon sale de
+# static.cloudflareinsights.com, en script-src, y envía la medición a cloudflareinsights.com, en connect-src). El widget del asistente no pide
+# nada a terceros hasta que el visitante manda su primera pregunta, y sin PUBLIC_ASISTENTE_URL en el build ni se monta (docs-asistente/activar-csp.md).
 # HSTS: 180 días, con subdominios (facturas., flota., tablero. y www. responden por HTTPS), sin preload.
 /*
-  Content-Security-Policy: default-src 'self'; script-src 'self' https://static.cloudflareinsights.com; connect-src 'self' https://cloudflareinsights.com; style-src 'self'; img-src 'self'; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://static.cloudflareinsights.com https://challenges.cloudflare.com; connect-src 'self' https://cloudflareinsights.com https://asistente.matiasormeno.com.ar https://challenges.cloudflare.com; style-src 'self'; img-src 'self'; font-src 'self'; object-src 'none'; frame-src https://challenges.cloudflare.com; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
   Strict-Transport-Security: max-age=15552000; includeSubDomains
   X-Content-Type-Options: nosniff
   Cross-Origin-Opener-Policy: same-origin

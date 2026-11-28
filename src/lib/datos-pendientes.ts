@@ -25,17 +25,16 @@ export interface Telefono {
  *  `_publica` de cv/pdf/ van a public/cv/; las privadas nunca. Con `null` la página no muestra el botón de descarga.
  *  Si se cambia un PDF, el detalle se actualiza con sus páginas y su peso (scripts/cv.test.mjs lo comprueba). */
 export const cv: Record<'logistica' | 'tecnico', CvPdf | null> = {
-	logistica: { archivo: '/cv/matias-ormeno-cv-logistica.pdf', detalle: 'PDF · 2 páginas · 88 KB' },
+	logistica: { archivo: '/cv/matias-ormeno-cv-logistica.pdf', detalle: 'PDF · 2 páginas · 89 KB' },
 	tecnico: { archivo: '/cv/matias-ormeno-cv-tecnico.pdf', detalle: 'PDF · 1 página · 70 KB' },
 };
 
 /**
- * Los CV que enlaza la versión en inglés (/en/). El técnico tiene su PDF en inglés; el de logística solo existe en español,
- * así que apunta al mismo archivo y la página lo avisa («Spanish»). Si se publica un PDF en inglés de logística, se cambia acá
- * y se saca el aviso (`cvEnEspanol`).
+ * Los CV que enlaza la versión en inglés (/en/). Los dos caminos tienen su PDF en inglés (el de logística desde el 28/11/2026).
+ * Si algún camino volviera a apuntar al PDF en español, `cvEnEspanol` lo detecta y la página lo avisa («Spanish»).
  */
 export const cvEn: Record<'logistica' | 'tecnico', CvPdf | null> = {
-	logistica: cv.logistica && { archivo: cv.logistica.archivo, detalle: 'PDF · 2 pages · 88 KB' },
+	logistica: { archivo: '/cv/matias-ormeno-cv-logistics-en.pdf', detalle: 'PDF · 2 pages · 90 KB' },
 	tecnico: { archivo: '/cv/matias-ormeno-cv-technical-en.pdf', detalle: 'PDF · 1 page · 72 KB' },
 };
 

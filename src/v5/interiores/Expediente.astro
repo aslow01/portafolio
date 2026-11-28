@@ -8,7 +8,7 @@ import EnlaceArchivo from '../EnlaceArchivo.astro';
 import EnlacesDeContacto from '../EnlacesDeContacto.astro';
 import type { ModeloCaso } from './caso.ts';
 import type { DatosFicha } from '../datos';
-import SelectorIdioma from '../SelectorIdioma.astro';
+import Utiles from '../Utiles.astro';
 import { idiomaDe, traductor } from '../../i18n/idioma';
 
 interface Props {
@@ -36,8 +36,9 @@ const t = traductor(idiomaDe(Astro.currentLocale));
 >
 	<div class="ficha-cabeza">
 		<p class="oreja"><span class="num">{carpeta.numero}</span><b>{carpeta.nombre}</b></p>
-		<a class="cerrar" href={volver.href} data-salir><span>{t('Cerrar', 'Close')}</span><span class="solo-lector">{t(`: volver a ${carpeta.nombre}`, `: back to ${carpeta.nombre}`)}</span></a>
-		<SelectorIdioma />
+		<Utiles izquierda={carpeta.posicion >= 4}>
+			<a slot="cerrar" class="cerrar" href={volver.href} data-salir><span>{t('Cerrar', 'Close')}</span><span class="solo-lector">{t(`: volver a ${carpeta.nombre}`, `: back to ${carpeta.nombre}`)}</span></a>
+		</Utiles>
 	</div>
 	<div class="hojas">
 		<article class="pagina tapa" id="tapa" data-titulo={t('Tapa', 'Cover')}>

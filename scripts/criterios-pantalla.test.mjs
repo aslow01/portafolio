@@ -70,8 +70,8 @@ test('razonDeDocumento: alto del documento ÷ alto visible, con los mismos topes
 	assert.notEqual(problemaDeRazon(razonDeDocumento(900, 640), tam('320x640')), undefined);
 });
 
-test('paginasAMedirEn y rutasDeCasos con prefijo: lo mismo bajo /en/, sin la 404', () => {
-	assert.deepEqual(paginasAMedirEn(['/en/casos/uno/']), ['/en/#logistica', '/en/#tecnico', '/en/#demos', '/en/#proyectos', '/en/#contacto', '/en/tecnico/', '/en/casos/', '/en/casos/uno/']);
+test('paginasAMedirEn y rutasDeCasos con prefijo: lo mismo bajo /en/, con su 404 al final', () => {
+	assert.deepEqual(paginasAMedirEn(['/en/casos/uno/']), ['/en/#logistica', '/en/#tecnico', '/en/#demos', '/en/#proyectos', '/en/#contacto', '/en/tecnico/', '/en/casos/', '/en/casos/uno/', '/en/404.html']);
 	const dir = (nombre, esDir) => ({ name: nombre, isDirectory: () => esDir });
 	assert.deepEqual(rutasDeCasos([dir('uno', true), dir('index.html', false)], '/en'), ['/en/casos/uno/']);
 });

@@ -307,4 +307,10 @@ const hechoCon = (d: Demo): string => (d.data.stack.length > 0 ? `${t('Hecho con
 		.f-demos .viva .lamina { animation: demos-asienta 700ms var(--rebote) backwards 150ms; }
 	}
 	@keyframes demos-asienta { from { transform: translateY(40px) rotate(4deg); } }
+	/* En una sola columna (menos de 1024 px) la lámina tiene el texto justo debajo: al llegar desde 40 px más abajo y girada
+	   lo tapaba unos 300 ms. Ahí se descubre de arriba hacia abajo, en su lugar: sin desplazarse, sin girar, sin pisar nada. */
+	@media (prefers-reduced-motion: no-preference) and (max-width: 1023px) {
+		.f-demos .viva .lamina { animation: demos-descubre 600ms var(--sale) backwards 150ms; }
+	}
+	@keyframes demos-descubre { from { clip-path: inset(0 0 100% 0); } }
 </style>

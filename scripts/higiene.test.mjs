@@ -191,7 +191,7 @@ test('src: solo quedan las reglas de la CSP; las visuales de la v4 ya no se comp
 // --- El repositorio de verdad ---------------------------------------------------------------------------------
 
 test('src, public, scripts y README: nada de la empresa, @gmail, CUIT ni teléfonos ajenos', () => {
-	const rutas = [...archivos('src'), ...archivos('public'), ...archivos('scripts'), join(RAIZ, 'README.md')].filter(existsSync);
+	const rutas = [...archivos('src'), ...archivos('public'), ...archivos('scripts'), ...archivos('worker'), ...archivos('docs-asistente'), join(RAIZ, 'README.md')].filter(existsSync);
 	const problemas = [];
 	for (const ruta of rutas) {
 		// El archivo local y los de la propia higiene (llevan datos de mentira) no se revisan.

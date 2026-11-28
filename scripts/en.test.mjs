@@ -123,8 +123,8 @@ test('las fichas en inglés: mismos ids, números, colores y posiciones; solo ca
 		const e = en[i];
 		assert.deepEqual({ id: e.id, numero: e.numero, color: e.color, posicion: e.posicion }, { id: f.id, numero: f.numero, color: f.color, posicion: f.posicion });
 	});
-	assert.deepEqual(en.map((f) => f.corto), ['Logistics', 'Technical', 'Demos', 'Projects', 'Contact']);
-	assert.equal(ficha('tecnico', 'en').nombre, 'Technical and AI');
+	assert.deepEqual(en.map((f) => f.corto), ['Logistics', 'Software', 'Demos', 'Projects', 'Contact']);
+	assert.equal(ficha('tecnico', 'en').nombre, 'Software and AI');
 	assert.equal(ficha('tecnico').nombre, 'Técnico e IA', 'el español no cambia');
 	assert.equal(fichasDe('es'), fichas);
 });
@@ -143,7 +143,7 @@ test('listas y cantidades en inglés: «a, b and c» (sin coma antes de and), «
 	assert.equal(textoEstadoDemo('en-desarrollo', 'en'), 'in development');
 	assert.equal(textoEstadoDemo('en-vivo', 'en'), 'live');
 	assert.equal(textoEstadoDemo('en-desarrollo'), 'en desarrollo');
-	assert.equal(rotuloCaso(['logistica', 'tecnico'], 'en'), 'Case · Logistics · Technical and AI');
+	assert.equal(rotuloCaso(['logistica', 'tecnico'], 'en'), 'Case · Logistics · Software and AI');
 	assert.equal(rotuloCaso(['tecnico']), 'Caso · Técnico e IA');
 });
 
@@ -249,13 +249,13 @@ test('la verificación del caso principal en inglés: cinco oraciones (tres cont
 	assert.match(frases(verificacion)[2], /Nothing is entered without human approval/);
 });
 
-test('la novela en inglés tiene los mismos campos que la española y su autoría completa', () => {
+test('la novela en inglés tiene los mismos campos que la española y su autoría (sin IA ni verificación)', () => {
 	assert.deepEqual(Object.keys(novelaEn).sort(), Object.keys(novela).sort());
 	assert.equal(novelaEn.estado, novela.estado);
 	assert.equal(novelaEn.orden, novela.orden);
-	assert.equal(filasAutoria(novelaEn.autoria, 'en').length, 3);
-	assert.deepEqual(filasAutoria(novelaEn.autoria, 'en').map((f) => f.rotulo), ['My part', 'Authorship', 'How I verified it']);
-	assert.deepEqual(filasAutoria(novela.autoria).map((f) => f.rotulo), ['Mi parte', 'Autoría', 'Cómo lo verifiqué']);
+	assert.equal(filasAutoria(novelaEn.autoria, 'en').length, 1);
+	assert.deepEqual(filasAutoria(novelaEn.autoria, 'en').map((f) => f.rotulo), ['My part']);
+	assert.deepEqual(filasAutoria(novela.autoria).map((f) => f.rotulo), ['Mi parte']);
 });
 
 test('armarCaso en inglés: rótulos de la carátula y del cierre en inglés; la sección «Result» se reconoce como el resultado', () => {
@@ -291,7 +291,7 @@ test('expedientes en inglés: las direcciones van bajo /en/, los caminos y las n
 	const [a, b] = expedientes(casos, 'uno', true, false, 'en');
 	assert.equal(a.href, '/en/casos/uno/');
 	assert.equal(b.href, '/en/casos/dos/');
-	assert.equal(a.caminos, 'Technical · Logistics');
+	assert.equal(a.caminos, 'Software · Logistics');
 	assert.equal(a.nota, 'With live demo');
 	assert.equal(expedientes(casos, 'uno', true, false)[0].href, '/casos/uno/', 'el español no cambia');
 });
@@ -301,13 +301,27 @@ test('expedientes en inglés: las direcciones van bajo /en/, los caminos y las n
 const dist = hayDist ? cargarDist() : undefined;
 // Las cuatro puertas (/demos/…) son redirecciones: no se indexan y tienen sus pruebas en redirecciones-v5.test.mjs.
 const PUERTAS = ['/logistica/', '/demos/', '/contacto/', '/proyectos/'];
-const enRutas = () => [...dist.paginas.keys()].filter((r) => r.startsWith('/en/') && !PUERTAS.includes(r.slice(3)));
+// La 404 (en español y en inglés) no se indexa ni tiene par: tiene su propia prueba más abajo.
+const enRutas = () => [...dist.paginas.keys()].filter((r) => r.startsWith('/en/') && r !== '/en/404.html' && !PUERTAS.includes(r.slice(3)));
 const esRutas = () => [...dist.paginas.keys()].filter((r) => !r.startsWith('/en/') && r !== '/404.html' && !PUERTAS.includes(r));
 
 test('dist: cada página en español que se indexa tiene su par en /en/, y viceversa', conDist, () => {
 	const esperadas = esRutas().map((r) => `/en${r}`).sort();
 	assert.deepEqual(enRutas().sort(), esperadas);
 	assert.ok(esperadas.length >= 9, 'la prueba dejó de servir: casi no hay páginas');
+});
+
+test('dist: la 404 en inglés está en /en/404.html (Cloudflare Pages sirve el 404.html más cercano): en inglés, sin índice, fuera del sitemap y con la salida a /en/', conDist, () => {
+	const p = dist.paginas.get('/en/404.html');
+	assert.ok(p, 'falta dist/en/404.html: /en/… caería en la 404 en español');
+	assert.ok(!dist.paginas.has('/en/404/'), 'quedó dist/en/404/index.html además de /en/404.html');
+	assert.match(p.html, /<html lang="en"[ >]/);
+	assert.match(p.html, /<meta name="robots" content="noindex"/);
+	assert.ok(!dist.sitemap.some((r) => r.includes('404')), 'la 404 no va en el sitemap');
+	assert.match(p.html, /Page not found/);
+	assert.match(p.html, /<a class="boton" href="[/]en[/]"/, 'el botón no lleva a /en/');
+	assert.doesNotMatch(p.html, /No se encontró|Ir a la portada/, 'quedó texto en español');
+	assert.match(dist.paginas.get('/404.html').html, /No se encontró la página/, 'la 404 de la raíz sigue en español');
 });
 
 test('dist: <html lang> dice el idioma de la página (es-AR en español, en en /en/)', conDist, () => {
@@ -395,14 +409,17 @@ test('dist: las páginas en inglés enlazan por dentro solo a /en/…, a los PDF
 	assert.deepEqual(problemas, []);
 });
 
-test('dist: en /en/ el CV técnico es el PDF en inglés y el de logística avisa «(Spanish)»; el interfaz de las demos también', conDist, () => {
+test('dist: en /en/ los dos CV son PDF en inglés (ninguno avisa «(Spanish)»); el interfaz de las demos sí', conDist, () => {
 	const portada = sinNbsp(textoVisible(dist.paginas.get('/en/').html));
 	const hrefs = dist.paginas.get('/en/').enlaces.map((e) => e.href);
 	assert.ok(hrefs.includes('/cv/matias-ormeno-cv-technical-en.pdf'), 'la portada en inglés no enlaza el CV técnico en inglés');
 	assert.ok(!hrefs.includes('/cv/matias-ormeno-cv-tecnico.pdf'), 'la portada en inglés enlaza el CV técnico en español');
-	assert.match(portada, /Download the logistics CV \(Spanish\)/);
-	assert.match(portada, /Technical and AI CV/);
-	assert.doesNotMatch(portada, /Technical CV \(Spanish\)|Download CV \(Spanish\)/);
+	assert.ok(hrefs.includes('/cv/matias-ormeno-cv-logistics-en.pdf'), 'la portada en inglés no enlaza el CV de logística en inglés');
+	assert.ok(!hrefs.includes('/cv/matias-ormeno-cv-logistica.pdf'), 'la portada en inglés enlaza el CV de logística en español');
+	assert.match(portada, /Download the logistics CV/);
+	assert.doesNotMatch(portada, /logistics CV \(Spanish\)/);
+	assert.match(portada, /Software and AI CV/);
+	assert.doesNotMatch(portada, /Software CV \(Spanish\)|Download CV \(Spanish\)/);
 	assert.match(portada, /The demos’ interface is in Spanish\./);
 	assert.match(portada, /Spanish: native · English: A2 \(I write with translation tools\)/);
 	// En español no aparece nada de eso.
@@ -457,4 +474,20 @@ test('dist: cada caso en inglés trae su título, su resultado y su autoría en 
 	assert.match(facturas, /40/);
 	assert.match(facturas, /300\+/);
 	assert.match(facturas, /invoices per workday/);
+});
+
+test('Contacto en inglés: la línea de idiomas va en la primera página, bajo la bajada, y no se repite en la segunda', () => {
+	const fuente = readFileSync(join(RAIZ, 'src/v5/fichas/Contacto.astro'), 'utf8');
+	const iBajada = fuente.indexOf('<p class="texto">{bajada}</p>');
+	const iIdiomas = fuente.indexOf('<p class="texto idiomas">{idiomas}</p>');
+	const iCanales = fuente.indexOf('<ul class="canales');
+	assert.ok(iBajada > 0 && iIdiomas > iBajada && iIdiomas < iCanales, 'los idiomas van entre la bajada y los canales');
+	assert.equal(fuente.split('{idiomas}').length - 1, 1, 'la línea sale una sola vez');
+});
+
+test('Logística: el pie de la foto de Pachón dice «curso Hombre Nuevo» y la ficha ya no lleva «350 cc»', () => {
+	const fuente = readFileSync(join(RAIZ, 'src/v5/fichas/Logistica.astro'), 'utf8');
+	assert.match(fuente, /Pachón \(curso Hombre Nuevo\)\. Foto propia/);
+	assert.match(fuente, /Pachón \(Hombre Nuevo course\)\. My own photo/);
+	assert.doesNotMatch(fuente, /Pachón: Hombre Nuevo|350 cc/);
 });

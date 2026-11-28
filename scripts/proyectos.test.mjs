@@ -42,9 +42,7 @@ test('la novela figura sin título, con textos fijos, aunque no haya ninguna ent
 		sinTitulo: true,
 		orden: 1,
 		filas: [
-			{ clave: 'yo', rotulo: 'Mi parte', texto: 'Escribo parte de los capítulos; la historia la decido yo.' },
-			{ clave: 'ia', rotulo: 'Autoría', texto: 'La IA escribe el resto de los capítulos.' },
-			{ clave: 'verif', rotulo: 'Cómo lo verifiqué', texto: 'Una sala de críticos de IA revisa cada capítulo.' },
+			{ clave: 'yo', rotulo: 'Mi parte', texto: 'La escribo yo solo: la historia y cada capítulo.' },
 		],
 		enlaces: [],
 		tamanoTitulo: 'largo',
@@ -154,11 +152,11 @@ test('la autoría de la novela sale de lib/opciones.ts, nunca de su entrada', ()
 	const lista = proyectosV5([e, juego], false);
 	assert.doesNotMatch(JSON.stringify(lista), /SECRET/);
 	const n = lista.find((p) => p.tipo === 'novela');
-	assert.equal(n.filas.length, 3);
+	assert.equal(n.filas.length, 1, 'la novela no lleva fila de autoría con IA ni de verificación');
 	assert.deepEqual(novela.autoria, {
-		yo: 'Escribo parte de los capítulos; la historia la decido yo.',
-		ia: 'La IA escribe el resto de los capítulos.',
-		verificacion: 'Una sala de críticos de IA revisa cada capítulo.',
+		yo: 'La escribo yo solo: la historia y cada capítulo.',
+		ia: '',
+		verificacion: '',
 	});
 });
 
@@ -231,8 +229,8 @@ const FICHAS = {
 		texto: 'Juego de supervivencia contra infectados, pensado para Unreal Engine.',
 		aparte: 'Hoy está en etapa de diseño. Todavía no hay capturas.',
 		autoria: {
-			yo: 'Diseñé el juego con ayuda de la IA.',
-			ia: 'La IA ayuda con el diseño del juego.',
+			yo: 'Lo hago yo solo: la historia, los sonidos y las animaciones.',
+			ia: 'Uso IA como ayuda en el diseño del juego.',
 			verificacion: 'Todavía no hay nada jugable que probar.',
 		},
 		topeAparte: 110,
@@ -300,19 +298,62 @@ for (const [archivo, esperado] of Object.entries(FICHAS)) {
 	});
 }
 
-test('las piezas del camino técnico están publicadas (OK de Matías, 25/11): salen en producción en piezasTecnico, por orden, y no en Proyectos', () => {
+test('las piezas del camino técnico: Método y Laboratorio publicados; el traductor oculto (borrador) hasta que funcione, así que no sale en producción', () => {
 	const metodo = leerEntrada('metodo-claude.md');
 	const lab = leerEntrada('laboratorio-modelos.md');
-	if (!metodo || !lab) return;
+	const traductor = leerEntrada('traductor-entrevistas.md');
+	if (!metodo || !lab || !traductor) return;
 	assert.equal(metodo.data.borrador, false);
 	assert.equal(lab.data.borrador, false);
-	assert.deepEqual(piezasTecnico([lab, metodo], false).map((p) => p.pagina), ['Método', 'Laboratorio'], 'en producción salen las dos, por orden');
-	assert.deepEqual(piezasTecnico([lab, metodo], true).map((p) => p.pagina), ['Método', 'Laboratorio']);
-	assert.deepEqual(piezasTecnico([lab, metodo], false).map((p) => p.tamanoTitulo), ['largo', 'mas-largo']);
-	assert.ok(!proyectosV5([lab, metodo], false).some((p) => p.tipo === 'otro'), 'Proyectos sigue con dos cartas');
-	// Si Matías las vuelve a poner en borrador, en producción no sale ninguna.
-	const enBorrador = [lab, metodo].map((e) => ({ ...e, data: { ...e.data, borrador: true } }));
+	assert.equal(traductor.data.borrador, true, 'el traductor sigue oculto hasta que funcione (decisión del 28/11)');
+	assert.deepEqual(piezasTecnico([traductor, lab, metodo], false).map((p) => p.pagina), ['Método', 'Laboratorio'], 'en producción salen solo dos, por orden');
+	assert.deepEqual(piezasTecnico([traductor, lab, metodo], true).map((p) => p.pagina), ['Método', 'Laboratorio', 'Traductor'], 'en desarrollo se ve el traductor');
+	assert.deepEqual(piezasTecnico([traductor, lab, metodo], false).map((p) => p.tamanoTitulo), ['largo', 'mas-largo']);
+	assert.ok(!proyectosV5([traductor, lab, metodo], false).some((p) => p.tipo === 'otro'), 'Proyectos sigue con dos cartas');
+	// Si Matías pone también las otras dos en borrador, en producción no sale ninguna.
+	const enBorrador = [traductor, lab, metodo].map((e) => ({ ...e, data: { ...e.data, borrador: true } }));
 	assert.deepEqual(piezasTecnico(enBorrador, false), []);
+});
+
+test('traductor-entrevistas.md: en desarrollo, dice qué está hecho y qué falta, sin enlace (repositorio privado) y sin nada que funcione aún', () => {
+	const e = leerEntrada('traductor-entrevistas.md');
+	if (!e) return;
+	assert.equal(e.data.tipo, 'otro');
+	assert.equal(e.data.camino, 'tecnico');
+	assert.equal(e.data.estado, 'en-desarrollo');
+	assert.equal(e.data.orden, 3);
+	assert.equal(e.body.trim(), '', 'el cuerpo queda vacío');
+	const v = vistaDeProyecto(e);
+	assert.equal(v.pagina, 'Traductor');
+	assert.equal(v.titulo, 'Traductor para entrevistas');
+	assert.deepEqual(v.enlaces, [], 'sin enlace: el repositorio es privado');
+	assert.equal(v.filas.length, 3);
+	assert.ok(v.texto.length <= 90, 'texto > 90');
+	// Dice qué está hecho, qué está en curso y qué falta.
+	assert.match(v.aparte, /Hecho:.*En curso:.*Falta:/);
+	// Nada de afirmar que ya funciona o que ya se usó, ni de proveedores de pago distintos de ElevenLabs.
+	const todo = JSON.stringify([e.data.resumen, e.data.autoria]);
+	assert.doesNotMatch(todo, /funciona|ya lo uso|probado en|Parley|Voxis|Transync|Palabra|DeepL|USD|precio/i);
+	assert.match(e.data.autoria.verificacion, /Todavía no se midió/);
+	// Honestidad con el audio: no se guarda en la PC de Matías, pero sale en vivo hacia ElevenLabs.
+	assert.match(e.data.autoria.yo, /ElevenLabs/);
+	// El archivo no lleva comentarios que sugieran un vínculo laboral (sale en el repositorio público).
+	assert.doesNotMatch(readFileSync(join(carpeta, 'traductor-entrevistas.md'), 'utf8'), /^#/m);
+});
+
+test('traductor-entrevistas.md en inglés: mismo orden y estado, dice Done / In progress / Still to do y no afirma que funcione', () => {
+	if (!leerEntrada('traductor-entrevistas.md')) return; // la copia pública no lleva este archivo
+	const ruta = join(raiz, 'src', 'content-en', 'proyectos', 'traductor-entrevistas.md');
+	assert.ok(existsSync(ruta), 'si existe el de español, tiene que existir el de inglés');
+	const [, cabeza] = readFileSync(ruta, 'utf8').match(/^---\r?\n([\s\S]*?)\r?\n---/);
+	assert.match(cabeza, /^orden:\s*3\s*$/m);
+	assert.match(cabeza, /^estado:\s*en-desarrollo\s*$/m);
+	assert.match(cabeza, /^borrador:\s*true\s*$/m, 'oculto hasta que funcione');
+	assert.match(cabeza, /Done:.*In progress:.*Still to do:/);
+	assert.match(cabeza, /not been measured yet/);
+	assert.match(cabeza, /ElevenLabs for speech recognition/);
+	assert.doesNotMatch(cabeza, /works|already use|tested in|USD/i);
+	assert.doesNotMatch(readFileSync(ruta, 'utf8'), /^#/m);
 });
 
 /** Las oraciones de un cuerpo (sin comentarios HTML) de 25 caracteres o más: sirven para buscar la sinopsis. */

@@ -9,7 +9,8 @@
 	--banda-min: 90px;
 	/* alto que el celular en vertical le descuenta al nombre para mostrar los enlaces rápidos (y la bajada, si hay lugar) */
 	--extra: 0px;
-	--F: max(44px, min(30vw, calc((100svh - 48px - var(--extra) - 5 * var(--banda-min)) / 2.92)));
+	/* `--reserva`: el alto de la barra del asistente al pie (consulta.css, solo con asistente y en una columna): se le descuenta al nombre, no a las pestañas */
+	--F: max(44px, min(30vw, calc((100svh - 48px - var(--extra) - var(--reserva, 0px) - 5 * var(--banda-min)) / 2.92)));
 	position: relative;
 	z-index: 0;
 	/* alto mínimo, no fijo: con espaciado de texto ampliado o zoom, crece y todo queda alcanzable */
@@ -41,7 +42,8 @@
 	grid-template-columns: auto 1fr;
 	grid-template-areas: 'n1 n1' 'n2 tit' 'n3 n3';
 	column-gap: 16px;
-	padding: 16px var(--margen) 0;
+	/* con la barra del asistente al pie (`--reserva`), el nombre y la pila ceden 8 px cada uno */
+	padding: calc(16px - var(--reserva, 0px) / 7) var(--margen) 0;
 	font-size: var(--F);
 	color: var(--texto);
 }
@@ -72,7 +74,7 @@
 
 /* La pila: cinco pestañas. Es la navegación y es la pieza.
    pan-y: el dedo puede desplazar la página si con zoom crece; el abanico se arma con los eventos táctiles. */
-.pila { flex: 1; display: flex; flex-direction: column; margin-top: calc(var(--oreja) + 14px); min-height: calc(5 * var(--banda-min)); touch-action: pan-y pinch-zoom; }
+.pila { flex: 1; display: flex; flex-direction: column; margin-top: calc(var(--oreja) + 14px - var(--reserva, 0px) / 7); min-height: calc(5 * var(--banda-min)); touch-action: pan-y pinch-zoom; }
 /* El destino del salto «Ir a las secciones» recibe el foco para que el siguiente Tab caiga en la primera pestaña: no es un control, no lleva anillo. */
 .pila:focus-visible { outline: none; box-shadow: none; }
 /* La fila de Técnico pesa un 20 % más: su dato va en dos renglones (la etiqueta nueva es más larga) y, con filas iguales, las cinco crecerían y la portada dejaría de entrar en la pantalla. El alto que suma se le descuenta al nombre (`--extra`). */
@@ -307,13 +309,13 @@
    con sus dos líneas de dato, era más alta que lo que dejaba el nombre. */
 /* Tableta en vertical: el nombre y las palabras bajan un escalón y los renglones extra del dato (`.mas`) se omiten */
 @media (min-width: 768px) and (max-width: 1023px) and (orientation: portrait) {
-	.portada { --F: min(21vw, calc(10.5svh - 21px)); }
+	.portada { --F: min(21vw, calc(10.5svh - 21px - var(--reserva, 0px) / 2.92)); }
 	.palabra { font-size: clamp(44px, 5.4svh, 72px); }
 	.dato .mas { display: none; }
 }
 /* Teléfono vertical bajo (375 × 667, 360 × 640, 320 × 640): pestañas más compactas */
 @media (max-width: 767px) and (max-height: 700px) {
-	.portada { --banda-min: 86px; --extra: 0px; --F: max(44px, min(30vw, calc((100svh - 108px - 5 * var(--banda-min)) / 2.62))); }
+	.portada { --banda-min: 86px; --extra: 0px; --F: max(44px, min(30vw, calc((100svh - 108px - var(--reserva, 0px) - 5 * var(--banda-min)) / 2.62))); }
 	.cabecera { display: none; }
 	.palabra { font-size: clamp(36px, 10.4vw, 96px); }
 	.dato { font-size: 13px; }
@@ -342,7 +344,8 @@
 	.portada { display: grid; grid-template-columns: minmax(0, 42fr) minmax(0, 58fr); grid-template-rows: auto 1fr; --banda-min: 56px; --oreja: 18px; --corte: 11px; }
 	.portada .oreja { font-size: 11px; }
 	.portada .oreja .num { font-size: 12px; }
-	.cabeza { display: flex; grid-column: 1; grid-row: 1; padding: 12px 16px 0 var(--margen); justify-content: flex-start; }
+	/* flex-wrap: con zoom alto la columna mide ~300 px y el lanzador no entra junto a «San Juan» y «ES | EN»: baja a su propio renglón (si no, queda debajo de las pestañas, que se pintan encima) */
+	.cabeza { display: flex; flex-wrap: wrap; gap: 8px 16px; grid-column: 1; grid-row: 1; padding: 12px 16px 0 var(--margen); justify-content: flex-start; }
 	.lugar { position: static; width: auto; text-align: left; }
 	.cabecera { display: none; }
 	.pila { order: 0; }

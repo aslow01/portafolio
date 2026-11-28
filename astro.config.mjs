@@ -2,6 +2,24 @@
 import { defineConfig } from 'astro/config';
 import sitemap from '@astrojs/sitemap';
 import { esRedireccion } from './src/lib/redirecciones.ts';
+import { existsSync, renameSync, rmSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+
+// Astro solo trata como `404.html` a la 404 de la raíz; la de inglés (src/pages/en/404.astro) sale como `en/404/index.html`.
+// Cloudflare Pages busca `404.html` (el más cercano a la dirección pedida, `/en/404.html` para `/en/…`): se la deja con ese nombre.
+/** @type {import('astro').AstroIntegration} */
+const la404EnInglesComoArchivo = {
+	name: 'la-404-en-ingles-como-archivo',
+	hooks: {
+		'astro:build:done': ({ dir }) => {
+			const carpeta = fileURLToPath(new URL('en/404/', dir));
+			const origen = `${carpeta}index.html`;
+			if (!existsSync(origen)) throw new Error('No se generó dist/en/404/index.html: falta src/pages/en/404.astro');
+			renameSync(origen, fileURLToPath(new URL('en/404.html', dir)));
+			rmSync(carpeta, { recursive: true, force: true });
+		},
+	},
+};
 
 // https://astro.build/config
 export default defineConfig({
@@ -15,6 +33,7 @@ export default defineConfig({
 	},
 	// Las direcciones viejas que redirigen a la portada (lib/redirecciones.ts) llevan noindex y no entran al sitemap.
 	integrations: [
+		la404EnInglesComoArchivo,
 		sitemap({
 			filter: (pagina) => !esRedireccion(pagina),
 			i18n: { defaultLocale: 'es', locales: { es: 'es-AR', en: 'en' } },

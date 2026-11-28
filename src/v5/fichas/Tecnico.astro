@@ -2,8 +2,8 @@
 // Ficha Técnico de la portada: tres páginas.
 // 1 · Tapa: el barrido del centavo (la factura contra el sistema, dígito por dígito) y «Cómo trabajo».
 // 2 · El caso: «40 → 300+» con una marca por factura.
-// 3 · Herramientas propias: dos cartas cruzadas, el método con Claude y el laboratorio de modelos, que llevan a su página de
-//     /tecnico/. Sin piezas publicables, esta página no se genera.
+// 3 · Herramientas propias: dos cartas cruzadas (el método con Claude y el laboratorio de modelos) o, con el traductor para
+//     entrevistas, tres en escalera (`.cruce.tres`); cada una lleva a su página de /tecnico/. Sin piezas publicables, esta página no se genera.
 // Los textos y las cifras salen de src/lib y src/content; el circuito y la autoría completos viven en /tecnico/.
 import Ficha from '../Ficha.astro';
 import Pagina from '../Pagina.astro';
@@ -46,13 +46,16 @@ const signo = (i: number): string | undefined => (factura[i] === espacio ? undef
 // («En cada trabajo digo…») queda para /tecnico/, donde el párrafo va entero.
 const [principio, ...resto] = frases(comoTrabajo);
 
-// Las piezas propias del camino técnico (método, laboratorio): salen de la colección `proyectos`, por `orden`.
+// Las piezas propias del camino técnico (método, laboratorio, traductor): salen de la colección `proyectos`, por `orden`.
 const piezas = piezasTecnico(await proyectosDe(idioma), undefined, idioma);
+// Una sola variable manda el texto y la escalera de la p. 3: con tres piezas (la tercera es el traductor, `orden` 3) las cartas caen en
+// escalera (`.cruce.tres`); cartas.css y `estiloDePieza` están hechos para dos o tres, no más.
+const tres = piezas.length > 2;
 ---
 
 <Ficha id="tecnico">
 	<Pagina titulo={t('Tapa', 'Cover')} tapa>
-		<TituloFicha id="tecnico" palabra={t('Técnico', 'Technical')} resto={t('e IA', 'and AI')} />
+		<TituloFicha id="tecnico" palabra={t('Técnico', 'Software')} resto={t('e IA', 'and AI')} />
 		{
 			acerca && factura.length === sistema.length && (
 				<figure class="centavo-b der">
@@ -119,8 +122,12 @@ const piezas = piezasTecnico(await proyectosDe(idioma), undefined, idioma);
 			<Pagina titulo={t('Herramientas propias', 'My own tools')}>
 				<p class="rotulo">{t('Proyectos propios', 'My projects')}</p>
 				<h3 class="pg-sub">{t('Herramientas propias', 'My own tools')}</h3>
-				<p class="texto">{t('Lo que diseñé para trabajar con IA: un método y un laboratorio de pruebas.', 'What I designed to work with AI: a method and a testing lab.')}</p>
-				<div class="cruce der">
+				<p class="texto">
+					{tres
+						? t('Lo que diseñé: un método y un laboratorio para trabajar con IA, y un traductor para entrevistas.', 'What I designed: a method and a lab for working with AI, and an interview translator.')
+						: t('Lo que diseñé para trabajar con IA: un método y un laboratorio de pruebas.', 'What I designed to work with AI: a method and a testing lab.')}
+				</p>
+				<div class:list={['cruce', 'der', { tres }]}>
 					{
 						piezas.map((p, i) => (
 							<a class={`carta-p ${estiloDePieza(i).chica}`} href={rutaDe(idioma, `/tecnico/#${idDePieza(p)}`)} data-salir data-color="var(--azurita)">
@@ -195,7 +202,7 @@ const piezas = piezasTecnico(await proyectosDe(idioma), undefined, idioma);
 	/* Herramientas propias, en el celular: «Ver resumen» de la carta de arriba sube un poco, para que la carta de abajo, que
 	   la cruza, no le tape el subrayado (con «Abrir» no llegaba a tocarla) */
 	@media (max-width: 767px) {
-		.f-tecnico .carta-p.a .ir { margin-bottom: 14px; }
+		.f-tecnico .cruce:not(.tres) .carta-p.a .ir { margin-bottom: 14px; }
 	}
 	/* Angosto (menos de 360 px): «Ver el caso» y la descarga entran en una fila. «Descargar » sale de la vista, pero queda
 	   en el nombre accesible («Descargar CV: PDF · …»), que así contiene el rótulo visible (2.5.3). */

@@ -24,6 +24,7 @@ export const CASOS_PUBLICADOS = [
 	'cargador-bajas',
 	'capacitacion-ia-administracion',
 	'reemplazo-erp-facturacion',
+	'plataforma-multiempresa',
 ];
 /** Opciones de `test()` para lo que necesita dist/: se saltea sin build (salvo que se exija; ver `dist existe…`). */
 export const conDist = { skip: !hayDist && 'no hay dist/ (corra `npm run build`)' };

@@ -1,0 +1,30 @@
+---
+// Las utilidades de la cabeza de una ficha: «Cerrar» y el selector de idioma «ES | EN» (y, con asistente, el lanzador, que
+// suma el script de la consulta). Van en un solo grupo cuyo orden en el DOM es el orden visual, que es el de Tab (WCAG 2.4.3):
+//   · fichas 01 a 03 (las utilidades a la derecha):  [lanzador] ES | EN  Cerrar
+//   · fichas 04 y 05 (las utilidades a la izquierda): Cerrar  ES | EN  [lanzador]
+// El lanzador no está en el HTML: lo arma src/scripts/v5/consulta.ts (sin JavaScript no hay asistente).
+import SelectorIdioma from './SelectorIdioma.astro';
+
+interface Props {
+	/** Las fichas 04 y 05 llevan las utilidades a la izquierda de la cabeza. */
+	izquierda?: boolean;
+}
+const { izquierda = false } = Astro.props;
+---
+
+<div class:list={['utiles', { izq: izquierda }]}>
+	{
+		izquierda ? (
+			<Fragment>
+				<slot name="cerrar" />
+				<SelectorIdioma />
+			</Fragment>
+		) : (
+			<Fragment>
+				<SelectorIdioma />
+				<slot name="cerrar" />
+			</Fragment>
+		)
+	}
+</div>

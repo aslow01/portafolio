@@ -1,0 +1,47 @@
+# Worker del asistente del portafolio. NO lleva secretos: las claves se cargan con `wrangler secret put` (ver abajo).
+# Diseño: docs-asistente/03-arquitectura-y-seguridad.md. Antes de desplegar: `npm run asistente:indice` desde la raíz.
+name = "matiasormeno-asistente"
+main = "src/index.ts"
+compatibility_date = "2026-11-01"
+workers_dev = false                      # solo por el dominio propio
+
+routes = [
+  { pattern = "asistente.matiasormeno.com.ar", custom_domain = true },
+]
+
+[vars]
+# Orígenes que pueden llamar al Worker (exactos, sin comodines). En local, el propio Worker admite localhost.
+#   Además del dominio real, la vista previa fija «vista-previa-28-11» de Pages (un solo subdominio, no todo *.pages.dev).
+ALLOWED_ORIGINS     = "https://matiasormeno.com.ar,https://www.matiasormeno.com.ar,https://vista-previa-28-11.matiasormeno-web.pages.dev"
+TURNSTILE_HOSTNAMES = "matiasormeno.com.ar,www.matiasormeno.com.ar,vista-previa-28-11.matiasormeno-web.pages.dev"
+MODELO              = "claude-haiku-5-5"   # [verificar] el identificador en la consola de Anthropic
+MAX_TOKENS_SALIDA   = "300"
+TOPE_DIA            = "40"                 # mensajes globales por día (UTC). Con 15 por visitante, tres IP lo agotan: es el techo de gasto, no una promesa de servicio
+TOPE_MES            = "500"                # mensajes globales por mes (gasto mínimo, pedido del 28/11/2026: peor caso en docs/43, sección 1)
+PAUSADO             = "0"                  # "1" = interruptor: todo responde 503 servicio_pausado
+# SIMULADO no se define acá: es solo para worker/.dev.vars (y el Worker lo ignora fuera de localhost).
+
+[[durable_objects.bindings]]
+name = "LIMITADOR"
+class_name = "Limitador"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Limitador"]
+
+# Registros: solo los de registro.ts (una línea JSON por evento, sin texto del visitante). Los registros de invocación de Workers
+# guardan la URL, el método y metadatos de cada pedido: se apagan para sostener «no se guarda la conversación».
+# [verificar] en la documentación de wrangler vigente que `invocation_logs` existe con ese nombre y qué más conserva Cloudflare.
+[observability]
+enabled = true
+
+[observability.logs]
+invocation_logs = false
+
+# SECRETOS (no van en este archivo; se cargan con `wrangler secret put <NOMBRE>` y wrangler pide el valor por consola):
+#   ANTHROPIC_API_KEY   clave de la API, exclusiva de este uso
+#   TURNSTILE_SECRET    clave secreta del sitio de Turnstile
+#   SESSION_SECRET      32 bytes aleatorios; firma las sesiones y deriva la sal de las huellas
+#
+# Para probar en local sin claves, worker/.dev.vars (ignorado por git):
+#   SIMULADO=1

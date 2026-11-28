@@ -1,0 +1,566 @@
+/*
+ * Asistente de la web v5: «La consulta a mano» (docs-asistente/destacado.md). El lanzador es un botón de tinta con la frase entera
+ * («Pregúntele a mi asistente»), siempre a la vista: en la cabeza de cada ficha y de la portada (escritorio), en una barra fija al pie
+ * de la portada y en una celda junto al paginador (celular y tableta). La hoja de consulta sale de él. Los tokens `--consulta-*`
+ * están en tokens.css; acá no hay colores ni medidas sueltas. Sin radios, sin sombras fuera de token, sin degradados, sin familias
+ * nuevas. El marcado lo arma src/scripts/v5/consulta.ts (sin JavaScript no hay lanzador).
+ * Las clases llevan el prefijo `consulta-` para no chocar con las del sistema.
+ */
+
+/* ---------- Lo que cambia en el resto del sistema cuando hay asistente (html.con-consulta y html.con-barra, los pone el script) ---------- */
+/* `html.con-consulta` (y no `.con-consulta`): tokens.css declara los mismos tokens en `:root` con igual especificidad y se carga después. */
+html.con-consulta { --consulta-ancho: var(--consulta-celda); }
+/* La portada le reserva el lugar a la barra: la pila se acorta y nada queda debajo de ella (si no hay JavaScript, la clase no está y no se reserva nada). */
+html.con-barra { --consulta-asomo-espera: 700ms; }
+html.con-barra .portada { --reserva: calc(var(--consulta-barra) + env(safe-area-inset-bottom, 0px)); padding-bottom: var(--reserva); }
+@media (min-width: 1024px), (orientation: landscape) and (max-height: 520px) {
+	html.con-consulta { --consulta-ancho: 0px; }
+}
+
+/* ---------- Los lanzadores ---------- */
+/* Un solo botón, en tres lugares. Tinta con texto claro: la pieza de más contraste de la pantalla; nunca más grande que «Escribir por correo». */
+.consulta-lanzador {
+	display: inline-flex;
+	align-items: center;
+	gap: 10px;
+	font-family: var(--f-cartel);
+	font-stretch: 85%;
+	font-weight: 700;
+	font-size: 17px;
+	line-height: 1;
+	white-space: nowrap;
+	text-align: left;
+	background: var(--consulta-lanzador);
+	color: var(--consulta-lanzador-texto);
+	transition: background-color var(--d-rapida), color var(--d-rapida), transform var(--d-rapida) var(--sale);
+}
+.consulta-completo { display: block; }
+.consulta-reducido { display: none; }
+.consulta-palabra { font-stretch: 75%; font-size: 14px; line-height: 1.1; }
+.consulta-ir { flex: none; font-weight: 700; transition: transform var(--d-rapida) var(--sale); }
+
+/* El sello «IA»: un globo de diálogo con el corte en diagonal del sistema, 26 × 20 (el rectángulo de 26 × 16 y la cola de 4 abajo a la
+   izquierda). Disponible o comprobando: relleno claro con «IA» en tinta. No disponible: solo el contorno de 2 px. */
+.consulta-sello {
+	position: relative;
+	isolation: isolate;
+	flex: none;
+	display: grid;
+	place-items: center;
+	width: 26px;
+	height: 20px;
+	padding-bottom: 4px;
+	background: var(--consulta-sello);
+	color: var(--consulta-sello-texto);
+	clip-path: var(--consulta-globo);
+	font-family: var(--f-texto);
+	font-size: 11px;
+	font-weight: 800;
+	letter-spacing: 0.04em;
+	line-height: 1;
+}
+.consulta-lanzador[data-apagado] .consulta-sello { background: var(--consulta-lanzador-texto); color: var(--consulta-lanzador-texto); }
+.consulta-lanzador[data-apagado] .consulta-sello::before { content: ''; position: absolute; inset: 0; z-index: -1; background: var(--consulta-lanzador); clip-path: var(--consulta-globo-hueco); }
+
+/* Estados: hover (solo con puntero), activo y abierto. El foco y los colores forzados están más abajo. */
+@media (hover: hover) {
+	.consulta-lanzador:not([aria-expanded='true']):hover { background: var(--consulta-lanzador-hover); }
+	.consulta-lanzador:not([aria-expanded='true']):hover .consulta-ir { transform: translateX(4px); }
+}
+.consulta-lanzador:active { transform: translateY(1px); }
+/* Abierto: se invierte (fondo transparente, borde de 2 px por dentro, texto en tinta): se lee como «está prendido» */
+.consulta-lanzador[aria-expanded='true'] { background: transparent; color: var(--consulta-chrome-texto); box-shadow: inset 0 0 0 2px var(--consulta-chrome-texto); }
+.consulta-lanzador[aria-expanded='true'] .consulta-sello { background: var(--consulta-chrome-texto); color: var(--consulta-chrome); }
+
+/* El asomo: el único movimiento. Una vez por llegada al sitio (la clase la pone el script y la quita al terminar), cuando termina la
+   entrada de la página; sube 6 px y vuelve. Con movimiento reducido, la regla global de sistema.css lo apaga. */
+.consulta-asomo { animation: consulta-asomo var(--consulta-asomo) var(--rebote) var(--consulta-asomo-espera) backwards; }
+@keyframes consulta-asomo { 0%, 100% { transform: none; } 45% { transform: translateY(-6px); } }
+
+/* Foco visible: el del sistema en la cabeza (anillo tinta y su aro del color de fondo); en la barra y la celda, pegadas al borde de la
+   pantalla, el anillo va por dentro y claro. */
+.consulta-en-cabeza:focus-visible { outline: 3px solid var(--tinta); outline-offset: 3px; box-shadow: 0 0 0 6px var(--hueso); }
+.consulta-en-cabeza[aria-expanded='true']:focus-visible { box-shadow: inset 0 0 0 2px var(--consulta-chrome-texto), 0 0 0 6px var(--hueso); }
+.consulta-en-barra:focus-visible, .consulta-en-celda:focus-visible { outline: 3px solid var(--consulta-lanzador-texto); outline-offset: -5px; box-shadow: none; }
+
+/* --- En la cabeza (escritorio y celular apaisado): 44 px, junto a «ES | EN», del lado de adentro de la cabeza --- */
+.consulta-en-cabeza { display: none; height: var(--consulta-lanzador-alto); padding: 0 16px 0 12px; }
+.utiles .consulta-en-cabeza { margin-right: 20px; } /* fichas 01 a 03: a la izquierda de «ES | EN», a 20 px */
+.utiles.izq .consulta-en-cabeza { margin-right: 0; margin-left: 20px; } /* fichas 04 y 05: a la derecha */
+@media (min-width: 1024px) and (min-height: 521px), (orientation: landscape) and (max-height: 520px) {
+	.consulta-en-cabeza { display: inline-flex; }
+	.consulta-pieza { display: none; }
+}
+/* La portada en dos columnas (escritorio y tableta apaisada) y en celular apaisado: el lanzador va en su cabecera, no en la barra */
+@media (min-width: 1024px), (min-width: 800px) and (orientation: landscape) and (min-height: 521px), (orientation: landscape) and (max-height: 520px) {
+	.portada .consulta-en-cabeza { display: inline-flex; }
+	.consulta-barra { display: none; }
+	html.con-barra .portada { --reserva: 0px; padding-bottom: 0; }
+}
+/* Celular apaisado (poca altura): la forma corta, sello + «Preguntar», sin flecha */
+@media (orientation: landscape) and (max-height: 520px) {
+	.consulta-en-cabeza { padding-right: 12px; }
+	.consulta-en-cabeza .consulta-completo, .consulta-en-cabeza .consulta-ir { display: none; }
+	.consulta-en-cabeza .consulta-reducido { display: block; }
+	.consulta-en-cabeza .consulta-palabra { font-size: 15px; font-stretch: 85%; }
+}
+
+/* Demos (03) a menos de 1220 px: su solapa llega hasta la mitad de la cabeza y la frase entera no cabe entre ella y «ES | EN»; el lanzador
+   pasa a la forma corta (nunca encima de la solapa). Medido a 1024: de ~590 a ~815 quedan unos 225 px y la frase mide ~272. */
+@media (min-width: 1024px) and (max-width: 1219px) {
+	.ficha.p3 .consulta-en-cabeza .consulta-completo, .ficha.p3 .consulta-en-cabeza .consulta-ir { display: none; }
+	.ficha.p3 .consulta-en-cabeza .consulta-reducido { display: block; }
+	.ficha.p3 .consulta-en-cabeza .consulta-palabra { font-size: 15px; font-stretch: 85%; }
+}
+
+/* --- En el índice de casos (/casos/, sin paginador): solo en escritorio, al pie de la cabeza, debajo del CV y el correo --- */
+.consulta-en-archivo { display: none; height: var(--consulta-lanzador-alto); margin-top: 6px; padding: 0 16px 0 12px; }
+@media (min-width: 1024px) and (min-height: 700px) {
+	.consulta-en-archivo { display: inline-flex; }
+}
+.consulta-en-archivo:focus-visible { outline: 3px solid var(--tinta); outline-offset: 3px; box-shadow: 0 0 0 6px var(--hueso); }
+.consulta-en-archivo[aria-expanded='true']:focus-visible { box-shadow: inset 0 0 0 2px var(--consulta-chrome-texto), 0 0 0 6px var(--hueso); }
+
+/* --- La barra al pie de la portada (celular y tableta): 56 px más la zona segura, tinta, con un filete claro de 2 px arriba --- */
+.consulta-en-barra {
+	position: fixed;
+	z-index: 10; /* sobre la portada, bajo las fichas (20): con una ficha abierta se va con los lomos */
+	left: 0;
+	right: 0;
+	bottom: 0;
+	width: 100%;
+	height: calc(var(--consulta-barra) + env(safe-area-inset-bottom, 0px));
+	padding: 0 var(--margen) env(safe-area-inset-bottom, 0px);
+	font-size: 18px;
+	/* 4 px (no 2): la barra es tinta y la ficha de Contacto, que queda encima, también; con menos filete parecían una sola pieza */
+	box-shadow: inset 0 4px 0 var(--consulta-filete);
+}
+.consulta-en-barra .consulta-ir { margin-left: auto; }
+/* Mientras sube con el asomo, el cuerpo de la barra no deja un hueco abajo */
+.consulta-en-barra::after { content: ''; position: absolute; left: 0; right: 0; top: 100%; height: 8px; background: var(--consulta-lanzador); }
+.lomos.visible ~ .consulta-barra { visibility: hidden; }
+
+/* --- La celda junto al paginador (celular y tableta en vertical): 64 × 56, sello arriba y «Preguntar» abajo --- */
+.consulta-pieza {
+	position: fixed;
+	z-index: 41;
+	right: 0;
+	bottom: calc(var(--lomos) + env(safe-area-inset-bottom, 0px));
+	width: var(--consulta-celda);
+	height: var(--pag);
+	visibility: hidden;
+}
+/* Aparece y se va junto con los lomos: nunca se ve sola (en la portada, en /casos/ y en la 404 no hay lomos con ficha). */
+.lomos.visible ~ .consulta-pieza { visibility: visible; }
+.consulta-en-celda {
+	flex-direction: column;
+	justify-content: center;
+	gap: 4px;
+	width: 100%;
+	height: 100%;
+	padding: 4px 2px 0;
+	box-shadow: inset 2px 0 0 var(--consulta-filete), inset 0 2px 0 var(--consulta-filete);
+}
+.consulta-en-celda .consulta-completo, .consulta-en-celda .consulta-ir { display: none; }
+.consulta-en-celda .consulta-reducido { display: block; }
+@media (max-width: 379px) {
+	.consulta-en-celda .consulta-palabra { font-size: 13px; letter-spacing: -0.015em; }
+}
+
+/* ---------- La hoja de consulta ---------- */
+/* Celular y tableta: a pantalla completa, modal (showModal): el resto de la página queda inerte, que es la trampa de foco. */
+dialog.consulta {
+	--texto: var(--consulta-texto);
+	--texto-2: var(--consulta-texto-2);
+	--fondo: var(--consulta-fondo);
+	position: fixed;
+	inset: var(--consulta-arriba, 0px) 0 auto 0;
+	z-index: 35;
+	width: 100%;
+	max-width: none;
+	height: var(--consulta-alto, 100dvh);
+	max-height: none;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	overflow: visible; /* en escritorio, la solapa cuelga por encima del borde */
+	background: var(--consulta-fondo);
+	color: var(--consulta-texto);
+	font-family: var(--f-texto);
+	font-size: 17px;
+	line-height: 1.5;
+	text-align: left;
+}
+dialog.consulta[open] { display: flex; flex-direction: column; }
+dialog.consulta::backdrop { background: transparent; }
+
+/* Cabeza en celular: franja hueso con «Cerrar» a la izquierda y la solapa tinta a la derecha (del lado del lanzador) */
+.consulta-cabeza {
+	position: relative;
+	flex: none;
+	height: calc(var(--cabeza) + env(safe-area-inset-top, 0px));
+	background: var(--consulta-chrome);
+	color: var(--consulta-chrome-texto);
+}
+.consulta-cerrar {
+	position: absolute;
+	left: var(--margen);
+	bottom: 0;
+	display: inline-flex;
+	align-items: center;
+	height: var(--cabeza);
+	min-width: 44px;
+	font-family: var(--f-cartel);
+	font-stretch: 85%;
+	font-weight: 700;
+	font-size: 17px;
+	color: var(--consulta-chrome-texto);
+}
+.consulta-cerrar span { text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 5px; }
+.consulta-cerrar:hover span { text-decoration-thickness: 3px; }
+.consulta-cerrar:focus-visible { outline-color: var(--consulta-chrome-texto); outline-offset: -4px; box-shadow: none; }
+.consulta-solapa {
+	position: absolute;
+	right: 0;
+	bottom: 0;
+	height: calc(var(--cabeza) - 10px);
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 0 var(--margen) 0 calc(var(--corte) + 12px);
+	background: var(--consulta-tapa);
+	color: var(--consulta-tapa-texto);
+	clip-path: polygon(var(--corte) 0, 100% 0, 100% 100%, 0 100%);
+	font-family: var(--f-cartel);
+	font-stretch: 80%;
+	font-weight: 700;
+	font-size: 15px;
+	white-space: nowrap;
+}
+
+/* La tapa: título y bajada */
+.consulta-tapa { flex: none; padding: 14px var(--margen) 16px; background: var(--consulta-tapa); color: var(--consulta-tapa-texto); }
+.consulta-tapa h2 {
+	font-family: var(--f-cartel);
+	font-stretch: 75%;
+	font-weight: 800;
+	font-optical-sizing: none;
+	font-variation-settings: 'opsz' 96;
+	font-size: 30px;
+	line-height: 0.95;
+	letter-spacing: -0.015em;
+	text-wrap: balance;
+}
+.consulta-tapa p { margin-top: 8px; font-size: 14px; line-height: 1.4; color: var(--consulta-tapa-texto-2); max-width: 40ch; }
+.consulta-tapa p.consulta-prueba {
+	display: inline-block;
+	margin-top: 10px;
+	padding: 3px 7px 2px;
+	border: 1.5px dashed currentColor;
+	font-size: 12px;
+	font-weight: 700;
+	line-height: 1.35;
+	color: var(--consulta-tapa-texto);
+}
+dialog.consulta [hidden] { display: none !important; } /* los componentes de abajo fijan `display`, que le ganaría al atributo */
+
+.consulta-sinred {
+	flex: none;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 10px var(--margen);
+	border-bottom: 1px solid var(--consulta-regla);
+	font-size: 14px;
+	line-height: 1.4;
+}
+
+/* El cuerpo: lo único que se desplaza dentro de la hoja */
+.consulta-cuerpo {
+	position: relative;
+	flex: 1;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+	padding: 20px var(--margen) 12px;
+	overflow-y: auto;
+	overscroll-behavior: contain;
+}
+.consulta-cuerpo:focus-visible { outline-offset: -5px; box-shadow: none; }
+.consulta-registro { display: flex; flex-direction: column; gap: 20px; }
+.consulta-registro:empty { display: none; }
+.consulta-registro:focus { outline: none; }
+
+/* Estado vacío: saludo y sugerencias (filas de 48 px con filetes; no son píldoras) */
+.consulta-inicio { display: flex; flex-direction: column; gap: 14px; }
+.consulta-saludo { font-size: 16px; line-height: 1.45; max-width: 44ch; text-wrap: pretty; }
+.consulta-rotulo { font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; line-height: 1.3; color: var(--consulta-texto-2); }
+.consulta-sugerencias { border-top: 1px solid var(--consulta-regla); }
+.consulta-sugerencias button {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 12px;
+	width: 100%;
+	min-height: 48px;
+	padding: 10px 0;
+	border-bottom: 1px solid var(--consulta-regla);
+	text-align: left;
+	font-weight: 600;
+	font-size: 16px;
+	line-height: 1.3;
+	color: var(--consulta-texto);
+	transition: padding-left var(--d-rapida) var(--sale);
+}
+.consulta-sugerencias button::after { content: '→'; content: '→' / ''; flex: none; font-family: var(--f-cartel); font-weight: 700; font-size: 20px; }
+.consulta-sugerencias button:hover { padding-left: 6px; }
+.consulta-sugerencias button:focus-visible { outline-offset: -4px; box-shadow: none; }
+.consulta-sugerencias button:disabled { color: var(--consulta-texto-2); cursor: default; }
+
+/* Turnos: un acta, no globos. Sin fondos, sin avatares, alineados a la izquierda. */
+.consulta-turno { display: flex; flex-direction: column; gap: 4px; scroll-margin-top: 20px; }
+.consulta-turno.pregunta:not(:first-child) { padding-top: 20px; border-top: 1px solid var(--consulta-regla); }
+.consulta-turno .consulta-rotulo { display: flex; align-items: center; gap: 7px; }
+.consulta-pregunta-texto {
+	font-family: var(--f-cartel);
+	font-stretch: 85%;
+	font-weight: 600;
+	font-size: 20px;
+	line-height: 1.12;
+	text-wrap: pretty;
+	overflow-wrap: anywhere;
+}
+.consulta-turno.pregunta[data-estado='fallida'] .consulta-pregunta-texto { color: var(--consulta-texto-2); }
+.consulta-respuesta-texto { font-size: 17px; line-height: 1.5; text-wrap: pretty; overflow-wrap: anywhere; }
+.consulta-respuesta-texto > * + * { margin-top: 8px; }
+.consulta-respuesta-texto ul { padding-left: 1.1em; list-style: disc; }
+.consulta-respuesta-texto li + li { margin-top: 4px; }
+.consulta-respuesta-texto a, .consulta-aviso a, .consulta-contacto a.consulta-enlace, .consulta-fuente-texto {
+	font-weight: 600;
+	color: var(--consulta-texto);
+	text-decoration: underline;
+	text-decoration-thickness: 1.5px;
+	text-underline-offset: 5px;
+}
+.consulta-respuesta-texto a:hover, .consulta-fuentes a:hover .consulta-fuente-texto { text-decoration-thickness: 3px; }
+.consulta-respuesta-texto strong { font-weight: 700; }
+.consulta-fuentes { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 18px; margin-top: 6px; }
+.consulta-fuentes a { display: inline-flex; align-items: center; min-height: 44px; font-size: 15px; text-decoration: none; color: var(--consulta-texto); }
+.consulta-fuentes a::after { content: '→'; content: '→' / ''; margin-left: 6px; font-family: var(--f-cartel); font-weight: 700; }
+.consulta-fuentes .consulta-rotulo { align-self: center; }
+
+/* Llega la respuesta: solo opacidad, entera. Sin efecto de máquina de escribir. */
+@media (prefers-reduced-motion: no-preference) {
+	.consulta-turno.llega { animation: consulta-llega var(--d-rapida) linear; }
+}
+@keyframes consulta-llega { from { opacity: 0; } }
+/* Esperando: la lámpara del rótulo parpadea (la única pieza que se mueve); con movimiento reducido queda vacía y quieta */
+.consulta-turno.espera .consulta-lampara { animation: consulta-parpadeo 760ms steps(1, end) infinite; }
+.consulta-turno.espera .consulta-espera-texto { color: var(--consulta-texto-2); }
+@keyframes consulta-parpadeo { 50% { background: currentColor; } }
+
+/* Derivación a contacto, avisos y errores: un mismo bloque, con filete a la izquierda */
+.consulta-contacto, .consulta-aviso { display: flex; flex-direction: column; gap: 6px; padding: 2px 0 2px 14px; border-left: 3px solid var(--consulta-texto-2); }
+.consulta-contacto { margin-top: 8px; }
+.consulta-contacto h3 { font-family: var(--f-cartel); font-stretch: 85%; font-weight: 700; font-size: 20px; line-height: 1.12; }
+.consulta-contacto p, .consulta-aviso p { font-size: 15px; line-height: 1.45; }
+.consulta-aviso.falla { border-left-color: var(--consulta-error); }
+.consulta-aviso.falla .consulta-rotulo { color: var(--consulta-error); }
+.consulta-aviso .consulta-rotulo { display: flex; align-items: center; gap: 7px; }
+.consulta-acciones { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 18px; margin-top: 4px; }
+.consulta-boton, .consulta-boton-lleno {
+	display: inline-flex;
+	align-items: center;
+	min-height: 44px;
+	padding: 0 16px;
+	font-weight: 700;
+	font-size: 15px;
+	line-height: 1.2;
+	text-decoration: none;
+	border: 2px solid var(--consulta-texto);
+	transition: background-color var(--d-rapida), color var(--d-rapida);
+}
+.consulta-boton { color: var(--consulta-texto); }
+.consulta-boton:hover { background: var(--consulta-texto); color: var(--consulta-fondo); }
+.consulta-boton-lleno, .consulta-aviso a.consulta-boton-lleno, .consulta-contacto a.consulta-boton-lleno { background: var(--consulta-texto); color: var(--consulta-fondo); text-decoration: none; }
+.consulta-boton-lleno:hover, .consulta-aviso a.consulta-boton-lleno:hover, .consulta-contacto a.consulta-boton-lleno:hover { background: transparent; color: var(--consulta-texto); }
+
+/* Turnstile, solo si Cloudflare pide una interacción: el recuadro y su explicación se ven mientras el widget ocupa lugar
+   (la clase `activa` la pone el script al medirlo); si no, el contenedor queda vacío y sin filete. */
+.consulta-verificacion { display: flex; flex-direction: column; font-size: 14px; line-height: 1.4; color: var(--consulta-texto-2); }
+.consulta-verificacion > p { display: none; }
+.consulta-verificacion.activa { gap: 8px; margin-bottom: 10px; padding: 12px; border: 1px solid var(--consulta-regla); }
+.consulta-verificacion.activa > p { display: block; }
+
+/* ---------- Formulario: pegado abajo ---------- */
+.consulta-form {
+	flex: none;
+	padding: 10px var(--margen) calc(12px + env(safe-area-inset-bottom, 0px));
+	border-top: 1px solid var(--consulta-regla);
+	background: var(--consulta-fondo);
+}
+.consulta-fila-rotulo { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 24px; }
+.consulta-form label { color: var(--consulta-texto); }
+.consulta-lado { display: flex; align-items: center; gap: 14px; color: var(--consulta-texto-2); font-size: 13px; line-height: 1.4; }
+.consulta-contador.pasado { color: var(--consulta-error); font-weight: 700; }
+.consulta-nueva {
+	min-height: 44px;
+	margin: -10px 0;
+	font-size: 14px;
+	font-weight: 600;
+	color: var(--consulta-texto);
+	text-decoration: underline;
+	text-decoration-thickness: 1.5px;
+	text-underline-offset: 5px;
+}
+.consulta-fila { display: flex; align-items: flex-end; gap: 8px; margin-top: 6px; }
+.consulta-campo {
+	flex: 1;
+	min-width: 0;
+	min-height: 48px;
+	max-height: 128px;
+	padding: 11px 12px;
+	resize: none;
+	background: var(--consulta-campo);
+	color: var(--consulta-texto);
+	border: 2px solid var(--consulta-borde-campo);
+	font: inherit;
+	font-size: 17px; /* 16 px o más: iOS no hace zoom al enfocar */
+	line-height: 1.35;
+}
+.consulta-campo::placeholder { color: var(--consulta-texto-2); opacity: 1; }
+.consulta-campo:focus-visible { outline-offset: 2px; box-shadow: none; }
+.consulta-campo:disabled { background: transparent; border-color: var(--consulta-texto-2); cursor: not-allowed; }
+.consulta-enviar {
+	flex: none;
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	min-height: 48px;
+	padding: 0 16px;
+	background: var(--consulta-texto);
+	color: var(--consulta-fondo);
+	border: 2px solid var(--consulta-texto);
+	font-weight: 700;
+	font-size: 16px;
+	transition: transform var(--d-rapida) var(--sale), background-color var(--d-rapida), color var(--d-rapida);
+}
+.consulta-enviar .consulta-flecha { font-family: var(--f-cartel); font-weight: 700; transition: transform 200ms var(--sale); }
+.consulta-enviar:hover:not([aria-disabled='true']) { background: transparent; color: var(--consulta-texto); }
+.consulta-enviar:hover:not([aria-disabled='true']) .consulta-flecha { transform: translateX(4px); }
+.consulta-enviar:active:not([aria-disabled='true']) { transform: translateY(1px) scale(0.985); }
+.consulta-enviar:focus-visible { outline-offset: 3px; }
+.consulta-enviar[aria-disabled='true'] { background: transparent; color: var(--consulta-texto-2); border-color: var(--consulta-texto-2); cursor: not-allowed; }
+.consulta-validacion { margin-top: 8px; padding-left: 12px; border-left: 3px solid var(--consulta-error); font-size: 14px; line-height: 1.4; color: var(--consulta-error); }
+.consulta-nota { margin-top: 8px; font-size: 13px; line-height: 1.4; color: var(--consulta-texto-2); }
+
+/* Hoja con poca altura (celular apaisado o con el teclado virtual abierto: la agrega el script, que mide lo que se ve): la tapa
+   pasa a una sola fila y la nota se achica, para que quede lugar para la conversación. */
+dialog.consulta.compacta .consulta-tapa { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 20px; padding: 8px var(--margen) 10px; }
+dialog.consulta.compacta .consulta-tapa h2 { font-size: 22px; }
+dialog.consulta.compacta .consulta-tapa p { margin-top: 0; font-size: 13px; line-height: 1.35; }
+dialog.consulta.compacta .consulta-cuerpo { padding-top: 12px; gap: 14px; }
+/* Si ni así entra (zoom del 200 % o más, o un teléfono muy bajo), la hoja entera se desplaza en vertical: la conversación nunca queda
+   reducida a unas pocas líneas (WCAG 1.4.10). El formulario queda pegado abajo solo si hay alto de sobra. */
+dialog.consulta.compacta { overflow-y: auto; overscroll-behavior: contain; }
+dialog.consulta.compacta .consulta-cuerpo { flex: 1 0 auto; min-height: 8rem; overflow: visible; }
+/* «Cerrar» queda a la vista aunque la hoja se haya desplazado hasta la pregunta */
+dialog.consulta.compacta .consulta-cabeza { flex: none; position: sticky; top: 0; z-index: 2; }
+dialog.consulta.compacta .consulta-turno { scroll-margin-top: calc(var(--cabeza) + 12px); }
+@media (min-height: 360px) { dialog.consulta.compacta .consulta-form { position: sticky; bottom: 0; } }
+@media (max-height: 359px) { dialog.consulta.compacta .consulta-tapa p { display: none; } dialog.consulta.compacta .consulta-tapa p.consulta-prueba { display: inline-block; } }
+dialog.consulta.compacta .consulta-form { padding-top: 6px; padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px)); }
+dialog.consulta.compacta .consulta-fila { margin-top: 2px; }
+dialog.consulta.compacta .consulta-nota { margin-top: 4px; font-size: 12px; line-height: 1.3; }
+
+/* ---------- Escritorio (≥ 1024 px y alto > 520 px): la hoja se ancla arriba, debajo de la cabeza y pegada al riel; no es modal ---------- */
+@media (min-width: 1024px) and (min-height: 521px) {
+	dialog.consulta {
+		inset: var(--cabeza) var(--riel) 0 auto;
+		width: var(--consulta-panel);
+		height: auto;
+		box-shadow: var(--consulta-sombra), -1px 0 0 var(--consulta-regla);
+		/* Un filo de tinta en el borde: sobre la portada la hoja corta las pestañas y sin él parecía un recorte, no una capa encima */
+		border-left: 3px solid var(--consulta-lanzador);
+	}
+	/* Sin solapa sobre el borde (taparía «Cerrar» y «ES | EN» de la cabeza): el título y «Cerrar» quedan en la tapa */
+	.consulta-cabeza { position: static; height: 0; background: transparent; }
+	.consulta-solapa { display: none; }
+	.consulta-cerrar { right: 24px; left: auto; top: 6px; bottom: auto; height: 44px; color: var(--consulta-tapa-texto); z-index: 1; }
+	.consulta-cerrar:focus-visible { outline-color: var(--consulta-tapa-texto); }
+	.consulta-tapa { padding: 16px 24px; }
+	.consulta-tapa h2 { font-size: 26px; padding-right: 72px; }
+	.consulta-cuerpo, .consulta-form, .consulta-sinred { padding-left: 24px; padding-right: 24px; }
+	.consulta-form { padding-bottom: 14px; }
+	/* En la portada no hay riel de lomos: la hoja queda pegada al borde */
+	.lomos:not(.visible) ~ dialog.consulta { right: 0; }
+}
+
+/* Hoja abierta (no modal): el contenido de la ficha se estrecha para no quedar debajo de la hoja (la cabeza no: la hoja arranca
+   debajo de ella). Así el contenido y su anillo de foco nunca quedan tapados al recorrer con Tab (WCAG 2.4.11); la hoja se queda donde está. */
+@media (min-width: 1024px) and (min-height: 521px) {
+	html.js:has(dialog.consulta[open]) .ficha > :not(.ficha-cabeza) { margin-right: var(--consulta-panel); }
+}
+
+/* ---------- La invitación del camino técnico (escritorio con alto de 700 px o más): el rótulo y una o dos preguntas que se envían solas ---------- */
+.consulta-invita { display: none; }
+.consulta-invita[hidden] { display: none !important; } /* sin servicio no se invita (las reglas de abajo fijan `display`) */
+/* El rótulo («Pregunte, por ejemplo:») solo se ve cuando hay lugar de sobra (dos preguntas); si no, la pregunta sola se explica y el
+   rótulo queda como nombre del grupo para el lector de pantalla (`aria-labelledby` lee también los elementos ocultos). */
+.consulta-invita-rotulo { display: none; font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; line-height: 1.3; color: var(--texto-2); }
+@media (min-width: 1280px) and (min-height: 820px) { .consulta-invita-rotulo { display: block; margin-bottom: 6px; } }
+.consulta-invita-fila { display: flex; flex-wrap: wrap; gap: 8px; }
+.consulta-pregunta {
+	display: inline-flex;
+	align-items: center;
+	gap: 12px;
+	min-height: var(--consulta-ficha-alto);
+	padding: 0 16px;
+	border: 2px solid var(--texto);
+	color: var(--texto);
+	font-family: var(--f-texto);
+	font-size: 16px;
+	font-weight: 600;
+	line-height: 1.25;
+	text-align: left;
+	transition: background-color var(--d-rapida), color var(--d-rapida), transform var(--d-rapida) var(--sale);
+}
+.consulta-pregunta:nth-of-type(2) { display: none; }
+@media (hover: hover) {
+	.consulta-pregunta:hover { background: var(--texto); color: var(--fondo); }
+	.consulta-pregunta:hover .consulta-ir { transform: translateX(4px); }
+}
+.consulta-pregunta:active { transform: translateY(1px); }
+/* Mientras una pregunta espera su respuesta, las fichas no se envían dos veces */
+.consulta-pregunta[aria-disabled='true'] { border-style: dotted; cursor: progress; }
+@media (min-width: 1024px) and (min-height: 700px) {
+	/* En la tapa, entre la línea «Busco» y el circuito: en la misma fila que el circuito (la 4), arriba y a todo el ancho. Aprovecha el aire
+	   que el circuito tiene arriba (el lugar de la ficha que viaja, que está a la derecha); si no queda un respiro de 16 px sobre él, el
+	   script esconde la segunda pregunta y, después, la invitación entera (`sin-segunda`, `sin-lugar`). */
+	.pg > .consulta-invita { display: block; grid-column: 1 / 13; grid-row: 4; align-self: start; margin-top: -8px; z-index: 1; }
+	.pg > .consulta-invita.sin-lugar { display: none; }
+}
+/* Tableta en vertical y celular (la tapa es una columna): la pregunta por defecto va en el contenido, entre las acciones y el circuito,
+   y ocupa lugar de verdad (no se superpone). Solo si entra sin que la página se desplace: si no, el script la esconde (`sin-lugar`) y
+   queda la celda «Preguntar» del paginador. Con menos de 640 px de alto no se muestra. */
+@media (max-width: 1023px) and (min-height: 640px) {
+	.pg > .consulta-invita { display: block; order: 1; }
+	.pg > .consulta-invita ~ .tira { order: 2; }
+	.pg > .consulta-invita.sin-lugar { display: none; }
+	.consulta-pregunta { max-width: 100%; }
+}
+@media (max-height: 760px) { .consulta-pregunta { min-height: 44px; } }
+/* Dos preguntas solo con espacio de sobra (1280 × 820 o más); con menos, una */
+@media (min-width: 1280px) and (min-height: 820px) { .consulta-pregunta:nth-of-type(2) { display: inline-flex; } }
+.consulta-invita.sin-segunda .consulta-pregunta:nth-of-type(2) { display: none; }
+
+/* ---------- Forzar colores (alto contraste): las piezas con fondo propio lo conservan ---------- */
+@media (forced-colors: active) {
+	.consulta-solapa { forced-color-adjust: none; }
+	.consulta-lanzador, .consulta-pregunta { border: 2px solid ButtonText; color: ButtonText; }
+	.consulta-sello { forced-color-adjust: none; }
+	.consulta-aviso, .consulta-contacto, .consulta-validacion { border-left-color: CanvasText; }
+	.consulta-aviso.falla .consulta-rotulo, .consulta-validacion { color: CanvasText; }
+	dialog.consulta { border: 2px solid CanvasText; }
+}

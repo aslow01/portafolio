@@ -62,5 +62,5 @@ export const rutasDeCasos = (entradas, prefijo = '') => entradas.filter((e) => e
 /** La lista que mide `verificar-paginas.mjs`: las cinco fichas de la portada, /tecnico/, el índice, los casos y la 404. */
 export const paginasAMedir = (casos) => ['/#logistica', '/#tecnico', '/#demos', '/#proyectos', '/#contacto', '/tecnico/', '/casos/', ...casos, '/404.html'];
 
-/** Lo mismo en inglés (/en/): el inglés es más largo, así que se mide con los mismos topes. Sin 404: no hay una en /en/. */
-export const paginasAMedirEn = (casosEn) => ['/en/#logistica', '/en/#tecnico', '/en/#demos', '/en/#proyectos', '/en/#contacto', '/en/tecnico/', '/en/casos/', ...casosEn];
+/** Lo mismo en inglés (/en/): el inglés es más largo, así que se mide con los mismos topes. Incluye la 404 en inglés (/en/404.html). */
+export const paginasAMedirEn = (casosEn) => ['/en/#logistica', '/en/#tecnico', '/en/#demos', '/en/#proyectos', '/en/#contacto', '/en/tecnico/', '/en/casos/', ...casosEn, '/en/404.html'];

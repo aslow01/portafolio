@@ -39,7 +39,7 @@ const LITERALES = {
 };
 
 /** Cuántos expedientes caben en la lámina del cajón. */
-export const MAX_EN_CAJON = 6;
+export const MAX_EN_CAJON = 7;
 
 /**
  * Los expedientes que entran en la lámina del cajón y cuántos quedan afuera. Si hay más casos que lugares, no se recorta

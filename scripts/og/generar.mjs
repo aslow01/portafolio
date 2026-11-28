@@ -85,10 +85,12 @@ function dibujar(l) {
 		const cajon = lamina.querySelector('.cajon');
 		cajon.replaceChildren();
 		const n = l.expedientes.length;
-		const paso = (630 - 44) / n;
+		// Con siete o más, la primera solapa sube (36 px en vez de 44) para que el título de dos renglones entre a 18 px.
+		const tope = n > 6 ? 36 : 44;
+		const paso = (630 - tope) / n;
 		l.expedientes.forEach((e, i) => {
 			const li = nodo('li', `e ${e.clases}`);
-			li.style.top = `${44 + i * paso}px`;
+			li.style.top = `${tope + i * paso}px`;
 			li.style.setProperty('--x', String(n > 1 ? i / (n - 1) : 0));
 			const o = nodo('span', 'o');
 			o.append(nodo('b', '', e.numero));
@@ -96,15 +98,15 @@ function dibujar(l) {
 			cajon.append(li);
 		});
 		// El título no puede bajar más allá de `paso − 34 − 4` desde el borde de su banda (si no, lo tapa la solapa siguiente)
-		// ni pasar de dos renglones. Se prueba a 27 px; si alguno no entra, a 24 px (todos igual, para que se lea parejo).
+		// ni pasar de dos renglones. Se prueba a 27 px; si alguno no entra, a 24, 21 o 18 px (todos igual, para que se lea parejo).
 		const entra = (tt) => {
 			cajon.style.setProperty('--tt', `${tt}px`);
 			return [...cajon.querySelectorAll('.t')].every((t) => caja(t).height <= paso - 34 - 4 - 10 + 0.5 && caja(t).height <= 2 * tt * 1.02 + 1);
 		};
-		const tt = [27, 24].find(entra);
+		const tt = [27, 24, 21, 18].find(entra);
 		if (tt === undefined) {
 			const malos = [...cajon.querySelectorAll('.t')].filter((t) => caja(t).height > paso - 48 + 0.5).map((t) => t.textContent);
-			return { error: `un título no entra en su banda ni a 24 px: ${malos.join(' | ')}` };
+			return { error: `un título no entra en su banda ni a 18 px: ${malos.join(' | ')}` };
 		}
 		return { tt };
 	}

@@ -5,10 +5,10 @@ import { esDeCamino, type Camino } from './contenido.ts';
 import { esPublicable } from './estados.ts';
 import type { Idioma } from '../i18n/idioma.ts';
 
-/** Rótulo de un caso: "Caso · Logística · Técnico e IA" ("Case · Logistics · Technical and AI"). */
+/** Rótulo de un caso: "Caso · Logística · Técnico e IA" ("Case · Logistics · Software and AI"). */
 export function rotuloCaso(caminos: Camino[], idioma: Idioma = 'es'): string {
 	const cortos: Record<Camino, string> =
-		idioma === 'en' ? { logistica: 'Logistics', tecnico: 'Technical and AI' } : { logistica: 'Logística', tecnico: 'Técnico e IA' };
+		idioma === 'en' ? { logistica: 'Logistics', tecnico: 'Software and AI' } : { logistica: 'Logística', tecnico: 'Técnico e IA' };
 	return [idioma === 'en' ? 'Case' : 'Caso', ...caminos.map((c) => cortos[c])].join(' · ');
 }
 

@@ -52,11 +52,10 @@ const tituloCornisa = t(
 const chapas = [
 	{ valor: 'B2', sub: t('auto y camioneta', 'car and pickup truck') },
 	{ valor: '4x4', sub: t('alta y baja, en montaña y ripio', 'high and low range, on mountain and gravel roads') },
-	{ valor: '350 cc', sub: t('moto y cuatriciclo', 'motorcycle and quad bike') },
 ];
 
 // ---- En el terreno ----
-const notaTerreno = t('Pachón: Hombre Nuevo. Foto propia, camino de montaña.', 'Pachón: Hombre Nuevo. My own photo, mountain road.');
+const notaTerreno = t('Pachón (curso Hombre Nuevo). Foto propia, camino de montaña.', 'Pachón (Hombre Nuevo course). My own photo, mountain road.');
 
 // ---- De dónde vengo (pages/index.astro de la v4, con sus fechas del 25/11) ----
 const hitos = [
@@ -75,8 +74,8 @@ const hitos = [
 		// no tienen fecha más precisa que «antes de julio», no se dice «desde comienzos de año» de las dos. El largo del texto
 		// está medido: con más no entra a 360 × 740 ni a 320 × 640.
 		texto: t(
-			'Paso a administración a pedido de la gerencia. En logística ya automatizaba (partes diarios y bajas); en julio empiezo el cargador de facturas, en uso diario desde agosto.',
-			'I moved to administration at management’s request. In logistics I had automated daily reports and write-offs; I started the invoice loader in July, in use since August.',
+			'Paso a administración a pedido de la gerencia. En logística automatizaba partes diarios y bajas de uniformes; en julio empiezo el cargador de facturas, en uso diario desde agosto.',
+			'I moved to administration at management’s request. In logistics I had automated reports and uniform unassignment; I started the invoice loader in July, in use since August.',
 		),
 	},
 ];

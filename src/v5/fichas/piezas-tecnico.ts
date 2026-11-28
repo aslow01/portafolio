@@ -4,7 +4,7 @@
 // de acá y no se pueden desparejar. Sin Astro: lo importan los .astro.
 import type { ProyectoVista } from '../../lib/proyectos.ts';
 
-/** El `id` de la página de una pieza en /tecnico/ (`#metodo`, `#laboratorio`): su nombre corto, sin tildes ni mayúsculas. */
+/** El `id` de la página de una pieza en /tecnico/ (`#metodo`, `#laboratorio`, `#traductor`): su nombre corto, sin tildes ni mayúsculas. */
 export const idDePieza = (p: Pick<ProyectoVista, 'pagina'>): string =>
 	p.pagina
 		.normalize('NFD')
@@ -22,8 +22,14 @@ export interface EstiloDePieza {
 	atras: { color: 'hueso' | 'grafito'; lado: 'izq' | 'der' };
 }
 
-/** Método → grafito (atrás, hueso a la derecha); Laboratorio → hueso (atrás, grafito a la izquierda); y así alternando. */
-export const estiloDePieza = (indice: number): EstiloDePieza =>
-	indice % 2 === 0
-		? { chica: 'a c-grafito', grande: 'c-grafito', atras: { color: 'hueso', lado: 'der' } }
-		: { chica: 'b c-hueso', grande: 'h c-hueso', atras: { color: 'grafito', lado: 'izq' } };
+/**
+ * Método → grafito (atrás, hueso a la derecha); Laboratorio → hueso (atrás, grafito a la izquierda); Traductor → grafito otra vez, y así
+ * alternando. La posición de la carta chica (`a`, `b`, `c`) la usa cartas.css: con dos cartas se cruzan; con tres (`.cruce.tres`), caen
+ * en escalera.
+ */
+export const estiloDePieza = (indice: number): EstiloDePieza => {
+	const posicion = ['a', 'b', 'c'][indice] ?? 'c';
+	return indice % 2 === 0
+		? { chica: `${posicion} c-grafito`, grande: 'c-grafito', atras: { color: 'hueso', lado: 'der' } }
+		: { chica: `${posicion} c-hueso`, grande: 'h c-hueso', atras: { color: 'grafito', lado: 'izq' } };
+};

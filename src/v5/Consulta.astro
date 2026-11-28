@@ -1,0 +1,45 @@
+---
+// El asistente de la web («La consulta a mano»): acá solo se deja el marcador con la
+// configuración (la bandera sale de v5/consulta/config.ts) y se carga el script. El lanzador y la hoja los arma
+// src/scripts/v5/consulta.ts recién cuando termina de iniciar: sin JavaScript no hay nada que se vea roto (queda Contacto).
+// BaseV5 lo dibuja solo en las páginas con paginador y lomos (no en la portada cerrada, ni en /casos/ ni en la 404) y solo
+// con la bandera prendida: por defecto, en producción, NO se dibuja.
+// Los datos de contacto son los públicos de src/lib (nunca se escriben a mano acá).
+import { getCollection } from 'astro:content';
+import { cv, cvEn } from '../lib/datos-pendientes';
+import { esPublicable } from '../lib/estados';
+import { correo, linkedin } from '../lib/sitio';
+import type { ConfiguracionConsulta } from './consulta/config';
+
+interface Props {
+	config: ConfiguracionConsulta;
+}
+const { config } = Astro.props;
+// Los CV de los dos idiomas (el de /en/ puede ser otro archivo): el widget solo enlaza a los publicados.
+const cvs = [
+	...new Set(
+		[...Object.values(cv), ...Object.values(cvEn)]
+			.filter((c): c is NonNullable<typeof c> => c !== null)
+			.map((c) => c.archivo),
+	),
+];
+// Los únicos casos a los que el widget deja enlazar: los que el build publica (el modelo no puede inventar un nombre). Los casos en
+// inglés (/en/casos/<id>/) tienen los mismos identificadores que los de español.
+const casos = (await getCollection('casos', ({ data }) => esPublicable(data))).map((c) => c.id);
+---
+
+<div
+	id="consulta-raiz"
+	hidden
+	data-modo={config.modo}
+	data-api={config.api}
+	data-sitekey={config.sitekey}
+	data-correo={correo}
+	data-linkedin={linkedin}
+	data-cvs={cvs.join(' ')}
+	data-casos={casos.join(' ')}
+>
+</div>
+<script>
+	import '../scripts/v5/consulta';
+</script>

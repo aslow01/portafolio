@@ -65,7 +65,72 @@
 	--d-lenta: 380ms;
 	--d-larga: 640ms;
 
+	/* ---------- Asistente («El lomo de consulta») ---------- */
+	/* Color · claro. Derivados de los tokens de arriba donde se puede. Sin la señal amarilla ni un mineral de sección. */
+	--consulta-fondo: var(--claro); /* cuerpo de la hoja */
+	--consulta-texto: var(--tinta);
+	--consulta-texto-2: var(--tinta-2); /* rótulos, notas, placeholder */
+	--consulta-tapa: var(--tinta); /* solapa y tapa de la hoja; lanzador abierto */
+	--consulta-tapa-texto: var(--claro);
+	--consulta-tapa-texto-2: #c9c2b8; /* bajada sobre la tapa */
+	--consulta-campo: #fbf9f5;
+	--consulta-borde-campo: var(--tinta-2);
+	--consulta-regla: var(--regla-pliego);
+	--consulta-error: #b3261e; /* solo errores (rótulo y filete) */
+	--consulta-chrome: var(--hueso); /* el lanzador y la cabeza de la hoja en celular */
+	--consulta-chrome-texto: var(--tinta);
+	--consulta-chrome-texto-2: var(--tinta-2);
+	--consulta-sombra: var(--sombra-hoja);
+	--sombra-hoja-oscura: 0 18px 30px -22px rgba(0, 0, 0, 0.9);
+
+	/* El lanzador («La consulta a mano», docs-asistente/destacado.md): tinta con texto claro, la pieza de más contraste de la
+	   pantalla (15,20:1 contra hueso). Se invierte solo donde toca un color oscuro: ahí lleva un filete claro de 2 px. */
+	--consulta-lanzador: var(--tinta); /* cuerpo del lanzador de la cabeza, de la barra y de la celda */
+	--consulta-lanzador-texto: var(--claro); /* frase y flecha */
+	--consulta-lanzador-hover: var(--negro);
+	--consulta-sello: var(--claro); /* relleno del sello «IA» (el ícono) */
+	--consulta-sello-texto: var(--tinta);
+	--consulta-filete: var(--claro); /* solo donde el lanzador toca cobre, azurita, malaquita o grafito */
+	/* El sello «IA»: un globo de diálogo de 26 × 20 con la cola abajo a la izquierda, y su hueco (el contorno de 2 px del estado «no disponible») */
+	--consulta-globo: polygon(0 0, 100% 0, 100% 80%, 38% 80%, 15% 100%, 15% 80%, 0 80%);
+	--consulta-globo-hueco: polygon(2px 2px, calc(100% - 2px) 2px, calc(100% - 2px) 14px, 11px 14px, 6px 17px, 6px 14px, 2px 14px);
+
+	/* Medidas. `--consulta-ancho` la pone html.con-consulta (consulta.css): sin asistente, el paginador no cambia. */
+	--consulta-celda: 64px; /* ancho de la celda del lanzador en celular y tableta */
+	--consulta-panel: 420px; /* ancho de la hoja en escritorio */
+	--consulta-ancho: 0px; /* columna que le cede el paginador */
+	--consulta-lanzador-alto: 44px; /* cabeza de escritorio y cabecera de la portada */
+	--consulta-barra: 56px; /* barra fija de la portada en celular y tableta */
+	--consulta-ficha-alto: 48px; /* preguntas sugeridas del camino técnico (44 px con alto ≤ 760) */
+	--consulta-asomo: 560ms; /* el único movimiento: el lanzador sube 6 px y vuelve, una vez */
+	--consulta-asomo-espera: 1300ms; /* termina la cascada de los lomos: 260 + 6 · 55 + 640 ≈ 1230 (en la portada, 700 ms: html.con-barra) */
+
 	color-scheme: light;
+}
+/* Color · oscuro: definido y APAGADO. La v5 prohíbe `prefers-color-scheme` hasta que todo el sitio tenga tema oscuro: estos
+   valores se activan con el mismo interruptor que use el sitio (hoy, ninguno; `data-tema` es el nombre reservado). */
+:root[data-tema='oscuro'] {
+	--consulta-fondo: #1f1d1a;
+	--consulta-texto: #f1ece2;
+	--consulta-texto-2: #b8afa3;
+	--consulta-tapa: #2b2824;
+	--consulta-tapa-texto: #f1ece2;
+	--consulta-tapa-texto-2: #b8afa3;
+	--consulta-campo: #141311;
+	--consulta-borde-campo: #b8afa3;
+	--consulta-regla: rgba(241, 236, 226, 0.22);
+	--consulta-error: #ff9b8c;
+	--consulta-chrome: #141311;
+	--consulta-chrome-texto: #f1ece2;
+	--consulta-chrome-texto-2: #b8afa3;
+	--consulta-sombra: var(--sombra-hoja-oscura);
+	/* El lanzador se invierte: claro sobre la página oscura, sigue siendo la pieza de más contraste (14,28:1 contra #1f1d1a) */
+	--consulta-lanzador: #f1ece2;
+	--consulta-lanzador-texto: #141311;
+	--consulta-lanzador-hover: #ffffff;
+	--consulta-sello: #141311;
+	--consulta-sello-texto: #f1ece2;
+	--consulta-filete: #141311;
 }
 @media (min-width: 768px) {
 	:root { --oreja: 30px; --corte: 19px; --margen: 40px; --cabeza: 56px; --pag: 64px; --wn: 0.2; }

@@ -33,13 +33,13 @@ A `/casos/` se llega desde la tapa de `/tecnico/`, desde la ficha de Logística 
 
 ### Versión en inglés (`/en/`)
 
-El sitio tiene dos idiomas con la i18n nativa de Astro (`astro.config.mjs`, sin dependencias nuevas): el español es el idioma por defecto y vive en `/`; el inglés vive bajo `/en/` y repite las mismas páginas (`/en/`, `/en/tecnico/`, `/en/casos/` y `/en/casos/<caso>/`). Las redirecciones de la v4 y la 404 solo existen en español.
+El sitio tiene dos idiomas con la i18n nativa de Astro (`astro.config.mjs`, sin dependencias nuevas): el español es el idioma por defecto y vive en `/`; el inglés vive bajo `/en/` y repite las mismas páginas (`/en/`, `/en/tecnico/`, `/en/casos/` y `/en/casos/<caso>/`). Las redirecciones de la v4 solo existen en español; la 404 tiene las dos versiones (`/404.html` y `/en/404.html`, que Cloudflare Pages sirve para las direcciones bajo `/en/`).
 
 - **Las páginas son las mismas.** `src/pages/en/*` solo importa la página en español; cada componente lee su idioma de la dirección (`Astro.currentLocale`) y escribe sus textos «a pares» (`t('Cerrar', 'Close')`, `src/i18n/idioma.ts`), el español al lado del inglés.
 - **El contenido en inglés** está en `src/content-en/` (`casos`, `demos`, `proyectos`): mismos archivos y mismos ids que `src/content/`, con las colecciones `casos-en`, `demos-en` y `proyectos-en`. `scripts/en.test.mjs` comprueba que sean el mismo contenido (estado, orden, cifras, código literal de las pruebas).
 - **Selector ES | EN** en el encabezado de cada página (`src/v5/SelectorIdioma.astro`): lleva a la misma página, y en la portada también a la misma ficha.
 - **Cabeza de cada página:** `<html lang>`, `canonical` propia, `hreflang` (`es-AR`, `en` y `x-default`) y Open Graph en el idioma de la página; el sitemap lista las dos versiones con `xhtml:link`.
-- **CV:** `/en/` enlaza el CV técnico en inglés (`public/cv/matias-ormeno-cv-technical-en.pdf`); el de logística solo existe en español y el botón lo avisa («Spanish»). Las demos están en español y la ficha de Demos lo dice.
+- **CV:** `/en/` enlaza los dos CV en inglés (`public/cv/matias-ormeno-cv-technical-en.pdf` y `public/cv/matias-ormeno-cv-logistics-en.pdf`). Las demos están en español y la ficha de Demos lo dice.
 - **Imágenes para compartir:** el generador dibuja también las láminas en inglés (`en-<clave>-<huella>.png`).
 
 ### Método y Laboratorio
@@ -106,7 +106,7 @@ Además, a mano: abrir `npm run preview` a 320, 360 y 1280 px, recorrer con Tab 
 
 ### Verificación de las páginas (navegador)
 
-`npm run verificar:paginas` sirve `dist/` y abre la portada con cada una de sus cinco fichas abiertas, `/tecnico/`, `/casos/`, cada caso y la 404, en seis tamaños de pantalla (de 320 × 640 a 1440 × 900, en vertical y apaisado). Falla si una página de una ficha no entra en su pantalla (los topes están en `scripts/criterios-pantalla.mjs`), si la página desborda en horizontal, si una captura que enlaza una demo no tiene un `alt` que empiece con «Probar la demo», si una imagen no carga o si hay errores de consola. No forma parte de `npm test` ni de `prepublicar`, y no agrega dependencias: Playwright no está en `package.json`. Para correrlo:
+`npm run verificar:paginas` sirve `dist/` y abre la portada con cada una de sus cinco fichas abiertas, `/tecnico/`, `/casos/`, cada caso y la 404 (en español y en inglés), en seis tamaños de pantalla (de 320 × 640 a 1440 × 900, en vertical y apaisado). Falla si una página de una ficha no entra en su pantalla (los topes están en `scripts/criterios-pantalla.mjs`), si la página desborda en horizontal, si una captura que enlaza una demo no tiene un `alt` que empiece con «Probar la demo», si una imagen no carga o si hay errores de consola. Mide solo esos tamaños: en celulares apaisados más bajos (p. ej. 568 × 320) algunas páginas se desplazan. No forma parte de `npm test` ni de `prepublicar`, y no agrega dependencias: Playwright no está en `package.json`. Para correrlo:
 
 ```
 npm install --no-save playwright
@@ -115,6 +115,8 @@ npm run verificar:paginas
 ```
 
 `npm run verificar:interacciones` usa el mismo Playwright y las mismas variables y comprueba lo que solo se ve con un navegador real: adónde queda el foco al cargar, cambiar de ficha o cerrar una hoja, que «Atrás» no deje una entrada repetida tras recargar, que las flechas pasen de página recién cargada la página, que un doble clic no cierre una hoja y que la portada y la tapa de Logística entren en pantallas bajas. Tampoco forma parte de `npm test` ni de `prepublicar`.
+
+`npm run verificar:asistente` comprueba en Chromium el orden de Tab de la hoja del asistente (campo → «Enviar» → «Cerrar»). Levanta solo el Worker de prueba y `astro dev` (si ya hay un `astro dev` abierto en la carpeta, `ASISTENTE_DEV_URL=<su dirección>` lo reutiliza). Tampoco forma parte de `npm test` ni de `prepublicar`.
 
 Variables opcionales: `PLAYWRIGHT_MODULO` (carpeta `node_modules` que ya tenga Playwright), `CHROMIUM_RUTA` (ejecutable de Chromium), `PUERTO`, `TAMANOS`, `PAGINAS` (lista separada por comas) y `CAPTURAS` (carpeta donde guardar una captura por página y tamaño).
 

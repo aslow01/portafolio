@@ -33,9 +33,9 @@ export const novela: {
 	texto: 'Novela de terror por contagio, en dos libros.',
 	aparte: 'Trabajo en esta historia desde alrededor de 2018; en 2026 tomó impulso.',
 	autoria: {
-		yo: 'Escribo parte de los capítulos; la historia la decido yo.',
-		ia: 'La IA escribe el resto de los capítulos.',
-		verificacion: 'Una sala de críticos de IA revisa cada capítulo.',
+		yo: 'La escribo yo solo: la historia y cada capítulo.',
+		ia: '',
+		verificacion: '',
 	},
 };
 
@@ -49,9 +49,9 @@ export const novelaEn: typeof novela = {
 	texto: 'A horror novel about contagion, in two books.',
 	aparte: 'I have been working on this story since around 2018; it gained momentum in 2026.',
 	autoria: {
-		yo: 'I write some of the chapters; I decide the story.',
-		ia: 'AI writes the rest of the chapters.',
-		verificacion: 'A panel of AI critics reviews each chapter.',
+		yo: 'I write it alone: the story and every chapter.',
+		ia: '',
+		verificacion: '',
 	},
 };
 

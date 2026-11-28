@@ -82,7 +82,7 @@ test('las bajas: no se genera formacion, ni proyectos/<slug>, ni ninguna página
 });
 
 test('el conjunto de páginas del sitio es exactamente el de la especificación: portada, /tecnico/, el índice /casos/, casos publicados (en español y en inglés), las cuatro redirecciones (en los dos idiomas) y la 404', conDist, () => {
-	const esperadas = [...indexadas, ...enIngles(indexadas), '/404.html', ...Object.keys(REDIRECCIONES), ...Object.keys(REDIRECCIONES_EN)];
+	const esperadas = [...indexadas, ...enIngles(indexadas), '/404.html', '/en/404.html', ...Object.keys(REDIRECCIONES), ...Object.keys(REDIRECCIONES_EN)];
 	assert.deepEqual([...dist.paginas.keys()].sort(), esperadas.sort());
 });
 

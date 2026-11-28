@@ -18,3 +18,8 @@ npm-debug.log*
 
 # palabras extra de la higiene (ver scripts/higiene.mjs): no se versiona
 scripts/higiene.local.json
+
+# asistente: secretos locales del Worker, caché de wrangler y el contenido generado en el build
+.dev.vars*
+worker/.wrangler/
+worker/src/contexto.generado.ts
